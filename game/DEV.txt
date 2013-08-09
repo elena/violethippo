@@ -115,3 +115,5 @@ To update pyglet and cocos2d run these commands:
   (cd cocos2d; svn up)
 
 To install hg or svn, ask someone :-)
+
+Moar!
