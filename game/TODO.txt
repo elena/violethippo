@@ -1,0 +1,15 @@
+Things To Do
+============
+
+
+Before The End Of The Week
+--------------------------
+
+- edit the README (decide on a license)
+- test running of created upload on OS X, Windows and Linux
+
+
+Otherwise Nice To Have
+----------------------
+
+- press left mouse button to shoot ducks

@@ -1,0 +1,117 @@
+To set up an environment to work on you will need to:
+
+Check out pyglet with Mercurial (also known as "hg"):
+
+  hg clone https://pyglet.googlecode.com/hg/ pyglet
+
+Check out cocos2d with Subversion (also known as "svn"):
+
+  svn checkout http://los-cocos.googlecode.com/svn/trunk/ cocos2d
+
+We will be using py.test to implement the unit testing of our game model:
+
+1. install virtualenv
+2. install virtualenvwrapper
+3. mkvirtalenv violethippo
+4. workon violethippo
+5. pip install py.test promise
+
+And then to run tests use:
+
+  py.test
+
+Full info on how py.test works is at:
+
+  http://pytest.org/latest/getting-started.html
+
+Of particular interest to the game modelling testing is the monkeypatching
+facility in py.test which allows one to short-circuit complex code which
+is not directly the interest of a particular test:
+
+  http://pytest.org/latest/monkeypatch.html
+
+
+The Structure Of The Game Code
+-------------------------------
+
+There's three directories:
+
+gamelib
+  All the game codez go here. Keep stuff out of main.py unless it's
+  *specifically* about launching the game.
+data
+  All the data files (images, sounds, shaders, etc.) go here and are
+  loaded using gamelib.data functions. Don't hard-code paths to the files
+  in code which uses images etc (ie. I don't want to see open("../../data")
+  anywhere!)
+tests
+  All the model tests go here. Write tests for basic game model behaviour!
+  If you code up something that implements shooting and unit health goes
+  down then write a test that calls that shoot() to make sure it works (and
+  that someone else down the track doesn't break it!)
+
+Then there's run_game.py which is the top-level launcher for the game. Ignore
+the other create-upload.py and pyweek-upload.py files for now.
+
+
+Working With The Game Checkout
+------------------------------
+
+First, run:
+
+  hg pull -u
+
+Run this a lot. It ensures you're up to date. If you don't stay up to date
+you will create additional work for yourself.
+
+If you've edited a file in the checkout you need to commit your changes. You
+should do this relatively frequently - don't leave it too long between commits
+because other people might step on your toes and conflicts can occur. These
+can be resolved, but it's generally easier to not have conflicts in the first
+place :-)
+
+To commit changes, run:
+
+  hg commit -m 'some message indicating briefly what you did'
+
+(seriously, make that message meaningful otherwise people will get grumpy)
+
+Now is a good time to run "hg pull -u".
+
+If you are adding assets or code to the game you need to register it with
+Mercurial. You can check the current status of the files in your checkout
+with:
+
+  hg status
+
+The files which are unknown to Mercurial will be marked with a "?". Sometimes
+you want these to be added, sometimes not. If you find there's junk files that
+should always be ignored, we can add them to Mercurial's ignore list. Otherwise
+you add files with:
+
+  hg add data/directory/filename
+
+If you're adding a whole lot of files you can often just say "hg add" - but
+this will add *all* non-ignored "?" files, so be careful you don't add too
+much junk.
+
+Once you've added those files you should run the "hg commit".
+
+Now is a good time to run "hg pull -u". Sometimes after running a "hg pull" you
+may need to run another commit, as you might have needed to merge in some
+changes someone else made.
+
+Finally, once you've committed code you need to also push it out to everyone
+else with:
+
+  hg push
+
+This sends it up to the central server. And now everyone else may "hg pull"
+your changes!
+
+To update pyglet and cocos2d run these commands:
+
+  (cd pyglet; hg pull -u)
+  (cd cocos2d; svn up)
+
+To install hg or svn, ask someone :-)
