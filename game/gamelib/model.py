@@ -1,7 +1,6 @@
 class Game:
     def __init__(self):
         self.player = Player()
-        self.planet = Planet()
         self.moon = Moon()
         self.factions = []
         self.resistance = []
@@ -14,7 +13,7 @@ class Game:
             group.update(self, ui)
         self.planet.update(self, ui)
         self.moon.update(self, ui)
-        self.player.calculate_discovery_chance(self, ui)
+        # tally planet threat, check for game over
 
 
 class Player:
@@ -23,16 +22,13 @@ class Player:
     def __init__(self):
         self.orders = []
         self.discovery_chance = 0
-        self.visibility = 0     # Richard made this up "Instigator Noticeable"
+        self.visibility = 0   # affected by orders with "Instigator Noticeable"
         self.activity_points = 0
 
     def update(self, game, ui):
         for order in self.orders:
             order.enact(game, ui)
         self.orders = []
-
-    def calculate_discovery_chance(self, game, ui):
-        raise NotImplementedError()
 
     def add_order(self, order):
         """Use actvity points per:
@@ -51,18 +47,6 @@ class Player:
         # REJECT if cost > self.activity_points
         self.orders.append(order)
 
-class Planet:
-    """This is an infinite resource of natives who are sufficiently removed
-    from the action that they cannot have direct effect. They are the people
-    being fought for, but that may not require any functional detail. May
-    require a mood that reflects how easy it is to recruit, but that might be
-    fixed (based on difficulty, ultimately?).
-    """
-    loyalty = 1.0
-
-    def gather_people(self, number):
-        return int(number * self.loyalty)
-
 
 class Moon:
     """Made up of N zones, each ruled by a Boss who has a Faction around him.
@@ -80,15 +64,19 @@ class Moon:
 
 
 class Zone:
-    """Convert a raw material into a resource Contain two or more Cohorts
-    (population groups) Contain and are owned by a single Invader Faction
-    Utilize Servitor Cohort to carry out work Resource requirements must be
-    met or dropoff in output.
+    """Convert a raw material into a resource
+
+    Contain two Cohorts (population groups)
+    Contain and are owned by a single Invader Faction
+    Utilize Servitor Cohort to carry out work
+    Resource requirements must be met or dropoff in output.
     """
     def __init__(self):
         self.requirements = []  # what raw materials are needed, how much
         self.provider = []      # what are created from what volume of inputs
-        self.cohorts = []       # population groups
+        self.cohorts = [Privileged(), Servitor()]       # population groups
+        self.faction = Faction(type)
+        self.resistance_groups = []   # list of resistance groups
 
     def update(self, game, ui):
         # Process Raw Materials and create Resources
@@ -105,21 +93,28 @@ class Cohort:
     And how easily resistance can be recruited/created from there. Willingness
     is derived from the way the cohort is treated.
 
-    Willingness can be forced through low liberty, or the product of high
-    quality of life and cash in combination.
-
-    Rebellion is caused by low liberty, quality of life, and cash.
     """
     def __init___(self):
         self.size = 0           # how many in population
         self.liberty = 0        # freedom from rules and monitoring
         self.quality_of_life = 0        # provided services
         self.cash = 0           # additional discretionary money
-        self.willing = 0        # hardworking
-        self.rebellious = 0     # ability to be recruited to rebellion
 
     def update(self, game, ui):
         raise NotImplementedError('%s update not implemented' % self)
+
+    @property
+    def willing(self):
+        """Willingness can be forced through low liberty, or the product of
+        high quality of life and cash in combination.
+        """
+        pass
+
+    @property
+    def rebellious(self):
+        """Rebellion is caused by low liberty, quality of life, and cash.
+        """
+        pass
 
 
 class Privileged(Cohort):
@@ -130,7 +125,7 @@ class Servitor(Cohort):
     pass
 
 
-class Faction(Cohort):
+class Faction:
     """Invader Factions
     Led by a boss
     Staffed by zone Privileged Cohort
@@ -146,10 +141,12 @@ class Faction(Cohort):
     def update(self, game, ui):
         # Factions plan - factions plan the action they will take next turn
         # (not visible to player)
+        # Determine threat level against planet
         raise NotImplementedError()
 
+
 class Resistance(Cohort):
-    """Resistance Groups
+    """Resistance Group
     Numbers - how large, physically powerful in an open fight
     Informed - how connected to information sources
     Smart - technology available and used (multiplier for Numbers and Informed in some cases)
@@ -158,4 +155,3 @@ class Resistance(Cohort):
     Noteable - how obvious to the local Faction, how easy to find
     list Modus Operandi - style of actions to select from with chance of each
     """
-
