@@ -5,6 +5,15 @@ class Game:
         self.factions = []
         self.resistance = []
 
+    def to_json(self, filename):
+        # dump my state to a file to save it
+
+    @classmethod
+    def from_json(cls, filename):
+        o = cls()
+        # load my state from a file
+        return o
+
     def update(self, ui):
         # we pass in the Game instance and the UI from the top level so the
         # model objects don't need to hang on to them
