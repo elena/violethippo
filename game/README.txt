@@ -1,5 +1,5 @@
-Your Game Title
-===============
+Lucifer’s Moon
+==============
 
 Entry in PyWeek #17  <http://www.pyweek.org/17/>
 Team: Violent Hippo
