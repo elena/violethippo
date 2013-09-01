@@ -27,34 +27,19 @@ class Game:
 
 class Player:
     """Represents the player's orders.
+
+    Use actvity points per:
+
+    one free player action (any player action, cost 0)
+    each group support/discourage within the zone costs 1 activity point
+    each group support/discourage outside the zone costs 2 activity points
+    each additional player action costs 3 activity points (possibly some
+        are more expensive when purchased this way)
     """
     def __init__(self):
-        self.orders = []
         self.discovery_chance = 0
         self.visibility = 0   # affected by orders with "Instigator Noticeable"
         self.activity_points = 0
-
-    def update(self, game, ui):
-        for order in self.orders:
-            order.enact(game, ui)
-        self.orders = []
-
-    def add_order(self, order):
-        """Use actvity points per:
-
-        one free player action (any player action, cost 0)
-        each group support/discourage within the zone costs 1 activity point
-        each group support/discourage outside the zone costs 2 activity points
-        each additional player action costs 3 activity points (possibly some
-            are more expensive when purchased this way)
-        """
-        total_cost = 0
-        for order in self.orders:
-            # add order cost
-            # note player action to incur additional player action cost
-        # add on new order cost
-        # REJECT if cost > self.activity_points
-        self.orders.append(order)
 
 
 class Moon:
@@ -143,6 +128,12 @@ class Group:
         self.smart = 0
         self.loyal = 0
         self.rich = 0
+        self.buffs = []
+
+    def update(self, game, ui):
+        # Groups plan - plan the action they will take next turn
+        # (not visible to player)
+        raise NotImplementedError()
 
 
 class Faction(Group):
@@ -157,10 +148,8 @@ class Faction(Group):
         self.threat = 0     # potential power vs planet
 
     def update(self, game, ui):
-        # Factions plan - factions plan the action they will take next turn
-        # (not visible to player)
+        super(Faction, self).update(game, ui)
         # Determine threat level against planet
-        raise NotImplementedError()
 
 
 class Resistance(Group):
