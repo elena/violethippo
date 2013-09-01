@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """The bulk of the game takes place through the map of the city
 How close the player is to being captured is shown
 How much threat/control the city poses is shown

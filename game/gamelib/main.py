@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''Game main module.
 
 Contains the entry point used by the run_game.py script.
@@ -7,13 +8,14 @@ package.
 '''
 
 import data
-import cocos
 from cocos.director import director
+from ui.main import main_scene
+
 
 def main():
-    director.init(resizable=True)
+
     print "Hello from your game's main()"
     print data.load('sample.txt').read()
 
-    main_scene = cocos.scene.Scene()
+    # director.init run in menu.py lest spews AttributeError
     director.run(main_scene)
