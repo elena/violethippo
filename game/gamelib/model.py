@@ -7,11 +7,13 @@ class Game:
 
     def to_json(self, filename):
         # dump my state to a file to save it
+        raise NotImplementedError()
 
     @classmethod
     def from_json(cls, filename):
         o = cls()
         # load my state from a file
+        raise NotImplementedError()
         return o
 
     def update(self, ui):
@@ -23,6 +25,7 @@ class Game:
         self.planet.update(self, ui)
         self.moon.update(self, ui)
         # tally planet threat, check for game over
+        raise NotImplementedError()
 
 
 class Player:
@@ -149,7 +152,8 @@ class Faction(Group):
 
     def update(self, game, ui):
         super(Faction, self).update(game, ui)
-        # Determine threat level against planet
+        # alter threat level against planet
+        raise NotImplementedError()
 
 
 class Resistance(Group):
