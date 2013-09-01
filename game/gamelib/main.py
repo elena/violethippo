@@ -7,7 +7,13 @@ package.
 '''
 
 import data
+import cocos
+from cocos.director import director
 
 def main():
+    director.init(resizable=True)
     print "Hello from your game's main()"
     print data.load('sample.txt').read()
+
+    main_scene = cocos.scene.Scene()
+    director.run(main_scene)
