@@ -5,7 +5,7 @@ class Game:
         self.factions = []
         self.resistance = []
 
-    def update(self, game, ui):
+    def update(self, ui):
         # we pass in the Game instance and the UI from the top level so the
         # model objects don't need to hang on to them
         self.player.update(self, ui)
@@ -125,19 +125,28 @@ class Servitor(Cohort):
     pass
 
 
-class Faction:
+class Group:
+    """A group of non-rabble that actually do stuff in the game.
+    """
+    def __init__(self):
+        self.size = 0
+        self.informed = 0
+        self.smart = 0
+        self.loyal = 0
+        self.rich = 0
+
+
+class Faction(Group):
     """Invader Factions
     Led by a boss
     Staffed by zone Privileged Cohort
     controls a power projector (threat to the planet)
     requires support (resource or resources)
-    Threat - potential power vs planet
-    Numbers
-    Informed
-    Smart
-    Loyal
-    Rich?
     """
+    def __init__(self):
+        super(Faction, self).__init__()
+        self.threat = 0     # potential power vs planet
+
     def update(self, game, ui):
         # Factions plan - factions plan the action they will take next turn
         # (not visible to player)
@@ -145,13 +154,12 @@ class Faction:
         raise NotImplementedError()
 
 
-class Resistance(Cohort):
+class Resistance(Group):
     """Resistance Group
-    Numbers - how large, physically powerful in an open fight
-    Informed - how connected to information sources
-    Smart - technology available and used (multiplier for Numbers and Informed in some cases)
-    Loyal - willing to die for the cause
-    Rich - do we need wealth?
-    Noteable - how obvious to the local Faction, how easy to find
-    list Modus Operandi - style of actions to select from with chance of each
     """
+    def __init__(self):
+        super(Resistance, self).__init__()
+        # how obvious to the local Faction, how easy to find
+        self.visibility = 0
+        # style of actions to select from with chance of each
+        self.modus_operandi = Plan.TYPE_ESPIONAGE
