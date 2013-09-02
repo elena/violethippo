@@ -12,6 +12,8 @@ You might need to install this before running the game:
 
   Python 2.7:     http://www.python.org/
 
+Note: on Windows you need to use 32-bit Python!
+
 
 RUNNING THE GAME:
 
