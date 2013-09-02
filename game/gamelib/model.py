@@ -37,15 +37,11 @@ class JSONable(object):
         pass
 
 
-
-
-
 class Game(JSONable):
     def __init__(self):
         self.player = Player()
         self.moon = Moon()
         self.turn = 0
-#        self.factions = []   # now in zones
 
     def json_savefile_turn(self,sdir):
         self.json_savefile(sdir,'turn_%03d.json'%(self.turn))
@@ -112,15 +108,12 @@ class Player(JSONable):
         self.activity_points = 0
 
     def json_dump(self):
-        return self.json_dump_simple( 'discovery_chance','visibility','activity_points' )
+        return self.json_dump_simple('discovery_chance',
+            'visibility', 'activity_points')
 
 
     def update(self, game,ui):
         ui.msg( '%s update not implemented' % self)
-
-
-
-
 
 
 class Moon(JSONable):
@@ -137,23 +130,14 @@ class Moon(JSONable):
         v=self.json_dump_simple()
         v['zones']=[ z.json_dump() for z in self.zones ]
         return v
+
     def json_load(self, jdata):
         self.zones=[ Zone.json_create(z) for z in jdata['zones'] ]
-
 
     def update(self, game, ui):
         ui.msg('%s updating moon'%(self))
         for zone in self.zones:
             zone.update(game,ui)
-
-
-
-
-
-
-
-
-
 
 
 class Zone(JSONable):
@@ -208,11 +192,6 @@ class Zone(JSONable):
         self.faction.rich+=produce
 
 
-
-
-
-
-
 class Cohort(JSONable):
     """Each zone has at least two cohorts:
 
@@ -256,12 +235,9 @@ class Cohort(JSONable):
         return produce
 
 
-
 class Privileged(Cohort):
     def __init__(self):
         super(Privileged, self).__init__()
-
-
 
 
 class Servitor(Cohort):
@@ -269,14 +245,11 @@ class Servitor(Cohort):
         super(Servitor, self).__init__()
 
 
-
-
-
 class Group(JSONable):
     """A group of non-rabble that actually do stuff in the game.
     """
-    def __init__(self,name):
-        self.name=name
+    def __init__(self, name):
+        self.name = name
         self.size = 0
         self.informed = 0
         self.smart = 0
@@ -285,7 +258,8 @@ class Group(JSONable):
         self.buffs = []
 
     def json_dump(self):
-        return self.json_dump_simple('name','size','informed','smart','loyal','rich','buffs' )
+        return self.json_dump_simple('name', 'size', 'informed', 'smart',
+            'loyal', 'rich', 'buffs')
     @classmethod
     def json_create_args(cls,jdata):
         return [jdata['.name']]
@@ -294,11 +268,6 @@ class Group(JSONable):
         # Groups plan - plan the action they will take next turn
         # (not visible to player)
         ui.msg( '%s update not implemented' % self)
-
-
-
-
-
 
 
 class Faction(Group):
@@ -323,10 +292,6 @@ class Faction(Group):
         ui.msg( '%s update not implemented' % self)
 
 
-
-
-
-
 class Resistance(Group):
     """Resistance Group
     """
@@ -339,7 +304,7 @@ class Resistance(Group):
 
     def json_dump(self):
         v=Group.json_dump(self)
-        v.update( self.json_dump_simple('visibility','modus_operandi') )
+        v.update(self.json_dump_simple('visibility', 'modus_operandi'))
         return v
 
     def update(self, game, ui):
