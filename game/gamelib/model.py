@@ -91,7 +91,7 @@ class Cohort:
     is derived from the way the cohort is treated.
 
     """
-    def __init___(self):
+    def __init__(self):
         self.size = 0           # how many in population
         self.liberty = 0        # freedom from rules and monitoring
         self.quality_of_life = 0        # provided services
