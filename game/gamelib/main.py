@@ -10,12 +10,8 @@ package.
 import data
 from cocos.director import director
 from ui.main import main_scene
-
+from ui.overview import Overview
 
 def main():
-
-    print "Hello from your game's main()"
-    print data.load('sample.txt').read()
-
-    # director.init run in menu.py lest spews AttributeError
-    director.run(main_scene)
+    director.init(width=1024, height=768)
+    director.run(Overview())

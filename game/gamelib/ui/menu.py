@@ -4,6 +4,7 @@ from cocos.layer import MultiplexLayer
 from cocos.menu import Menu, MenuItem, zoom_in, zoom_out, CENTER
 from cocos.scene import Scene
 
+from overview import Overview
 
 class MainMenu(Menu):
 
@@ -25,8 +26,7 @@ class MainMenu(Menu):
         self.create_menu(items, zoom_in(), zoom_out())
 
     def on_new_game(self):
-        # director.set_scene(StartGame())
-        print "New Game!"
+        director.push(Overview())
 
     def on_options(self):
         self.parent.switch_to(1)
