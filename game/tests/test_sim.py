@@ -70,7 +70,6 @@ def test_model_construction(savedir,*args,**kw):
     z.cohorts.append( model.Servitor(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
     z.faction = model.Faction('mrfedex', threat=g.MAX, size=g.LOW,informed=g.MED,smart=g.HIGH,loyal=g.HIGH,rich=g.MED,buffs=[])
 
-
     ui = FakeUI(savedir)
     g.update(ui)
 

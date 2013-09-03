@@ -102,7 +102,7 @@ class Game(JSONable):
         for zone in self.moon.zones:
             threat+=zone.faction.threat
         if threat>1.2:
-          raise ui.SIGNAL_GAMEOVER
+            raise ui.SIGNAL_GAMEOVER
         ui.msg('update done threat is %s'%(threat))
 
     def roll(self,d1,d2=0.0):
