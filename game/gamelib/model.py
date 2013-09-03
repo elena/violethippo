@@ -59,6 +59,7 @@ class Game(JSONable):
         self.calculate_threat()
         self.created = time.time()
         self.turn_date = time.time()
+        self.game_over = False
 
     def json_savefile_turn(self,sdir):
         self.json_savefile(sdir,'turn_%03d.json'%(self.turn))
@@ -68,7 +69,7 @@ class Game(JSONable):
         if not name:
           name = 'save.json'
         fd = open(os.path.join(sdir,name),'w')
-        json.dump(self.json_dump(), fd, indent=2,sort_keys=True)
+        json.dump(self.json_dump(), fd, indent=2, sort_keys=True)
         fd.close()
 
     @classmethod
@@ -79,7 +80,8 @@ class Game(JSONable):
         return cls.json_create(jdata)
 
     def json_dump(self):
-        v = self.json_dump_simple('turn', 'threat', 'created', 'turn_date')
+        v = self.json_dump_simple('turn', 'threat', 'created', 'turn_date',
+            'game_over')
         v['player'] = self.player.json_dump()
         v['moon'] = self.moon.json_dump()
         return v
@@ -106,6 +108,7 @@ class Game(JSONable):
         self.calculate_threat()
         ui.msg('threat is %s' % self.threat)
         if self.threat > 9:
+            self.game_over = True
             raise ui.SIGNAL_GAMEOVER
         ui.msg('game: update done')
 
