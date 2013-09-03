@@ -13,7 +13,6 @@ from overview import Overview
 
 class MainMenu(Menu):
     def __init__(self):
-
         super(MainMenu, self).__init__("Moon Game")
         self.menu_valign = CENTER
         self.menu_halign = CENTER
@@ -42,6 +41,7 @@ class MainMenu(Menu):
         # when we enter this view - either in from starting up or by returning
         # from the overview screen, we need to clear the global in model.game
         model.game = None
+        super(MainMenu, self).on_enter()
 
     def on_new_game(self):
         game = model.Game()
