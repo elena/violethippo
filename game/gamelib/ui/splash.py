@@ -10,7 +10,7 @@ from gamelib.ui.menu import menu
 
 
 def splash():
-    return Scene(ColorLayer(128, 128, 128, 128), SplashControlLayer())
+    return Scene(ColorLayer(128, 128, 128, 255), SplashControlLayer())
 
 
 class SplashControlLayer(Layer):
