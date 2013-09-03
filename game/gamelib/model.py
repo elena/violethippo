@@ -195,9 +195,9 @@ class Zone(JSONable):
         o = cls('industry')
         o.cohorts = [
             Privileged(size=Game.MED, liberty=Game.UNDEF,
-                quality_of_life=Game.UNDEF, cash=Game.HIGH)),
+                quality_of_life=Game.UNDEF, cash=Game.HIGH),
             Servitor(size=Game.HIGH, liberty=Game.UNDEF,
-                quality_of_life=Game.UNDEF, cash=Game.UNDEF))
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF)
         ]
         o.faction = Faction('ecobaddy', threat=Game.MAX, size=Game.MED,
             informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED, rich=Game.HIGH,
@@ -205,13 +205,13 @@ class Zone(JSONable):
         return o
 
     @classmethod
-    def create_industry(cls):
+    def create_military(cls):
         o = cls('military')
         o.cohorts = [
             Privileged(size=Game.LOW, liberty=Game.UNDEF,
-                quality_of_life=Game.UNDEF, cash=Game.UNDEF)),
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF),
             Servitor(size=Game.MED, liberty=Game.UNDEF,
-                quality_of_life=Game.UNDEF, cash=Game.UNDEF))
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF)
         ]
         o.faction = Faction('mrstompy', threat=Game.MAX, size=Game.HIGH,
             informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH, rich=Game.LOW,
@@ -219,13 +219,13 @@ class Zone(JSONable):
         return o
 
     @classmethod
-    def create_industry(cls):
+    def create_logistics(cls):
         o = cls('logistics')
         o.cohorts = [
             Privileged(size=Game.MED, liberty=Game.UNDEF,
-                quality_of_life=Game.UNDEF, cash=Game.UNDEF)),
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF),
             Servitor(size=Game.LOW, liberty=Game.UNDEF,
-                quality_of_life=Game.UNDEF, cash=Game.UNDEF))
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF)
         ]
         o.faction = Faction('mrfedex', threat=Game.MAX, size=Game.LOW,
             informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH, rich=Game.MED,

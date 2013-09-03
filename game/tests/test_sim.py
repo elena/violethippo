@@ -48,26 +48,32 @@ def test_model_construction(savedir,*args,**kw):
     g = model.Game()
     random.seed(1)
 
-    g.moon.zones.append( model.Zone('Industry'))
-    g.moon.zones.append( model.Zone('Military'))
-    g.moon.zones.append( model.Zone('Logistics'))
+    g.moon.zones = [
+        model.Zone('industry'), model.Zone('military'), model.Zone('logistics')
+    ]
 
     #  from page 17: Industry
-    z=g.moon.zones[0]
-    z.cohorts.append( model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.HIGH) )
-    z.cohorts.append( model.Servitor(size=g.HIGH, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z = g.moon.zones[0]
+    z.cohorts = [
+        model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.HIGH),
+        model.Servitor(size=g.HIGH, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF)
+    ]
     z.faction = model.Faction('ecobaddy', threat=g.MAX, size=g.MED,informed=g.HIGH,smart=g.LOW,loyal=g.MED,rich=g.HIGH,buffs=[])
 
     #  from page 17: military
-    z=g.moon.zones[1]
-    z.cohorts.append( model.Privileged(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
-    z.cohorts.append( model.Servitor(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z = g.moon.zones[1]
+    z.cohorts = [
+        model.Privileged(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF),
+        model.Servitor(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF)
+    ]
     z.faction = model.Faction('mrstompy', threat=g.MAX, size=g.HIGH,informed=g.LOW,smart=g.MED,loyal=g.HIGH,rich=g.LOW,buffs=[])
 
     #  from page 17: logistics
-    z=g.moon.zones[2]
-    z.cohorts.append( model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
-    z.cohorts.append( model.Servitor(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z = g.moon.zones[2]
+    z.cohorts = [
+        model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF),
+        model.Servitor(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF)
+    ]
     z.faction = model.Faction('mrfedex', threat=g.MAX, size=g.LOW,informed=g.MED,smart=g.HIGH,loyal=g.HIGH,rich=g.MED,buffs=[])
 
     ui = FakeUI(savedir)
