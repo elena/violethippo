@@ -56,19 +56,19 @@ def test_model_construction(savedir,*args,**kw):
     z=g.moon.zones[0]
     z.cohorts.append( model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.HIGH) )
     z.cohorts.append( model.Servitor(size=g.HIGH, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
-    z.faction = model.Faction('ecobaddy', threat=g.UNDEF, size=g.MED,informed=g.HIGH,smart=g.LOW,loyal=g.MED,rich=g.HIGH,buffs=[])
+    z.faction = model.Faction('ecobaddy', threat=g.MAX, size=g.MED,informed=g.HIGH,smart=g.LOW,loyal=g.MED,rich=g.HIGH,buffs=[])
 
     #  from page 17: military
     z=g.moon.zones[1]
     z.cohorts.append( model.Privileged(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
     z.cohorts.append( model.Servitor(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
-    z.faction = model.Faction('mrstompy', threat=g.UNDEF, size=g.HIGH,informed=g.LOW,smart=g.MED,loyal=g.HIGH,rich=g.LOW,buffs=[])
+    z.faction = model.Faction('mrstompy', threat=g.MAX, size=g.HIGH,informed=g.LOW,smart=g.MED,loyal=g.HIGH,rich=g.LOW,buffs=[])
 
     #  from page 17: logistics
     z=g.moon.zones[2]
     z.cohorts.append( model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
     z.cohorts.append( model.Servitor(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
-    z.faction = model.Faction('mrfedex', threat=g.UNDEF, size=g.LOW,informed=g.MED,smart=g.HIGH,loyal=g.HIGH,rich=g.MED,buffs=[])
+    z.faction = model.Faction('mrfedex', threat=g.MAX, size=g.LOW,informed=g.MED,smart=g.HIGH,loyal=g.HIGH,rich=g.MED,buffs=[])
 
 
     ui = FakeUI(savedir)
