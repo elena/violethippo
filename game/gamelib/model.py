@@ -2,6 +2,7 @@
 import os
 import json
 import time
+import random
 
 from gamelib.plans.base import Plan
 
@@ -52,6 +53,11 @@ class Game(JSONable):
     #UNDEF='this will cause you pain when you use it in math'
     UNDEF=.2
 
+    EASE_LINEAR=0
+    EASE_HERMITE=1
+    EASE_QUAD=2
+    EASE_CUBIC=3
+
     def __init__(self):
         self.player = Player()
         self.moon = Moon()
@@ -60,6 +66,11 @@ class Game(JSONable):
         self.created = time.time()
         self.turn_date = time.time()
         self.game_over = False
+        #
+        # Seed for repeatable testing
+        #
+        # random.seed(1)
+        #
 
     def json_savefile_turn(self):
         p = self.json_path
@@ -115,6 +126,18 @@ class Game(JSONable):
         if self.threat > 9:
             self.game_over = True
             raise ui.SIGNAL_GAMEOVER
+        #
+        # Liam debug code
+        #
+        # win = 0
+        # tot = 0
+        # for rollnum in range(0,100):
+        #     ret = self.roll(0.2, 0.3)
+        #     if ret > 0:
+        #         win += 1
+        #         tot += ret
+        # print "rolled: %d wins, avg: %.3f" % (win, (tot/win))
+        #
         ui.msg('game: update done')
 
     def calculate_threat(self):
@@ -122,18 +145,39 @@ class Game(JSONable):
         for zone in self.moon.zones:
             self.threat += zone.faction.threat
 
-    def roll(self,d1,d2=0.0):
-        total=d1+d2
-        if total>1.5:
-            return total-.5
-        total*=2./3.
-        return self.roll_ease(total)
-    def roll_ease(self,total):
-        total*=2
-        if total<1:
-            return .5*total**3
-        total-=2
-        return .5*(total**3+2)
+    def roll(self, d1, d2=0.0):
+        total = d1+d2
+        if total >= 1.:
+            return max(random.random(), random.random()) + (total - 1.)
+        #
+        # Use if want to extend optimal requirements (lower chance of success)
+        # if total > 1.5:
+        #     return total - .5
+        # total *= 2./3.
+        #
+        total = self.ease(total)
+        ran = random.random()
+        return max(0, total-ran)
+
+    def ease(self, total, ease=EASE_CUBIC):
+        if ease == self.EASE_LINEAR:
+            return total
+        elif ease == self.EASE_HERMITE:
+            return (3 * total**2) - (2 * total**3)
+        elif ease == self.EASE_QUAD:
+            total *= 2
+            if total < 1:
+                return .5 * total**2
+            total -= 1
+            return -.5 * (total*(total-2) - 1)
+        elif ease == self.EASE_CUBIC:
+            total *= 2
+            if total < 1:
+               return .5 * total**3
+            total -= 2
+            return .5 * (total**3 + 2)
+        else:
+            return 0
 
 
 
