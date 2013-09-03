@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-
 from cocos.director import director
 from cocos.layer import MultiplexLayer
 from cocos.menu import Menu, MenuItem, zoom_in, zoom_out, CENTER
@@ -20,6 +19,7 @@ class MainMenu(Menu):
         self.font_title['font_size'] = 42
         self.font_item['font_size'] = 20
         self.font_item_selected['font_size'] = 20
+        self.title_label = "Menu"
 
         items = []
         if os.path.exists('save'):
