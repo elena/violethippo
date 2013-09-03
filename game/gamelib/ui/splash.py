@@ -17,20 +17,19 @@ class SplashControlLayer(Layer):
     is_event_handler = True
     def __init__(self):
         super(SplashControlLayer, self).__init__()
-        self.text_title = Label("Hippo Moon Monkey Revolution",
-            font_size=22, x=15, y=450)
-
-        self.text_help = Label("Hit 'Enter' to continue.",
-            font_size=16, x=director.get_window_size()[0] /2, y=20,
-            anchor_x='center')
-
+        w, h = director.get_window_size()
         logo = Sprite('hippo-300.png')
-        logo.position = (320, 250)
+        lh = logo.height
+        logo.position = (w//2, h//2)
         self.add(logo)
 
-    def draw(self):
-        self.text_title.draw()
-        self.text_help.draw()
+        self.add(Label("Hippo Moon Monkey Revolution",
+            font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
+            anchor_y='bottom'))
+
+        self.add(Label("Hit 'Enter' to continue.",
+            font_size=16, x=w//2, y=h//2 - lh//2 - 20, anchor_x='center',
+            anchor_y='top'))
 
     def on_key_press(self, k, m):
         if k == key.ENTER:

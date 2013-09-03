@@ -44,6 +44,8 @@ class MainMenu(Menu):
         super(MainMenu, self).on_enter()
 
     def on_new_game(self):
+        if not os.path.exists('save'):
+            os.mkdir('save')
         game = model.Game()
         game.json_savefile('save', '%d.json' % game.created)
         model.game = game
