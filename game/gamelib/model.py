@@ -1,6 +1,7 @@
 
 import os
 import json
+import time
 
 from gamelib.plans.base import Plan
 
@@ -55,6 +56,8 @@ class Game(JSONable):
         self.player = Player()
         self.moon = Moon()
         self.turn = 0
+        self.created = time.time()
+        self.turn_date = time.time()
 
     def json_savefile_turn(self,sdir):
         self.json_savefile(sdir,'turn_%03d.json'%(self.turn))
@@ -75,7 +78,7 @@ class Game(JSONable):
         return cls.json_create(jdata)
 
     def json_dump(self):
-        v = self.json_dump_simple('turn')
+        v = self.json_dump_simple('turn', 'created', 'turn_date')
         v['player'] = self.player.json_dump()
         v['moon'] = self.moon.json_dump()
         return v
@@ -85,6 +88,7 @@ class Game(JSONable):
         self.moon = Moon.json_create(jdata['moon'])
 
     def update(self, ui):
+        self.turn_date = time.time()
         # we pass in the Game instance and the UI from the top level so the
         # model objects don't need to hang on to them
         self.player.update(self, ui)
@@ -153,7 +157,8 @@ class Moon(JSONable):
     status.
     """
     def __init__(self):
-        self.zones = []
+        self.zones = [Zone.create_industry(), Zone.create_military(),
+            Zone.create_logistics()]
 
     def json_dump(self):
         v = self.json_dump_simple()
@@ -184,6 +189,48 @@ class Zone(JSONable):
         self.cohorts = []        # population groups
         self.faction = None
         self.resistance_groups = []   # list of resistance groups
+
+    @classmethod
+    def create_industry(cls):
+        o = cls('industry')
+        o.cohorts = [
+            Privileged(size=Game.MED, liberty=Game.UNDEF,
+                quality_of_life=Game.UNDEF, cash=Game.HIGH)),
+            Servitor(size=Game.HIGH, liberty=Game.UNDEF,
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF))
+        ]
+        o.faction = Faction('ecobaddy', threat=Game.MAX, size=Game.MED,
+            informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED, rich=Game.HIGH,
+            buffs=[])
+        return o
+
+    @classmethod
+    def create_industry(cls):
+        o = cls('military')
+        o.cohorts = [
+            Privileged(size=Game.LOW, liberty=Game.UNDEF,
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF)),
+            Servitor(size=Game.MED, liberty=Game.UNDEF,
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF))
+        ]
+        o.faction = Faction('mrstompy', threat=Game.MAX, size=Game.HIGH,
+            informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH, rich=Game.LOW,
+            buffs=[])
+        return o
+
+    @classmethod
+    def create_industry(cls):
+        o = cls('logistics')
+        o.cohorts = [
+            Privileged(size=Game.MED, liberty=Game.UNDEF,
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF)),
+            Servitor(size=Game.LOW, liberty=Game.UNDEF,
+                quality_of_life=Game.UNDEF, cash=Game.UNDEF))
+        ]
+        o.faction = Faction('mrfedex', threat=Game.MAX, size=Game.LOW,
+            informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH, rich=Game.MED,
+            buffs=[])
+        return o
 
     def json_dump(self):
         v = self.json_dump_simple('name', 'requirements')
