@@ -56,6 +56,7 @@ class Game(JSONable):
         self.player = Player()
         self.moon = Moon()
         self.turn = 0
+        self.calculate_threat()
         self.created = time.time()
         self.turn_date = time.time()
 
@@ -102,13 +103,16 @@ class Game(JSONable):
         #
         # Check for game over condition..
         #
-        threat=0
-        for zone in self.moon.zones:
-            threat+=zone.faction.threat
-        ui.msg('threat is %s'%(threat))
-        if threat>9:
+        self.calculate_threat()
+        ui.msg('threat is %s' % self.threat)
+        if self.threat > 9:
             raise ui.SIGNAL_GAMEOVER
-        ui.msg('game:  update done')
+        ui.msg('game: update done')
+
+    def calculate_threat(self):
+        self.threat = 0
+        for zone in self.moon.zones:
+            self.threat += zone.faction.threat
 
     def roll(self,d1,d2=0.0):
         total=d1+d2
