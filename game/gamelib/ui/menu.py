@@ -30,6 +30,7 @@ class MainMenu(Menu):
             # that restriction is to keep the load menu fitting on the screen
             items.append(MenuItem('New Game', self.on_new_game))
         if num_saves:
+            items.append(MenuItem('Continue Game', self.on_continue_game))
             items.append(MenuItem('Load Game', self.on_load_game))
         items.append(MenuItem('Options', self.on_options))
         items.append(MenuItem('Quit', self.on_quit))
@@ -47,7 +48,17 @@ class MainMenu(Menu):
         if not os.path.exists('save'):
             os.mkdir('save')
         game = model.Game()
-        game.json_savefile('save', '%d.json' % game.created)
+        game.json_savefile(os.path.join('save', '%d.json' % game.created))
+        model.game = game
+        director.push(Overview())
+
+    def on_continue_game(self):
+        # the the latest-updated game
+        BROKEN
+        # TODO this is currently broken because the model saves the game not
+        # updating the filename to the latest turn date
+        name = sorted(n for n in os.listdir('save') if n not in '..')[-1]
+        game = model.Game.json_loadfile(os.path.join('save', name))
         model.game = game
         director.push(Overview())
 
@@ -86,7 +97,7 @@ class OptionMenu(Menu):
 
 class LoadMenu(Menu):
     def on_select_game(self, filename):
-        game = model.Game.json_loadfile('save', filename)
+        game = model.Game.json_loadfile(os.path.join('save', filename))
         model.game = game
         director.push(Overview())
 

@@ -51,8 +51,8 @@ def test_model_construction(savedir,*args,**kw):
     ui = FakeUI(savedir)
     g.update(ui)
 
-    g2 = g.json_loadfile(savedir)
-    g2.json_savefile(savedir, 'save.json.verify')
+    g2 = g.json_loadfile(os.path.join(savedir, 'save.json'))
+    g2.json_savefile(os.path.join(savedir, 'save.json.verify'))
     # diffing save.json and save.json.verify should be equal...
 
     n = os.path.join(savedir, 'save.json')
