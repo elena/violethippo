@@ -1,8 +1,13 @@
 #! /usr/bin/env python
+from cocos.director import director
+director.init(width=1024, height=768)
+
 
 import pyglet
 pyglet.resource.path.append('data')
 pyglet.resource.reindex()
 
-from gamelib import main
-main.main()
+from cocos.scene import Scene
+from gamelib.ui.splash import splash
+
+director.run(splash())

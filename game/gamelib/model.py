@@ -65,8 +65,8 @@ class Game(JSONable):
 
     def json_savefile(self,sdir,name=None):
         if not name:
-          name='save.json'
-        fd=open(os.path.join(sdir,name),'w')
+          name = 'save.json'
+        fd = open(os.path.join(sdir,name),'w')
         json.dump(self.json_dump(), fd, indent=2,sort_keys=True)
         fd.close()
 
