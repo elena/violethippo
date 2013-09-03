@@ -79,7 +79,7 @@ class Game(JSONable):
         return cls.json_create(jdata)
 
     def json_dump(self):
-        v = self.json_dump_simple('turn', 'created', 'turn_date')
+        v = self.json_dump_simple('turn', 'threat', 'created', 'turn_date')
         v['player'] = self.player.json_dump()
         v['moon'] = self.moon.json_dump()
         return v
