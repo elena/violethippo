@@ -44,7 +44,6 @@ def savedir(test):
 
 @savedir
 def test_model_construction(savedir):
-    print 'HAI', savedir
     g = model.Game()
     random.seed(1)
 
