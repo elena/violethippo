@@ -1,11 +1,8 @@
 import os
-import sys
 import random
-import shlex
 import shutil
 import time
-
-sys.path.append('..')
+import functools
 
 from gamelib import model, player_orders
 from gamelib.plans.base import Plan
@@ -15,11 +12,15 @@ class FakeUI:
         pass
 
     def __init__(self, savedir):
-        self.savedir=savedir
+        self.savedir = savedir
         self.logging_begin(savedir)
-        self.messages=[]
+        self.messages = []
 
     def msg(self, msg, *args):
+        if args:
+            print msg % args
+        else:
+            print msg
         self.messages.append((msg, args))
 
     def logging_begin(self, sdir):
@@ -28,7 +29,22 @@ class FakeUI:
         os.mkdir(sdir)
 
 
-def test_model_construction():
+def savedir(test):
+    @functools.wraps(test)
+    def wrapper(*args, **kw):
+        tempdir = os.path.join('save.test', test.__name__)
+        if os.path.exists(tempdir):
+            shutil.rmtree(tempdir)
+        os.makedirs(tempdir)
+        r = test(tempdir, *args, **kw)
+        shutil.rmtree(tempdir)
+        return r
+    return wrapper
+
+
+@savedir
+def test_model_construction(savedir):
+    print 'HAI', savedir
     g = model.Game()
     random.seed(1)
 
@@ -48,18 +64,17 @@ def test_model_construction():
         modus_operandi=Plan.TYPE_VIOLENCE)
     g.moon.zones[0].resistance_groups.append(r)
 
-    ui = FakeUI('save.test')
+    ui = FakeUI(savedir)
     g.update(ui)
 
-    g2 = g.json_loadfile(ui.savedir)
-    g2.json_savefile(ui.savedir, 'save.json.verify')
+    g2 = g.json_loadfile(savedir)
+    g2.json_savefile(savedir, 'save.json.verify')
     # diffing save.json and save.json.verify should be equal...
 
-    with open('save.test/save.json') as f1, open('save.test/save.json.verify') as f2:
+    n = os.path.join(savedir, 'save.json')
+    with open(n) as f1, open(n + '.verify') as f2:
         assert f1.read() == f2.read()
 
     g.update(ui)
     g.update(ui)
     g.update(ui)
-
-    shutil.rmtree('save.test')
