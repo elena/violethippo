@@ -6,34 +6,36 @@ from gamelib.plans.base import Plan
 
 
 class JSONable(object):
-
     # take a list of simple variables to save....
-    def json_dump_simple(self,*names):
-        v={}
+    def json_dump_simple(self, *names):
+        v = {}
         for k in names:
-            v['.'+k]=getattr(self,k)
+            v['.' + k] = getattr(self, k)
         return v
     # restore anything simple.....
-    def json_load_simple(self,jdata):
-        v={}
+    def json_load_simple(self, jdata):
+        v = {}
         for k in jdata:
             if k.startswith('.'):
-                v[k]=setattr(self,k[1:],jdata[k])
+                v[k] = setattr(self, k[1:], jdata[k])
         return v
 
     # create an object from a json save.
     @classmethod
     def json_create(cls, jdata):
-        o = cls( *cls.json_create_args(jdata) )
+        args = cls.json_create_args(jdata)
+        o = cls(*args)
         o.json_load_simple(jdata)
         o.json_load(jdata)
         return o
+
     # handle __init__ args
     @classmethod
-    def json_create_args(cls,jdata):
+    def json_create_args(cls, jdata):
         return []
+
     # then load the extra (non simple) data bits... default to nothing to load
-    def json_load(self,jdata):
+    def json_load(self, jdata):
         pass
 
 
@@ -46,28 +48,30 @@ class Game(JSONable):
     def json_savefile_turn(self,sdir):
         self.json_savefile(sdir,'turn_%03d.json'%(self.turn))
         self.json_savefile(sdir)
+
     def json_savefile(self,sdir,name=None):
         if not name:
           name='save.json'
-        fd=open( os.path.join(sdir,name),'w' )
-        json.dump( self.json_dump(), fd, indent=2,sort_keys=True )
+        fd=open(os.path.join(sdir,name),'w')
+        json.dump(self.json_dump(), fd, indent=2,sort_keys=True)
         fd.close()
+
     @classmethod
-    def json_loadfile(cls,sdir,name=None):
+    def json_loadfile(cls, sdir, name=None):
         if not name:
-          name='save.json'
-        jdata=json.load( open( os.path.join(sdir,name) ) )
+          name = 'save.json'
+        jdata = json.load(open(os.path.join(sdir, name)))
         return cls.json_create(jdata)
 
     def json_dump(self):
-        v=self.json_dump_simple('turn')
-        v['player']=self.player.json_dump()
-        v['moon']=self.moon.json_dump()
+        v = self.json_dump_simple('turn')
+        v['player'] = self.player.json_dump()
+        v['moon'] = self.moon.json_dump()
         return v
-    def json_load(self, jdata):
-        self.player=Player.json_create( jdata['player'] )
-        self.moon=Moon.json_create( jdata['moon'] )
 
+    def json_load(self, jdata):
+        self.player = Player.json_create(jdata['player'])
+        self.moon = Moon.json_create(jdata['moon'])
 
     def update(self, ui):
         # we pass in the Game instance and the UI from the top level so the
@@ -78,7 +82,7 @@ class Game(JSONable):
         #
         # save to be paranoid
         #
-        self.json_savefile_turn( ui.savedir )
+        self.json_savefile_turn(ui.savedir)
         self.turn+=1
         #
         # Check for game over condition..
@@ -113,7 +117,7 @@ class Player(JSONable):
 
 
     def update(self, game,ui):
-        ui.msg( '%s update not implemented' % self)
+        ui.msg('%s update not implemented' % self)
 
 
 class Moon(JSONable):
@@ -127,12 +131,12 @@ class Moon(JSONable):
         self.zones = []
 
     def json_dump(self):
-        v=self.json_dump_simple()
-        v['zones']=[ z.json_dump() for z in self.zones ]
+        v = self.json_dump_simple()
+        v['zones'] = [z.json_dump() for z in self.zones]
         return v
 
     def json_load(self, jdata):
-        self.zones=[ Zone.json_create(z) for z in jdata['zones'] ]
+        self.zones = [Zone.json_create(z) for z in jdata['zones']]
 
     def update(self, game, ui):
         ui.msg('%s updating moon'%(self))
@@ -148,31 +152,38 @@ class Zone(JSONable):
     Utilize Servitor Cohort to carry out work
     Resource requirements must be met or dropoff in output.
     """
-    def __init__(self,name):
-        self.name=name
-        self.requirements = []  # what raw materials are needed, how much
-        self.provider = []      # what are created from what volume of inputs
-        self.cohorts = [Privileged(), Servitor()]       # population groups
+    def __init__(self, name, requirements):
+        self.name = name
+        self.requirements = requirements  # what raw materials are needed, how much
+        self.provides = []      # what are created from what volume of inputs
+        self.cohorts = [        # population groups
+            Privileged(size=.1, liberty=.4, quality_of_life=.4, cash=.4),
+            Servitor(size=.4, liberty=.1, quality_of_life=.1, cash=.1)
+        ]
         self.faction = None
         self.resistance_groups = []   # list of resistance groups
 
     def json_dump(self):
-        v=self.json_dump_simple('name')
-        v['faction']=self.faction.json_dump()
-        v['cohorts.priv']=self.cohorts[0].json_dump()
-        v['cohorts.serv']=self.cohorts[1].json_dump()
-        v['resistance_groups']=[ g.json_dump() for g in self.resistance_groups ]
+        v = self.json_dump_simple('name', 'requirements')
+        v['faction'] = self.faction.json_dump()
+        v['cohorts.priv'] = self.cohorts[0].json_dump()
+        v['cohorts.serv'] = self.cohorts[1].json_dump()
+        v['resistance_groups'] = [g.json_dump()
+            for g in self.resistance_groups]
         return v
+
     @classmethod
     def json_create_args(cls,jdata):
-        return [ jdata['.name'] ]
-    def json_load(self, jdata):
-        self.cohorts=[ Privileged.json_create( jdata['cohorts.priv'] ),
-                       Servitor.json_create( jdata['cohorts.serv'] ),
-                     ]
-        self.faction=Faction.json_create( jdata['faction'] )
-        self.resistance_groups=[ Resistance.json_create(g) for g in jdata['resistance_groups'] ]
+        return [jdata['.name'], jdata['.requirements']]
 
+    def json_load(self, jdata):
+        self.cohorts = [
+            Privileged.json_create(jdata['cohorts.priv']),
+            Servitor.json_create(jdata['cohorts.serv']),
+        ]
+        self.faction = Faction.json_create(jdata['faction'])
+        self.resistance_groups = [Resistance.json_create(g)
+            for g in jdata['resistance_groups']]
 
     def update(self, game, ui):
         ui.msg('%s updating zone'%(self))
@@ -203,71 +214,76 @@ class Cohort(JSONable):
     is derived from the way the cohort is treated.
 
     """
-    def __init__(self):
-        self.size = 0           # how many in population
-        self.liberty = 0        # freedom from rules and monitoring
-        self.quality_of_life = 0        # provided services
-        self.cash = 0           # additional discretionary money
+    def __init__(self, size, liberty, quality_of_life, cash):
+        self.size = size           # how many in population
+        self.liberty = liberty        # freedom from rules and monitoring
+        self.quality_of_life = quality_of_life        # provided services
+        self.cash = cash           # additional discretionary money
 
     def json_dump(self):
-        return self.json_dump_simple('size','liberty','quality_of_life','cash')
+        return self.json_dump_simple('size', 'liberty', 'quality_of_life',
+            'cash')
+
+    @classmethod
+    def json_create_args(cls,jdata):
+        return [jdata['.' + n] for n in ['size', 'liberty', 'quality_of_life',
+            'cash']]
 
     @property
     def willing(self):
         """Willingness can be forced through low liberty, or the product of
         high quality of life and cash in combination.
         """
-        return min( self.liberty, (self.quality_of_life+self.cash)/2 )
+        return min(self.liberty, (self.quality_of_life+self.cash)/2)
 
     @property
     def rebellious(self):
         """Rebellion is caused by low liberty, quality of life, and cash.
         """
-        return min( self.liberty, self.quality_of_life, self.cash )
-
+        return min(self.liberty, self.quality_of_life, self.cash)
 
     def update(self, game, ui):
-        ui.msg( '%s update not implemented' % self)
+        ui.msg('%s update not implemented' % self)
 
     def update_production(self,game,ui,zone):
         produce=self.willing * self.size
-        ui.msg( '%s produced: %s' %( self,produce) )
+        ui.msg('%s produced: %s' %(self,produce))
         return produce
 
 
 class Privileged(Cohort):
-    def __init__(self):
-        super(Privileged, self).__init__()
+    pass
 
 
 class Servitor(Cohort):
-    def __init__(self):
-        super(Servitor, self).__init__()
+    pass
 
 
 class Group(JSONable):
     """A group of non-rabble that actually do stuff in the game.
     """
-    def __init__(self, name):
+    def __init__(self, name, size, informed, smart, loyal, rich, buffs):
         self.name = name
-        self.size = 0
-        self.informed = 0
-        self.smart = 0
-        self.loyal = 0
-        self.rich = 0
-        self.buffs = []
+        self.size = size
+        self.informed = informed
+        self.smart = smart
+        self.loyal = loyal
+        self.rich = rich
+        self.buffs = buffs
 
     def json_dump(self):
         return self.json_dump_simple('name', 'size', 'informed', 'smart',
             'loyal', 'rich', 'buffs')
+
     @classmethod
-    def json_create_args(cls,jdata):
-        return [jdata['.name']]
+    def json_create_args(cls, jdata):
+        return [jdata['.' + n] for n in ['name', 'size', 'informed', 'smart',
+            'loyal', 'rich', 'buffs']]
 
     def update(self, game, ui):
         # Groups plan - plan the action they will take next turn
         # (not visible to player)
-        ui.msg( '%s update not implemented' % self)
+        ui.msg('%s update not implemented' % self)
 
 
 class Faction(Group):
@@ -277,37 +293,51 @@ class Faction(Group):
     controls a power projector (threat to the planet)
     requires support (resource or resources)
     """
-    def __init__(self,name):
-        super(Faction, self).__init__(name)
-        self.threat = 0     # potential power vs planet
+    def __init__(self, name, size, informed, smart, loyal, rich, buffs,
+            threat):
+        super(Faction, self).__init__(name, size, informed, smart, loyal, rich,
+            buffs)
+        self.threat = threat     # potential power vs planet
 
     def json_dump(self):
-        v=Group.json_dump(self)
-        v.update( self.json_dump_simple( 'threat' ) )
+        v = Group.json_dump(self)
+        v.update(self.json_dump_simple('threat'))
         return v
+
+    @classmethod
+    def json_create_args(cls, jdata):
+        args = super(Faction, cls).json_create_args(jdata)
+        return args + [jdata['.threat']]
 
     def update(self, game, ui):
         super(Faction, self).update(game, ui)
         # alter threat level against planet
-        ui.msg( '%s update not implemented' % self)
+        ui.msg('%s update not implemented' % self)
 
 
 class Resistance(Group):
     """Resistance Group
     """
-    def __init__(self,name):
-        super(Resistance, self).__init__(name)
+    def __init__(self, name, size, informed, smart, loyal, rich, buffs,
+            visibility, modus_operandi):
+        super(Resistance, self).__init__(name, size, informed, smart, loyal,
+            rich, buffs)
         # how obvious to the local Faction, how easy to find
-        self.visibility = 0
+        self.visibility = visibility
         # style of actions to select from with chance of each
-        self.modus_operandi = Plan.TYPE_ESPIONAGE
+        self.modus_operandi = modus_operandi
 
     def json_dump(self):
-        v=Group.json_dump(self)
+        v = Group.json_dump(self)
         v.update(self.json_dump_simple('visibility', 'modus_operandi'))
         return v
+
+    @classmethod
+    def json_create_args(cls, jdata):
+        args = super(Resistance, cls).json_create_args(jdata)
+        return args + [jdata['.visibility'], jdata['.modus_operandi']]
 
     def update(self, game, ui):
         super(Resistance, self).update(game, ui)
         # alter threat level against planet
-        ui.msg( '%s update not implemented' % self)
+        ui.msg('%s update not implemented' % self)

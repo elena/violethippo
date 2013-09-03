@@ -13,10 +13,7 @@ Informants - intel on planned actions for next turn (and/or targets)
 Search for player
 '''
 
-# note: Order vs Plan (plans are what NPCs do)
-class Plan:
-    """NPC group plans"""
-    pass
+from gamelib.plans.base import Plan
 
 
 class Patrol(Plan):

@@ -7,17 +7,17 @@ import time
 
 sys.path.append('..')
 
-from gamelib import model,player_orders,group_plans
-
+from gamelib import model, player_orders
+from gamelib.plans.base import Plan
 
 class FakeUI:
     class SIGNAL_GAMEOVER(Exception):
         pass
 
     def __init__(self, savedir):
-        self.savedir = savedir
+        self.savedir=savedir
         self.logging_begin(savedir)
-        self.messages = []
+        self.messages=[]
 
     def msg(self, msg, *args):
         self.messages.append((msg, args))
@@ -32,46 +32,21 @@ def test_model_construction():
     g = model.Game()
     random.seed(1)
 
-    g.moon.zones.append(model.Zone('Industry'))
+    g.moon.zones.append(model.Zone('Industry', []))
 
-    f = g.moon.zones[0].faction = model.Faction('baddies')
-    f.threat = .25
-    f.size = .1
-    f.informed = .2
-    f.smart = .1
-    f.loyal = .5
-    f.rich = .5
-    f.buffs = ['military', 'military', 'fanatic']
+    f = g.moon.zones[0].faction = model.Faction('baddies', threat=.25, size=.1,
+        informed=.2, smart=.1, loyal=.5, rich=.5, buffs=['military',
+        'military', 'fanatic'])
 
-    r = model.Resistance('managers')
-    f.size = .2
-    f.informed = .1
-    f.smart = .1
-    f.loyal = .3
-    f.rich = .4
-    f.buffs = ['leader']
+    r = model.Resistance('managers', size=.2, informed=.1, smart=.1, loyal=.3,
+        rich=.4, buffs=['leader'], visibility=.1,
+        modus_operandi=Plan.TYPE_ESPIONAGE)
     g.moon.zones[0].resistance_groups.append(r)
 
-    r = model.Resistance('workers')
-    f.size = .4
-    f.informed = .2
-    f.smart = .1
-    f.loyal = .2
-    f.rich = .1
-    f.buffs = ['grunts']
+    r = model.Resistance('workers', size=.4, informed=.2, smart=.1, loyal=.2,
+        rich=.1, buffs=['grunts'], visibility=.4,
+        modus_operandi=Plan.TYPE_VIOLENCE)
     g.moon.zones[0].resistance_groups.append(r)
-
-    c = g.moon.zones[0].cohorts[0]
-    c.size = .1
-    c.liberty = .4
-    c.quality_of_life = .2
-    c.cash = .4
-
-    c = g.moon.zones[0].cohorts[1]
-    c.size = .4
-    c.liberty = .2
-    c.quality_of_life = .1
-    c.cash = .2
 
     ui = FakeUI('save.test')
     g.update(ui)
