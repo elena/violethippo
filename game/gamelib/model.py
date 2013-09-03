@@ -61,23 +61,28 @@ class Game(JSONable):
         self.turn_date = time.time()
         self.game_over = False
 
-    def json_savefile_turn(self,sdir):
-        self.json_savefile(sdir,'turn_%03d.json'%(self.turn))
-        self.json_savefile(sdir)
+    def json_savefile_turn(self):
+        p = self.json_path
+        fn, ext = os.path.splitext(p)
+        self.json_savefile('%s_turn_%03d.json' % (fn, self.turn))
+        # save again under the original name
+        self.json_savefile(p)
 
-    def json_savefile(self,sdir,name=None):
-        if not name:
-          name = 'save.json'
-        fd = open(os.path.join(sdir,name),'w')
-        json.dump(self.json_dump(), fd, indent=2, sort_keys=True)
-        fd.close()
+    def json_savefile(self, filename=None):
+        if filename:
+            self.json_path = filename
+        else:
+            assert self.json_path, 'saving without loading or explicit filename'
+        with open(self.json_path, 'w') as f:
+            json.dump(self.json_dump(), f, indent=2, sort_keys=True)
 
     @classmethod
-    def json_loadfile(cls, sdir, name=None):
-        if not name:
-          name = 'save.json'
-        jdata = json.load(open(os.path.join(sdir, name)))
-        return cls.json_create(jdata)
+    def json_loadfile(cls, filename):
+        with open(filename) as f:
+            jdata = json.load(f)
+        o = cls.json_create(jdata)
+        o.json_path = filename
+        return o
 
     def json_dump(self):
         v = self.json_dump_simple('turn', 'threat', 'created', 'turn_date',
@@ -100,7 +105,7 @@ class Game(JSONable):
         #
         # save to be paranoid
         #
-        self.json_savefile_turn(ui.savedir)
+        self.json_savefile_turn()
         self.turn+=1
         #
         # Check for game over condition..
