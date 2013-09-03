@@ -40,6 +40,16 @@ class JSONable(object):
 
 
 class Game(JSONable):
+
+    LOW=.1
+    MED=.2
+    HIGH=.4
+    ###########################################
+    # FIX ALL UNDEF!!!!
+    ###########################################
+    #UNDEF='this will cause you pain when you use it in math'
+    UNDEF=.2
+
     def __init__(self):
         self.player = Player()
         self.moon = Moon()
@@ -93,6 +103,20 @@ class Game(JSONable):
         if threat>1.2:
           raise ui.SIGNAL_GAMEOVER
         ui.msg('update done threat is %s'%(threat))
+
+    def roll(self,d1,d2=0.0):
+        total=d1+d2
+        if total>1.5:
+            return total-.5
+        total*=2./3.
+        return self.roll_ease(total)
+    def roll_ease(self,total):
+        total*=2
+        if total<1:
+            return .5*total**3
+        total-=2
+        return .5*(total**3+2)
+
 
 
 class Player(JSONable):
@@ -152,14 +176,11 @@ class Zone(JSONable):
     Utilize Servitor Cohort to carry out work
     Resource requirements must be met or dropoff in output.
     """
-    def __init__(self, name, requirements):
+    def __init__(self, name ):
         self.name = name
-        self.requirements = requirements  # what raw materials are needed, how much
+        self.requirements = [] # what raw materials are needed, how much
         self.provides = []      # what are created from what volume of inputs
-        self.cohorts = [        # population groups
-            Privileged(size=.1, liberty=.4, quality_of_life=.4, cash=.4),
-            Servitor(size=.4, liberty=.1, quality_of_life=.1, cash=.1)
-        ]
+        self.cohorts = []        # population groups
         self.faction = None
         self.resistance_groups = []   # list of resistance groups
 
@@ -174,7 +195,7 @@ class Zone(JSONable):
 
     @classmethod
     def json_create_args(cls,jdata):
-        return [jdata['.name'], jdata['.requirements']]
+        return [jdata['.name'] ]
 
     def json_load(self, jdata):
         self.cohorts = [

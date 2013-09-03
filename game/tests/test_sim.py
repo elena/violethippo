@@ -37,31 +37,39 @@ def savedir(test):
             shutil.rmtree(tempdir)
         os.makedirs(tempdir)
         r = test(tempdir, *args, **kw)
-        shutil.rmtree(tempdir)
+        if not kw.get('leave_my_save_data_alone_you_bastard'):
+            shutil.rmtree(tempdir)
         return r
     return wrapper
 
 
 @savedir
-def test_model_construction(savedir):
+def test_model_construction(savedir,*args,**kw):
     g = model.Game()
     random.seed(1)
 
-    g.moon.zones.append(model.Zone('Industry', []))
+    g.moon.zones.append( model.Zone('Industry'))
+    g.moon.zones.append( model.Zone('Military'))
+    g.moon.zones.append( model.Zone('Logistics'))
 
-    f = g.moon.zones[0].faction = model.Faction('baddies', threat=.25, size=.1,
-        informed=.2, smart=.1, loyal=.5, rich=.5, buffs=['military',
-        'military', 'fanatic'])
+    #  from page 17: Industry
+    z=g.moon.zones[0]
+    z.cohorts.append( model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.HIGH) )
+    z.cohorts.append( model.Servitor(size=g.HIGH, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z.faction = model.Faction('ecobaddy', threat=g.UNDEF, size=g.MED,informed=g.HIGH,smart=g.LOW,loyal=g.MED,rich=g.HIGH,buffs=[])
 
-    r = model.Resistance('managers', size=.2, informed=.1, smart=.1, loyal=.3,
-        rich=.4, buffs=['leader'], visibility=.1,
-        modus_operandi=Plan.TYPE_ESPIONAGE)
-    g.moon.zones[0].resistance_groups.append(r)
+    #  from page 17: military
+    z=g.moon.zones[1]
+    z.cohorts.append( model.Privileged(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z.cohorts.append( model.Servitor(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z.faction = model.Faction('mrstompy', threat=g.UNDEF, size=g.HIGH,informed=g.LOW,smart=g.MED,loyal=g.HIGH,rich=g.LOW,buffs=[])
 
-    r = model.Resistance('workers', size=.4, informed=.2, smart=.1, loyal=.2,
-        rich=.1, buffs=['grunts'], visibility=.4,
-        modus_operandi=Plan.TYPE_VIOLENCE)
-    g.moon.zones[0].resistance_groups.append(r)
+    #  from page 17: logistics
+    z=g.moon.zones[2]
+    z.cohorts.append( model.Privileged(size=g.MED, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z.cohorts.append( model.Servitor(size=g.LOW, liberty=g.UNDEF, quality_of_life=g.UNDEF, cash=g.UNDEF) )
+    z.faction = model.Faction('mrfedex', threat=g.UNDEF, size=g.LOW,informed=g.MED,smart=g.HIGH,loyal=g.HIGH,rich=g.MED,buffs=[])
+
 
     ui = FakeUI(savedir)
     g.update(ui)

@@ -1,4 +1,4 @@
 .*.pyc
 .*.py~
 .*.swp
-game/simtest/save.tmp
+game/save.test/
