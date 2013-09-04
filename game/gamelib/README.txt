@@ -121,3 +121,7 @@ Production method is:
   turn N:  produce into zone stock
   turn N+1: ship out to other zones from local stocks
   turn N+2: used in other zone
+This is one by performing the following steps each turn:
+  * consume resources in prep for production
+  * transport last turns output to a new destination
+  * produce (based on consume availaibilty )
