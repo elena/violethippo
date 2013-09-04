@@ -27,14 +27,17 @@ class SplashControlLayer(Layer):
             font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
             anchor_y='bottom'))
 
-        self.add(Label("Hit 'Enter' to continue.",
+        self.add(Label("Hit a key to continue.",
             font_size=16, x=w//2, y=h//2 - lh//2 - 20, anchor_x='center',
             anchor_y='top'))
 
-    def on_key_press(self, k, m):
-        if k == key.ENTER:
-            director.replace(transitions.FadeTransition(menu()))
-            return True
+    def on_key_press(self, *args):
+        director.replace(transitions.FadeTransition(menu()))
+        return True
+
+    def on_mouse_press(self, *args):
+        director.replace(transitions.FadeTransition(menu()))
+        return True
 
 
 if __name__ == '__main__':
