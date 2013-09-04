@@ -138,7 +138,7 @@ class Game(JSONable):
     def calculate_threat(self):
         self.threat = 0
         for zone in self.moon.zones:
-            self.threat += zone.faction.threat
+            self.threat += self.moon.zones[zone].faction.threat
 
     def roll(self, d1, d2=0.0):
         total = d1+d2
@@ -209,21 +209,25 @@ class Moon(JSONable):
     status.
     """
     def __init__(self):
-        self.zones = [Zone.create_industry(), Zone.create_military(),
-            Zone.create_logistics()]
+        self.zones = dict(
+            industry=Zone.create_industry(),
+            military=Zone.create_military(),
+            logistics=Zone.create_logistics()
+        )
 
     def json_dump(self):
         v = self.json_dump_simple()
-        v['zones'] = [z.json_dump() for z in self.zones]
+        v['zones'] = dict((z, self.zones[z].json_dump()) for z in self.zones)
         return v
 
     def json_load(self, jdata):
-        self.zones = [Zone.json_create(z) for z in jdata['zones']]
+        self.zones = dict((z, Zone.json_create(jdata['zones'][z]))
+            for z in jdata['zones'])
 
     def update(self, game, ui):
         ui.msg('%s updating moon'%(self))
         for zone in self.zones:
-            zone.update(game,ui)
+            self.zones[zone].update(game,ui)
 
 
 class Zone(JSONable):

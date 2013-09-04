@@ -46,6 +46,7 @@ def savedir(test):
 @savedir
 def test_model_construction(savedir,*args,**kw):
     g = model.Game()
+    g.json_savefile(os.path.join(savedir, 'save.json'))
     random.seed(1)
 
     ui = FakeUI(savedir)
