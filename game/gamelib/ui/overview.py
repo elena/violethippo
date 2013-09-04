@@ -66,11 +66,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
         self.update()
 
-        self.zone = Zone()
-        self.add(self.zone)
-
         self.info = Info()
         self.add(self.info)
+
+        self.zone = Zone()
+        self.add(self.zone)
 
         self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
         self.add(self.end_turn)
@@ -111,11 +111,14 @@ class Zone(Layer):
         w, h = director.get_window_size()
         self.mode = self.MODE_INDUSTRY
 
-        self.industry = pyglet.resource.image('industry.png')
-        self.logistics = pyglet.resource.image('logistics.png')
-        self.military = pyglet.resource.image('military.png')
+        self.zone_images = {
+            self.MODE_INDUSTRY: pyglet.resource.image('industry.png'),
+            self.MODE_LOGISTICS: pyglet.resource.image('logistics.png'),
+            self.MODE_MILITARY: pyglet.resource.image('military.png')
+        }
 
-        self.active = Sprite(self.industry, position=(75+256, 75+256))
+        self.active = Sprite(self.zone_images[self.MODE_INDUSTRY],
+            position=(75+256, 75+256))
         self.add(self.active)
 
         self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
@@ -126,19 +129,24 @@ class Zone(Layer):
         self.add(self.but_logistics)
         self.add(self.but_military)
 
+    def on_enter(self):
+        super(Zone, self).on_enter()
+        self.switch_zone_to(self.MODE_INDUSTRY)
+
+    def switch_zone_to(self, zone):
+        self.mode = zone
+        self.active.image = self.zone_images[zone]
+        self.parent.info.display_zone(zone)
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.but_industry.get_rect().contains(x, y):
-            self.mode = self.MODE_INDUSTRY
-            self.active.image = self.industry
+            self.switch_zone_to(self.MODE_INDUSTRY)
             return True         # event handled
         if self.but_logistics.get_rect().contains(x, y):
-            self.mode = self.MODE_LOGISTICS
-            self.active.image = self.logistics
+            self.switch_zone_to(self.MODE_LOGISTICS)
             return True         # event handled
         if self.but_military.get_rect().contains(x, y):
-            self.mode = self.MODE_MILITARY
-            self.active.image = self.military
+            self.switch_zone_to(self.MODE_MILITARY)
             return True         # event handled
 
 
@@ -153,6 +161,35 @@ class Info(Layer):
         self.bg = ColorLayer(200, 198, 190, 255, width=350, height=680)
         self.add(self.bg)
 
+        self.zone_label = Label('', multiline=True, color=(0, 0, 0, 255),
+            width=350, anchor_x='left', anchor_y='bottom', x=10, y=10)
+        self.add(self.zone_label)
+
+    def display_zone(self, active_zone):
+        """It would be good not to have to summon a
+        pane for this, but instead to have room on the screen all the time
+        (even if it can get buried by other panes). Contents: Brief
+        description of zone. State of production (what it last produced, state
+        of inputs this turn, notes of supply shortfalls, alerts of low
+        willingness and high rebelliousness, really summarised status for the
+        faction along the lines of “strong”, “damaged”, “shaky”, “vulnerable”,
+        “destroyed”, and the level of alert to player and resistance
+        activity)."""
+        descr = dict(
+            industry='Produces goods and food',
+            logistics='Transport to and from planet',
+            military='Force and stability',
+        )
+        text = [descr[active_zone]]
+        zone = model.game.moon.zones[active_zone]
+        # text.append(inputs)
+        # text.append(production)
+        text.append('Willingness: %s / %s' % (zone.privileged.willing,
+            zone.servitor.willing))
+        text.append('Rebellious: %s / %s' % (zone.privileged.rebellious,
+            zone.servitor.rebellious))
+        # text.append(state)
+        self.zone_label.element.text = '\n'.join(text)
 
 if __name__ == '__main__':
     pyglet.resource.path.append('../../data')
