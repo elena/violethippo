@@ -59,17 +59,33 @@ factions consume resources
 
 zones produce resources depending on cohort.willingness and efficiency
 
-city zones convert raw into resources
+zones convert raw into resources
 
-resources requirements must be met or a drop off in output (efficency?)
+resources requirements must be met or a drop off in output
+MEANS - output depends on having enough of all inputs, less of an input
+reduces the possible amount of output.
+
   * list requirements -what we need, how much
   * list provided - what are created from what vol of inputs
 
-invader factions rquire support (resource and resources)
+cohorts require Goods or their Quality of Life decreases temporarily (in turn
+affecting efficiency or willingness, at least)
+cohort size affects how much Goods they need
+cohort Quality of Life affects Goods needed as well (to a lesser extent)
 
-servitor cohorts create zone resource
+servitor cohorts create zone resource using willingness
+privileged cohorts assist creation using efficiency
 
-cohort size -- good resource required to support each tuen is derived from this (and quality of life?)
+NOTES - willingness is more important ie servitors do most of the work, but
+the efficiency has to have some effect
+
+
+
+We want the initial setup to work, and likely create extra resources
+We can do that by adjusting the production formula for each zone, tweaking
+the requirements and what is produced from that volume of inputs...
+
+
 
 efficiency can be increased by plan
 
