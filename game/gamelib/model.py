@@ -494,7 +494,7 @@ class Cohort(JSONable):
         """priv: efficiency is mostly QOL and somewhat influenced by
         liberty and cash
         """
-        return (2* self.quality_of_life + self.quality_of_life + self.cash)/4
+        return (2* self.quality_of_life + self.liberty + self.cash)/4
 
 
 
