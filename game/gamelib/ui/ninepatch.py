@@ -248,6 +248,7 @@ class NinePatch(object):
 
 from cocos.cocosnode import CocosNode
 from cocos.rect import Rect
+from cocos.layer import Layer
 
 
 class LabelNinepatch(CocosNode):
@@ -262,6 +263,15 @@ class LabelNinepatch(CocosNode):
             self.label.element.y, self.label.element.content_width,
             self.label.element.content_height)
         self.rect = Rect(x, y, w, h)
+
+
+class NinepatchLayer(Layer):
+    def __init__(self, image):
+        super(NinepatchLayer, self).__init__()
+        self.ninepatch = NinePatch(pyglet.resource.image(image))
+
+    def draw(self):
+        self.ninepatch.draw_around(*self.patch_dimensions)
 
 
 if __name__ == '__main__':
