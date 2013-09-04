@@ -141,12 +141,16 @@ class Zone(Layer):
         self.but_servitors = Sprite('servitors button.png', position=(128, -200))
         self.active.add(self.but_servitors)
 
-        locs = [(-128, -256), (-100, -200), (-60, -256), (60, 64),
-            (100, -200), (160, -64)]
+        priv_locs = [(60, 164), (160, 64)]
+        serv_locs = [(-128, -256), (-100, -200), (-60, -256),
+            (160, -64)]
         self.resistance_locations = {
-            self.MODE_INDUSTRY: shuffled(locs),
-            self.MODE_LOGISTICS: shuffled(locs),
-            self.MODE_MILITARY: shuffled(locs),
+            (self.MODE_INDUSTRY, 'privileged'): shuffled(priv_locs),
+            (self.MODE_LOGISTICS, 'privileged'): shuffled(priv_locs),
+            (self.MODE_MILITARY, 'privileged'): shuffled(priv_locs),
+            (self.MODE_INDUSTRY, 'servitor'): shuffled(serv_locs),
+            (self.MODE_LOGISTICS, 'servitor'): shuffled(serv_locs),
+            (self.MODE_MILITARY, 'servitor'): shuffled(serv_locs),
         }
 
         self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
@@ -160,6 +164,7 @@ class Zone(Layer):
 
     def on_enter(self):
         super(Zone, self).on_enter()
+        self.mode = None
         self.switch_zone_to(self.MODE_INDUSTRY)
 
     def switch_zone_to(self, active_zone):
@@ -176,12 +181,14 @@ class Zone(Layer):
 
         self.resistance_buts = []
         zone = model.game.moon.zones[active_zone]
-        for n, group in enumerate(zone.resistance_groups):
-            position = self.resistance_locations[active_zone][n]
-            but = Sprite('resistance button.png', position=position)
-            but.resistance_group = group
-            self.resistance_buts.append(but)
-            self.active.add(but)
+        for name, l in [('privileged', zone.privileged.resistance_groups),
+                ('servitor', zone.servitor.resistance_groups)]:
+            for n, group in enumerate(l):
+                position = self.resistance_locations[active_zone, name][n]
+                but = Sprite('resistance button.png', position=position)
+                but.resistance_group = group
+                self.resistance_buts.append(but)
+                self.active.add(but)
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.but_industry.get_rect().contains(x, y):
