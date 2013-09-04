@@ -60,7 +60,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.visible_label = Label('', color=(0, 0, 0, 255), x=0, y=h-20, anchor_y='top')
         self.add(self.visible_label)
 
-        self.turn_label = Label('', color=(0, 0, 0, 255), x=w-64, y=h-32,
+        self.turn_label = Label('Turn: %d\nActivitiy Points: %d',
+            multiline=True, color=(0, 0, 0, 255), x=w-64, y=h, width=140,
             anchor_x='right', anchor_y='top')
         self.add(self.turn_label)
 
@@ -68,7 +69,6 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
         self.info = Info()
         self.add(self.info)
-        self.info.update_player()
 
         self.zone = Zone()
         self.add(self.zone)
@@ -77,7 +77,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.end_turn)
 
     def update(self):
-        self.turn_label.element.text = 'Turn: %d' % model.game.turn
+        self.turn_label.element.text = 'Turn: %d\nActivity_points: %d' % (
+            model.game.turn, model.game.player.activity_points)
         self.threat_label.element.text = 'Threat: %d' % model.game.threat
         self.visible_label.element.text = 'Visibility: %d' % model.game.player.visibility
 
@@ -159,24 +160,9 @@ class Info(Layer):
         self.x = 660
         self.y = 10
 
-        self.bg = ColorLayer(200, 198, 190, 255, width=350, height=680)
-        self.add(self.bg)
-
-        self.player_label = Label('', multiline=True, color=(0, 0, 0, 255),
-            width=350, anchor_x='left', anchor_y='top', x=10, y=680)
-        self.add(self.player_label)
-
         self.zone_label = Label('', multiline=True, color=(0, 0, 0, 255),
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=10)
         self.add(self.zone_label)
-
-    def update_player(self):
-        player = model.game.player
-        text = [
-            'Visibility: %s' % player.visibility,
-            'Activity Points: %s' % player.activity_points,
-        ]
-        self.player_label.element.text = '\n'.join(text)
 
     def display_zone(self, active_zone):
         """It would be good not to have to summon a
@@ -188,19 +174,20 @@ class Info(Layer):
         faction along the lines of “strong”, “damaged”, “shaky”, “vulnerable”,
         “destroyed”, and the level of alert to player and resistance
         activity)."""
-        descr = dict(
-            industry='Produces goods and food',
-            logistics='Transport to and from planet',
-            military='Force and stability',
-        )
-        text = [descr[active_zone]]
         zone = model.game.moon.zones[active_zone]
+        text = []
+        descr = dict(
+            industry='produces goods and food',
+            logistics='transports to and from planet',
+            military='provides force and stability',
+        )
+        text.append('Zone ' + descr[active_zone])
 #        text.append('Inputs: %s' % (', '.join(zone.inputs), ))
         text.append('Provides: %s' % (', '.join(zone.provides), ))
-        text.append('Willingness: %s & %s' % (zone.privileged.willing,
-            zone.servitor.willing))
-        text.append('Rebellious: %s & %s' % (zone.privileged.rebellious,
-            zone.servitor.rebellious))
+        text.append('Willingness: %d & %d' % (zone.privileged.willing * 10,
+            zone.servitor.willing * 10))
+        text.append('Rebellious: %d & %d' % (zone.privileged.rebellious * 10,
+            zone.servitor.rebellious * 10))
         text.append('State: %s' % zone.state_description)
         self.zone_label.element.text = '\n'.join(text)
 
