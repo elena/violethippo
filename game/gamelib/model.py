@@ -365,7 +365,7 @@ class Zone(JSONable):
         return o
 
     def json_dump(self):
-        v = self.json_dump_simple('name', 'requirements', 'player_found')
+        v = self.json_dump_simple('name', 'requirements', 'player_found','store')
         v['faction'] = self.faction.json_dump()
         v['priv'] = self.privileged.json_dump()
         v['serv'] = self.servitor.json_dump()
