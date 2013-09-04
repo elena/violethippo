@@ -137,6 +137,9 @@ class Game(JSONable):
         self.player = Player.json_create(jdata['player'])
 
     def update(self, ui):
+        ui.msg('-'*70)
+        ui.msg('game: update starting. turn %s'%(self.turn))
+        ui.msg('-'*70)
         self.turn_date = time.time()
         # we pass in the Game instance and the UI from the top level so the
         # model objects don't need to hang on to them
@@ -171,7 +174,7 @@ class Game(JSONable):
         #         tot += ret
         # print "rolled: %d wins, avg: %.3f" % (win, (tot/win))
         #
-        ui.msg('game: update done')
+        ui.msg('game: update done. now turn %s'%(self.turn))
 
     def calculate_threat(self):
         self.threat = 0
@@ -380,19 +383,40 @@ class Zone(JSONable):
         self.privileged.update(game, ui)
         self.servitor.update(game, ui)
         self.faction.update(game, ui)
-        #
         # Process Raw Materials and create Resources
         # (this needs work)
-        produce=0
-        produce += self.privileged.update_production(game, ui, self)
-        produce += self.servitor.update_production(game, ui, self)
-        ui.msg('total produce=%s'%(produce))
-        self.faction.rich+=produce
+        prodbase=self.privileged.production_output_turn0* self.servitor.production_output_turn0
+        prodcurr=self.privileged.production_output()* self.servitor.production_output()
+        # requires impacts this too
+        output=int(100*prodcurr/prodbase)
+        ui.msg('ZONE: %s'%(self.name))
+        ui.msg('   store: %s'%(self.store) )
+        ui.msg('   req: %s'%(self.requirements) )
+        ui.msg('   provides: %s'%(self.provides))
+        ui.msg('     priv:base: %s'%(self.privileged.production_output_turn0))
+        ui.msg('     serv:base: %s'%(self.servitor.production_output_turn0))
+        ui.msg('     priv:curr: %s'%(self.privileged.production_output()))
+        ui.msg('     serv:curr: %s'%(self.servitor.production_output()))
+        ui.msg('   base: %s  curr: %s'%(prodbase,prodcurr))
+        ui.msg('   prod: %s(percent)'%( output ))
+        for prod in self.provides:
+            if prod not in self.store:
+                self.store[ prod ]=0
+            self.store[ prod ] += output
+            ui.msg('   prod: %s%% %s '%( output,self.store[prod] ))
+        ui.msg('   store: %s'%( self.store ))
+        # test for killing output
+        ui.msg('      killing qol',self.privileged.quality_of_life)
+        self.privileged.quality_of_life=self.privileged.quality_of_life*.4
+        ui.msg('      killed qol',self.privileged.quality_of_life)
+        #
         # continue to search for the player
         if self.player_found < 1:
             self.player_found += self.faction.alert
             self.player_found = min(self.player_found, 1)
             ui.msg('player found in %s: %f'%(self.name, self.player_found))
+
+
 
     def produce(self,boss,workers):
       return workers * boss
@@ -422,12 +446,14 @@ class Cohort(JSONable):
         self.quality_of_life = quality_of_life        # provided services
         self.cash = cash           # additional discretionary money
         self.resistance_groups = []   # list of resistance groups
+        self.production_output_turn0=self.production_output()
 
     def json_dump(self):
         names = []
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
             names.append(name + '_value')
             names.append(name + '_history')
+        names.append('production_output_turn0')
         v = self.json_dump_simple(*names)
         v['resistance_groups'] = [g.json_dump()
             for g in self.resistance_groups]
@@ -442,6 +468,7 @@ class Cohort(JSONable):
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
             setattr(self, name + '_value', jdata['.%s_value' % name])
             setattr(self, name + '_history', jdata['.%s_history' % name])
+        self.production_output_turn0=jdata['.production_output_turn0']
         self.resistance_groups = [Resistance.json_create(g)
             for g in jdata['resistance_groups']]
 
@@ -451,6 +478,7 @@ class Cohort(JSONable):
            or the product of high quality of life and cash in combination.
         """
         return max(1.-self.liberty, (self.quality_of_life + self.cash)/2)
+
 
     @property
     def efficiency(self):
@@ -472,10 +500,6 @@ class Cohort(JSONable):
             group.update(game, ui)
         ui.msg('%s update not implemented' % self)
 
-    def update_production(self,game,ui,zone):
-        produce=self.willing * self.size
-        ui.msg('%s produced: %s' %(self,produce))
-        return produce
 
 
 
