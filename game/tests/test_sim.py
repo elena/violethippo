@@ -41,6 +41,7 @@ class FakeUI:
 
 
     def on_new_turn(self):
+        self.messages=[]
         try:
             model.game.update(self)
         except self.SIGNAL_GAMEOVER:
@@ -70,7 +71,6 @@ def test_model_construction(savedir,*args,**kw):
     random.seed(1)
 
     ui = FakeUI(savedir,g)
-    print 'first update'
     ui.on_new_turn()
 
     print 'save'
