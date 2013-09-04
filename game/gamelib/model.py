@@ -229,27 +229,28 @@ class Player(JSONable):
     each additional player action costs 3 activity points (possibly some
         are more expensive when purchased this way)
     """
-    def __init__(self, visibility=0, activity_points=0, hideout=None):
+    def __init__(self, visibility=0, activity_points=0, max_activity_points=3, hideout=None):
         self.discovery_chance = 0    # TODO I think this is unnecessary...
         self.visibility = visibility   # affected by orders with "Instigator Noticeable"
         self.activity_points = activity_points
+        self.max_activity_points = max_activity_points
         self.hideout = hideout   # one of the zone types, player must choose
 
     def json_dump(self):
         return self.json_dump_simple('visibility', 'activity_points',
-            'hideout')
+            'max_activity_points', 'hideout')
 
     @classmethod
     def json_create_args(cls,jdata):
         return [jdata['.visibility'], jdata['.activity_points'],
-            jdata['.hideout']]
+            jdata['.max_activity_points'], jdata['.hideout']]
 
     def update(self, game,ui):
         ui.msg('%s update player'% self)
-        self.activity_points += 1
-        self.visibility = len(game.moon.zones)
+        self.visibility = 0
         for zone in game.moon.zones:
-            self.visibility -= game.moon.zones[zone].player_found
+            self.visibility += 1 - game.moon.zones[zone].player_found
+        self.activity_points = self.max_activity_points
 
 
 class Moon(JSONable):
@@ -414,7 +415,11 @@ class Zone(JSONable):
         #
         # continue to search for the player
         if self.player_found < 1:
-            self.player_found += self.faction.alert
+            if game.player.hideout == self.name:
+                self.player_found += self.faction.alert
+            else:
+                self.player_found += self.faction.alert * .1
+                # perhaps not able to be found unless hideout in zone?
             self.player_found = min(self.player_found, 1)
             ui.msg('player found in %s: %f'%(self.name, self.player_found))
 

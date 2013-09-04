@@ -37,9 +37,11 @@ class Hideout(Order):
             'Military'], self.chosen)
 
     def chosen(self, ui, choice):
-        if not model.game.player.hideout:
-            model.game.player.activity_points -= 3
-        model.game.player.hideout = choice
+        # if not model.game.player.hideout:
+        if model.game.player.hideout != choice:
+            model.game.player.activity_points -= self.cost()
+            model.game.player.hideout = choice
+            ui.msg('setting player hideout to %s'%(choice))
 all.append(Hideout())
 
 
