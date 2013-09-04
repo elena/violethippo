@@ -373,6 +373,7 @@ class Info(Layer):
             'Rich: %d' % (faction.rich * 10),
             'Buffs: %s' % ', '.join(faction.buffs),
             'Threat: %d' % (faction.threat * 10),
+            'Alert: %.2f' % (faction.alert,),
         ])
         self.info_label.visible = True
         self.popup_9p.visible = True
