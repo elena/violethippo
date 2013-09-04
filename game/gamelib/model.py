@@ -240,7 +240,7 @@ class Zone(JSONable):
     """
     def __init__(self, name ):
         self.name = name
-        self.requirements = [] # what raw materials are needed, how much
+        self.requirements = []  # what raw materials are needed, how much
         self.provides = []      # what are created from what volume of inputs
         self.privileged = None  # privileged cohort
         self.servitor = None    # servitor cohort

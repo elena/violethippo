@@ -68,6 +68,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
         self.info = Info()
         self.add(self.info)
+        self.info.update_player()
 
         self.zone = Zone()
         self.add(self.zone)
@@ -161,9 +162,21 @@ class Info(Layer):
         self.bg = ColorLayer(200, 198, 190, 255, width=350, height=680)
         self.add(self.bg)
 
+        self.player_label = Label('', multiline=True, color=(0, 0, 0, 255),
+            width=350, anchor_x='left', anchor_y='top', x=10, y=680)
+        self.add(self.player_label)
+
         self.zone_label = Label('', multiline=True, color=(0, 0, 0, 255),
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=10)
         self.add(self.zone_label)
+
+    def update_player(self):
+        player = model.game.player
+        text = [
+            'Visibility: %s' % player.visibility,
+            'Activity Points: %s' % player.activity_points,
+        ]
+        self.player_label.element.text = '\n'.join(text)
 
     def display_zone(self, active_zone):
         """It would be good not to have to summon a
@@ -182,14 +195,15 @@ class Info(Layer):
         )
         text = [descr[active_zone]]
         zone = model.game.moon.zones[active_zone]
-        # text.append(inputs)
-        # text.append(production)
-        text.append('Willingness: %s / %s' % (zone.privileged.willing,
+#        text.append('Inputs: %s' % (', '.join(zone.inputs), ))
+        text.append('Provides: %s' % (', '.join(zone.provides), ))
+        text.append('Willingness: %s & %s' % (zone.privileged.willing,
             zone.servitor.willing))
-        text.append('Rebellious: %s / %s' % (zone.privileged.rebellious,
+        text.append('Rebellious: %s & %s' % (zone.privileged.rebellious,
             zone.servitor.rebellious))
-        # text.append(state)
+        text.append('State: %s' % zone.state_description)
         self.zone_label.element.text = '\n'.join(text)
+
 
 if __name__ == '__main__':
     pyglet.resource.path.append('../../data')
