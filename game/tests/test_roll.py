@@ -7,16 +7,25 @@ import functools
 from gamelib import model, player_orders
 from gamelib.plans.base import Plan
 
-
+# TODO this is a weak test now, just how many successes within 50 out of 1000
+#      we get, nothing about quality of success, although we save that
 
 
 def test_rolls():
     g = model.Game()
 
-    accuracy=0.001
+    accuracy=50
 
-    for tskill,want in [ [0,0], [.5,0.148148],[1.000000,0.851852],[1.500000, 1.000000], [2.000000,1.500000] ]:
-      result=g.roll(tskill)
-      print 'rolling',tskill,want,result,result-want
-      assert(  abs(result-want)<accuracy )
+    for tskill,want in [ [0,0], [.5,500],[1.000000,1000],[1.500000, 1000], [2.000000,1000] ]:
+        won = 0
+        tot = 0
+        for r in range(0,1000):
+            result=g.roll(tskill)
+            if result > 0:
+                tot += result
+                won += 1
+        if won > 0:
+            tot = tot / won
+        print 'rolling',tskill,want,won,won-want,tot
+        assert(  abs(won-want)<accuracy )
 
