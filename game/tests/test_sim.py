@@ -11,22 +11,42 @@ class FakeUI:
     class SIGNAL_GAMEOVER(Exception):
         pass
 
-    def __init__(self, savedir):
+    def __init__(self, savedir,game):
         self.savedir = savedir
+        self.game=game
+        model.game=game
+        #
         self.logging_begin(savedir)
         self.messages = []
 
+    def msgdump(self):
+        for m in self.messages:
+            print self.msgfix(*m)
+    def msgfix(self, msg, args):
+        if args:
+            try:
+                msg=msg % args
+            except:
+                msg='%s %s'%(msg,args)
+        return  msg
     def msg(self, msg, *args):
-        # if args:
-        #     print msg % args
-        # else:
-        #     print msg
         self.messages.append((msg, args))
 
     def logging_begin(self, sdir):
         if os.path.exists(sdir):
             shutil.rmtree(sdir)
         os.mkdir(sdir)
+    def update(self):
+        self.msgdump()
+
+
+    def on_new_turn(self):
+        try:
+            model.game.update(self)
+        except self.SIGNAL_GAMEOVER:
+            pass
+        self.update()
+
 
 
 def savedir(test):
@@ -49,9 +69,11 @@ def test_model_construction(savedir,*args,**kw):
     g.json_savefile(os.path.join(savedir, 'save.json'))
     random.seed(1)
 
-    ui = FakeUI(savedir)
-    g.update(ui)
+    ui = FakeUI(savedir,g)
+    print 'first update'
+    ui.on_new_turn()
 
+    print 'save'
     g2 = g.json_loadfile(os.path.join(savedir, 'save.json'))
     g2.json_savefile(os.path.join(savedir, 'save.json.verify'))
     # diffing save.json and save.json.verify should be equal...
@@ -60,9 +82,10 @@ def test_model_construction(savedir,*args,**kw):
     with open(n) as f1, open(n + '.verify') as f2:
         assert f1.read() == f2.read()
 
-    g.update(ui)
-    g.update(ui)
-    g.update(ui)
+    ui.on_new_turn()
+    ui.on_new_turn()
+    ui.on_new_turn()
+    ui.on_new_turn()
 
 
 def test_zone_state():
