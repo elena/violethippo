@@ -257,6 +257,14 @@ class Zone(JSONable):
         o.faction = Faction('ecobaddy', threat=Game.MAX, size=Game.MED,
             informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED, rich=Game.HIGH,
             buffs=[])
+        o.resistance_groups.append(Resistance('industry-res-1',
+            size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
+            rich=Game.LOW, buffs=[], visibility=Game.LOW,
+            modus_operandi=Plan.TYPE_VIOLENCE))
+        o.resistance_groups.append(Resistance('industry-res-2',
+            size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
+            rich=Game.LOW, buffs=[], visibility=Game.LOW,
+            modus_operandi=Plan.TYPE_SABOTAGE))
         return o
 
     @classmethod
@@ -269,6 +277,10 @@ class Zone(JSONable):
         o.faction = Faction('mrstompy', threat=Game.MAX, size=Game.HIGH,
             informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH, rich=Game.LOW,
             buffs=[])
+        o.resistance_groups.append(Resistance('military-res-1',
+            size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
+            rich=Game.MED, buffs=[], visibility=Game.LOW,
+            modus_operandi=Plan.TYPE_VIOLENCE))
         return o
 
     @classmethod
@@ -281,6 +293,14 @@ class Zone(JSONable):
         o.faction = Faction('mrfedex', threat=Game.MAX, size=Game.LOW,
             informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH, rich=Game.MED,
             buffs=[])
+        o.resistance_groups.append(Resistance('logistics-res-1',
+            size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
+            rich=Game.HIGH, buffs=[], visibility=Game.LOW,
+            modus_operandi=Plan.TYPE_SABOTAGE))
+        o.resistance_groups.append(Resistance('logistics-res-2',
+            size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
+            rich=Game.HIGH, buffs=[], visibility=Game.LOW,
+            modus_operandi=Plan.TYPE_ESPIONAGE))
         return o
 
     def json_dump(self):

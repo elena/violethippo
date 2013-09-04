@@ -31,6 +31,7 @@ TODO:
 
 import os
 import pyglet
+import random
 
 from cocos.director import director
 from cocos.scene import Scene
@@ -44,6 +45,10 @@ from gamelib import model
 import ninepatch
 
 
+def shuffled(l):
+    l = list(l)
+    random.shuffle(l)
+    return l
 
 
 class Overview(Scene):
@@ -136,9 +141,18 @@ class Zone(Layer):
         self.but_servitors = Sprite('servitors button.png', position=(128, -200))
         self.active.add(self.but_servitors)
 
+        locs = [(-128, -256), (-100, -200), (-60, -256), (60, 64),
+            (100, -200), (160, -64)]
+        self.resistance_locations = {
+            self.MODE_INDUSTRY: shuffled(locs),
+            self.MODE_LOGISTICS: shuffled(locs),
+            self.MODE_MILITARY: shuffled(locs),
+        }
+
         self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
         self.but_logistics = Sprite('logistics button.png', position=(230, 600), anchor=(0, 0))
         self.but_military = Sprite('military button.png', position=(430, 600), anchor=(0, 0))
+        self.resistance_buts = []
 
         self.add(self.but_industry)
         self.add(self.but_logistics)
@@ -148,11 +162,26 @@ class Zone(Layer):
         super(Zone, self).on_enter()
         self.switch_zone_to(self.MODE_INDUSTRY)
 
-    def switch_zone_to(self, zone):
-        self.mode = zone
-        self.active.image = self.zone_images[zone]
-        self.parent.info.display_zone(zone)
+    def switch_zone_to(self, active_zone):
+        if self.mode == active_zone:
+            return
+
+        for but in self.resistance_buts:
+            self.active.remove(but)
+
+        self.mode = active_zone
+        self.active.image = self.zone_images[active_zone]
+        self.parent.info.display_zone(active_zone)
         self.parent.info.hide_info()
+
+        self.resistance_buts = []
+        zone = model.game.moon.zones[active_zone]
+        for n, group in enumerate(zone.resistance_groups):
+            position = self.resistance_locations[active_zone][n]
+            but = Sprite('resistance button.png', position=position)
+            but.resistance_group = group
+            self.resistance_buts.append(but)
+            self.active.add(but)
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.but_industry.get_rect().contains(x, y):
@@ -181,6 +210,10 @@ class Zone(Layer):
         if self.but_servitors.get_rect().contains(x, y):
             self.parent.info.show_cohort(zone.servitor)
             return True         # event handled
+        for but in self.resistance_buts:
+            if but.get_rect().contains(x, y):
+                self.parent.info.show_resistance(but.resistance_group)
+                return True         # event handled
 
 
 class LabelNinepatch(CocosNode):
@@ -216,6 +249,8 @@ class Info(Layer):
         self.add(self.popup_9p, z=-1)
         self.popup_9p.visible = False
 
+        self.active_info = None
+
     def on_mouse_press(self, x, y, button, modifiers):
         ix = self.info_label.element.x + self.x
         iy = self.info_label.element.y + self.y
@@ -231,6 +266,7 @@ class Info(Layer):
     def hide_info(self):
         self.info_label.visible = False
         self.popup_9p.visible = False
+        self.active_info = None
 
     def show_faction(self, active_zone):
         """When we click on the faction button we want to see what we know
@@ -246,6 +282,10 @@ class Info(Layer):
         """
         zone = model.game.moon.zones[active_zone]
         faction = zone.faction
+        if self.active_info == faction:
+            self.hide_info()
+            return
+        self.active_info = faction
         self.info_label.element.text = '\n'.join([
             'Faction: %s' % active_zone,
             'Leader: %s' % faction.name,
@@ -256,6 +296,36 @@ class Info(Layer):
             'Rich: %d' % (faction.rich * 10),
             'Buffs: %s' % ', '.join(faction.buffs),
             'Threat: %d' % (faction.threat * 10),
+        ])
+        self.info_label.visible = True
+        self.popup_9p.visible = True
+
+    def show_resistance(self, group):
+        """This pane shows some basic Resistance Group info, and then lists
+        the Plans they are currently working on, briefly. clicking on the
+        Group or the Plans lets you investigate further.
+
+        Contents: Resistance Group name, modus operandi, perhaps their Trust
+        of the player if that is used/useful; list of Plans, showing at least
+        a name and progress bar towards carrying them out (full means they are
+        going ahead this turn).
+
+        Out: click outside the pane?
+        Resistance Info: summon Resistance Info Pane (over this one)
+        Resistance Plan: summon Resistance Plan Pane (over this one)
+        """
+        if self.active_info == group:
+            self.hide_info()
+            return
+        self.active_info = group
+        self.info_label.element.text = '\n'.join([
+            'Name: %s' % group.name,
+            'Size: %d' % (group.size * 10),
+            'Informed: %d' % (group.informed * 10),
+            'Smart: %d' % (group.smart * 10),
+            'Rich: %d' % (group.rich * 10),
+            'Loyal: %d' % (group.loyal * 10),
+            'Buffs: %s' % (', '.join(group.buffs),)
         ])
         self.info_label.visible = True
         self.popup_9p.visible = True
@@ -273,6 +343,10 @@ class Info(Layer):
         ok. We want the player to know what is going on, but not have too
         close a view of the numbers.
         """
+        if self.active_info == cohort:
+            self.hide_info()
+            return
+        self.active_info = cohort
         self.info_label.element.text = '\n'.join([
             'Cohort: %s' % cohort.__class__.__name__,
             'Size: %d' % (cohort.size * 10),
@@ -297,6 +371,10 @@ class Info(Layer):
         “shaky”, “vulnerable”, “destroyed”, and the level of alert to player
         and resistance activity)."""
         zone = model.game.moon.zones[active_zone]
+        if self.active_info == zone:
+            self.hide_info()
+            return
+        self.active_info = zone
         text = []
         descr = dict(
             industry='produces goods and food',
