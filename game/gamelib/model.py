@@ -38,6 +38,7 @@ class JSONable(object):
     @classmethod
     def json_create(cls, jdata):
         args = cls.json_create_args(jdata)
+        print cls, args
         o = cls(*args)
         o.json_load_simple(jdata)
         o.json_load(jdata)
@@ -66,7 +67,7 @@ class RecordedAttribute(object):
             setattr(instance, self.name + '_history', [])
         if game is not None:
             turn = game.turn
-            getattr(instance, self.name + '_history').append((turn, old_val))
+            getattr(instance, self.name + '_history').append((turn, value))
         setattr(instance, self.name + '_value', value)
 
 
@@ -429,10 +430,15 @@ class Cohort(JSONable):
             for g in self.resistance_groups]
         return v
 
+    @classmethod
+    def json_create_args(cls, jdata):
+        # just pretend it's all ok - json_load will fix things
+        return [0, 0, 0, 0]
+
     def json_load(self, jdata):
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
-            setattr(self, name + '_value', jdata[name + '_value'])
-            setattr(self, name + '_history', jdata[name + '_history'])
+            setattr(self, name + '_value', jdata['.%s_value' % name])
+            setattr(self, name + '_history', jdata['.%s_history' % name])
         self.resistance_groups = [Resistance.json_create(g)
             for g in jdata['resistance_groups']]
 
@@ -514,12 +520,12 @@ class Group(JSONable):
     @classmethod
     def json_create_args(cls, jdata):
         # just dummy values that'll be filled in by load below
-        return [jdata['.name'], 0, 0, 0, 0, 0, 0, jdata['.buffs']]
+        return [jdata['.name'], 0, 0, 0, 0, 0, jdata['.buffs']]
 
     def json_load(self, jdata):
         for name in ['size', 'informed', 'smart', 'loyal', 'rich']:
-            setattr(self, name + '_value', jdata[name + '_value'])
-            setattr(self, name + '_history', jdata[name + '_history'])
+            setattr(self, name + '_value', jdata['.%s_value' % name])
+            setattr(self, name + '_history', jdata['.%s_history' % name])
 
     def update(self, game, ui):
         # Groups plan - plan the action they will take next turn
@@ -554,8 +560,8 @@ class Faction(Group):
 
     def json_load(self, jdata):
         super(Faction, self).json_load(jdata)
-        self.threat_value = jdata['threat_value']
-        self.threat_history = jdata['threat_history']
+        self.threat_value = jdata['.threat_value']
+        self.threat_history = jdata['.threat_history']
 
     def update(self, game, ui):
         super(Faction, self).update(game, ui)
@@ -591,10 +597,10 @@ class Resistance(Group):
 
     def json_load(self, jdata):
         super(Resistance, self).json_load(jdata)
-        self.visibility_value = jdata['visibility_value']
-        self.visibility_history = jdata['visibility_history']
-        self.modus_operandi_value = jdata['modus_operandi_value']
-        self.modus_operandi_history = jdata['modus_operandi_history']
+        self.visibility_value = jdata['.visibility_value']
+        self.visibility_history = jdata['.visibility_history']
+        self.modus_operandi_value = jdata['.modus_operandi_value']
+        self.modus_operandi_history = jdata['.modus_operandi_history']
 
     def update(self, game, ui):
         super(Resistance, self).update(game, ui)

@@ -17,10 +17,10 @@ class FakeUI:
         self.messages = []
 
     def msg(self, msg, *args):
-        if args:
-            print msg % args
-        else:
-            print msg
+        # if args:
+        #     print msg % args
+        # else:
+        #     print msg
         self.messages.append((msg, args))
 
     def logging_begin(self, sdir):
