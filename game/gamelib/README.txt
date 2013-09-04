@@ -113,4 +113,11 @@ Logistics - Transport to and from Planet
   Provides Manpower from planet
 
 
+quality of life   <-- resources
+liberty <-- faction plan setting
+cash  <-- constant
 
+Production method is:
+  turn N:  produce into zone stock
+  turn N+1: ship out to other zones from local stocks
+  turn N+2: used in other zone

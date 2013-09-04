@@ -7,6 +7,18 @@ import random
 from gamelib.plans.base import Plan
 
 
+
+
+ENFORCEMENT='enforcement'
+RAW_MATERIAL='material'
+GOODS='goods'
+MANPOWER='lifeforms'
+
+
+
+
+
+
 class JSONable(object):
     # take a list of simple variables to save....
     def json_dump_simple(self, *names):
@@ -261,8 +273,11 @@ class Zone(JSONable):
     """
     def __init__(self, name ):
         self.name = name
+        # economy / production
         self.requirements = []  # what raw materials are needed, how much
         self.provides = []      # what are created from what volume of inputs
+        self.store= {}          # moving stuff around
+        # groups
         self.privileged = None  # privileged cohort
         self.servitor = None    # servitor cohort
         self.faction = None
@@ -270,6 +285,8 @@ class Zone(JSONable):
     @classmethod
     def create_industry(cls):
         o = cls('industry')
+        o.requirements=[ ENFORCEMENT, RAW_MATERIAL ]
+        o.provides=[ GOODS ]
         o.privileged = Privileged(size=Game.MED, liberty=Game.MED,
                 quality_of_life=Game.HIGH, cash=Game.HIGH)
         o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW,
@@ -290,6 +307,8 @@ class Zone(JSONable):
     @classmethod
     def create_military(cls):
         o = cls('military')
+        o.requirements= [MANPOWER, GOODS]
+        o.provides= [ ENFORCEMENT ]
         o.privileged = Privileged(size=Game.LOW, liberty=Game.HIGH,
                 quality_of_life=Game.HIGH, cash=Game.HIGH)
         o.servitor = Servitor(size=Game.MED, liberty=Game.HIGH,
@@ -306,6 +325,8 @@ class Zone(JSONable):
     @classmethod
     def create_logistics(cls):
         o = cls('logistics')
+        o.requirements= [ENFORCEMENT,GOODS]
+        o.provides= [RAW_MATERIAL,MANPOWER]
         o.privileged = Privileged(size=Game.MED, liberty=Game.HIGH,
                 quality_of_life=Game.HIGH, cash=Game.HIGH)
         o.servitor = Servitor(size=Game.LOW, liberty=Game.MED,
@@ -353,6 +374,11 @@ class Zone(JSONable):
         produce += self.servitor.update_production(game, ui, self)
         ui.msg('total produce=%s'%(produce))
         self.faction.rich+=produce
+
+
+    def produce(self,boss,workers):
+      return workers * boss
+
 
     @property
     def state(self):
@@ -412,10 +438,19 @@ class Cohort(JSONable):
 
     @property
     def willing(self):
-        """Willingness can be forced through low liberty, or the product of
-        high quality of life and cash in combination.
+        """Servitors: Willingness can be forced through low liberty,
+           or the product of high quality of life and cash in combination.
         """
-        return min(self.liberty, (self.quality_of_life + self.cash)/2)
+        return max(1.-self.liberty, (self.quality_of_life + self.cash)/2)
+
+    @property
+    def efficiency(self):
+        """priv: efficiency is mostly QOL and somewhat influenced by
+        liberty and cash
+        """
+        return (2* self.quality_of_life + self.quality_of_life + self.cash)/4
+
+
 
     @property
     def rebellious(self):
@@ -433,12 +468,22 @@ class Cohort(JSONable):
         ui.msg('%s produced: %s' %(self,produce))
         return produce
 
+
+
+
+
+
 class Privileged(Cohort):
-    pass
+    def production_output(self):
+        return self.efficiency
 
 
 class Servitor(Cohort):
-    pass
+    def production_output(self):
+        return self.willing
+
+
+
 
 
 class Group(JSONable):
