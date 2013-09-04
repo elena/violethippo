@@ -10,6 +10,11 @@ from gamelib import model
 from overview import Overview
 
 
+def list_saves(directory='save'):
+    return sorted((os.stat(os.path.join('save', n)).st_mtime, n)
+        for n in os.listdir('save') if n not in '..')
+
+
 class MainMenu(Menu):
     def __init__(self):
         super(MainMenu, self).__init__("Moon Game")
@@ -23,7 +28,7 @@ class MainMenu(Menu):
 
         items = []
         if os.path.exists('save'):
-            num_saves = len(os.listdir('save')) - 2
+            num_saves = len(list_saves())
         else:
             num_saves = 0
         if num_saves < 5:
@@ -54,8 +59,7 @@ class MainMenu(Menu):
 
     def on_continue_game(self):
         # play the last modified game
-        name = sorted((os.stat(os.path.join('save', n)).st_mtime, n)
-            for n in os.listdir('save') if n not in '..')[-1][1]
+        name = list_saves()[-1][1]
         game = model.Game.json_loadfile(os.path.join('save', name))
         model.game = game
         director.push(Overview())
