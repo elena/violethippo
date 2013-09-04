@@ -41,6 +41,27 @@ class JSONable(object):
         pass
 
 
+class RecordedAttribute(object):
+    def __init__(self, name):
+        self.name = name
+    def __get__(self, instance, owner):
+        return getattr(instance, self.name + '_value', None)
+    def __set__(self, instance, value):
+        old_val = getattr(instance, self.name + '_value', None)
+        if value == old_val:
+            return
+        if not hasattr(instance, self.name + '_history'):
+            setattr(instance, self.name + '_history', [])
+        if game is not None:
+            turn = game.turn
+            getattr(instance, self.name + '_history').append((turn, old_val))
+        setattr(instance, self.name + '_value', value)
+
+
+# this global will be set to the *current game* when convenient
+game = None
+
+
 class Game(JSONable):
 
     LOW=.1
@@ -360,6 +381,11 @@ class Cohort(JSONable):
     is derived from the way the cohort is treated.
 
     """
+    size = RecordedAttribute('size')
+    liberty = RecordedAttribute('liberty')
+    quality_of_life = RecordedAttribute('quality_of_life')
+    cash = RecordedAttribute('cash')
+
     def __init__(self, size, liberty, quality_of_life, cash):
         self.size = size           # how many in population
         self.liberty = liberty        # freedom from rules and monitoring
@@ -368,18 +394,19 @@ class Cohort(JSONable):
         self.resistance_groups = []   # list of resistance groups
 
     def json_dump(self):
-        v = self.json_dump_simple('size', 'liberty', 'quality_of_life',
-            'cash')
+        names = []
+        for name in ['size', 'liberty', 'quality_of_life', 'cash']:
+            names.append(name + '_value')
+            names.append(name + '_history')
+        v = self.json_dump_simple(*names)
         v['resistance_groups'] = [g.json_dump()
             for g in self.resistance_groups]
         return v
 
-    @classmethod
-    def json_create_args(cls,jdata):
-        return [jdata['.' + n] for n in ['size', 'liberty', 'quality_of_life',
-            'cash']]
-
     def json_load(self, jdata):
+        for name in ['size', 'liberty', 'quality_of_life', 'cash']:
+            setattr(self, name + '_value', jdata[name + '_value'])
+            setattr(self, name + '_history', jdata[name + '_history'])
         self.resistance_groups = [Resistance.json_create(g)
             for g in jdata['resistance_groups']]
 
@@ -406,7 +433,6 @@ class Cohort(JSONable):
         ui.msg('%s produced: %s' %(self,produce))
         return produce
 
-
 class Privileged(Cohort):
     pass
 
@@ -418,6 +444,12 @@ class Servitor(Cohort):
 class Group(JSONable):
     """A group of non-rabble that actually do stuff in the game.
     """
+    size = RecordedAttribute('size')
+    informed = RecordedAttribute('informed')
+    smart = RecordedAttribute('smart')
+    loyal = RecordedAttribute('loyal')
+    rich = RecordedAttribute('rich')
+
     def __init__(self, name, size, informed, smart, loyal, rich, buffs):
         self.name = name
         self.size = size
@@ -428,13 +460,21 @@ class Group(JSONable):
         self.buffs = buffs
 
     def json_dump(self):
-        return self.json_dump_simple('name', 'size', 'informed', 'smart',
-            'loyal', 'rich', 'buffs')
+        names = ['buffs', 'name']
+        for name in ['size', 'informed', 'smart', 'loyal', 'rich']:
+            names.append(name + '_value')
+            names.append(name + '_history')
+        return self.json_dump_simple(*names)
 
     @classmethod
     def json_create_args(cls, jdata):
-        return [jdata['.' + n] for n in ['name', 'size', 'informed', 'smart',
-            'loyal', 'rich', 'buffs']]
+        # just dummy values that'll be filled in by load below
+        return [jdata['.name'], 0, 0, 0, 0, 0, 0, jdata['.buffs']]
+
+    def json_load(self, jdata):
+        for name in ['size', 'informed', 'smart', 'loyal', 'rich']:
+            setattr(self, name + '_value', jdata[name + '_value'])
+            setattr(self, name + '_history', jdata[name + '_history'])
 
     def update(self, game, ui):
         # Groups plan - plan the action they will take next turn
@@ -449,6 +489,8 @@ class Faction(Group):
     controls a power projector (threat to the planet)
     requires support (resource or resources)
     """
+    threat = RecordedAttribute('threat')
+
     def __init__(self, name, size, informed, smart, loyal, rich, buffs,
             threat):
         super(Faction, self).__init__(name, size, informed, smart, loyal, rich,
@@ -456,14 +498,19 @@ class Faction(Group):
         self.threat = threat     # potential power vs planet
 
     def json_dump(self):
-        v = Group.json_dump(self)
-        v.update(self.json_dump_simple('threat'))
+        v = super(Faction, self).json_dump()
+        v.update(self.json_dump_simple('threat_value', 'threat_history'))
         return v
 
     @classmethod
     def json_create_args(cls, jdata):
-        args = super(Faction, cls).json_create_args(jdata)
-        return args + [jdata['.threat']]
+        # just dummy values that'll be filled in by load below
+        return super(Faction, cls).json_create_args(jdata) + [0]
+
+    def json_load(self, jdata):
+        super(Faction, self).json_load(jdata)
+        self.threat_value = jdata['threat_value']
+        self.threat_history = jdata['threat_history']
 
     def update(self, game, ui):
         super(Faction, self).update(game, ui)
@@ -474,6 +521,9 @@ class Faction(Group):
 class Resistance(Group):
     """Resistance Group
     """
+    visibility = RecordedAttribute('visibility')
+    modus_operandi = RecordedAttribute('modus_operandi')
+
     def __init__(self, name, size, informed, smart, loyal, rich, buffs,
             visibility, modus_operandi):
         super(Resistance, self).__init__(name, size, informed, smart, loyal,
@@ -484,14 +534,22 @@ class Resistance(Group):
         self.modus_operandi = modus_operandi
 
     def json_dump(self):
-        v = Group.json_dump(self)
-        v.update(self.json_dump_simple('visibility', 'modus_operandi'))
+        v = super(Resistance, self).json_dump()
+        v.update(self.json_dump_simple('visibility_value', 'visibility_history'))
+        v.update(self.json_dump_simple('modus_operandi_value', 'modus_operandi_history'))
         return v
 
     @classmethod
     def json_create_args(cls, jdata):
-        args = super(Resistance, cls).json_create_args(jdata)
-        return args + [jdata['.visibility'], jdata['.modus_operandi']]
+        # just dummy values that'll be filled in by load below
+        return super(Resistance, cls).json_create_args(jdata) + [0, 0]
+
+    def json_load(self, jdata):
+        super(Resistance, self).json_load(jdata)
+        self.visibility_value = jdata['visibility_value']
+        self.visibility_history = jdata['visibility_history']
+        self.modus_operandi_value = jdata['modus_operandi_value']
+        self.modus_operandi_history = jdata['modus_operandi_history']
 
     def update(self, game, ui):
         super(Resistance, self).update(game, ui)
