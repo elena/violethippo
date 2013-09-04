@@ -23,11 +23,15 @@ class SplashControlLayer(Layer):
         logo.position = (w//2, h//2)
         self.add(logo)
 
-        self.add(Label("Hippo Moon Monkey Revolution",
-            font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
-            anchor_y='bottom'))
+        title = Sprite('Title_Moon1.png')
+        title.position = (w//2, h//2 + (3*lh)//4)
+        self.add(title)
 
-        self.add(Label("Hit a key to continue.",
+        # self.add(Label("Hippo Moon Monkey Revolution",
+        #     font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
+        #     anchor_y='bottom'))
+
+        self.add(Label("Click to Continue",
             font_size=16, x=w//2, y=h//2 - lh//2 - 20, anchor_x='center',
             anchor_y='top'))
 

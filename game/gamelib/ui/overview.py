@@ -68,13 +68,13 @@ class ChoiceLayer(Layer):
         w, h = director.get_window_size()
 
         self.add(Label(title, color=(200, 200, 200, 255), x=w//2,
-            anchor_x='center', y=h-128, font_size=40))
+            anchor_x='center', y=h-128, font_size=30))
 
         self.choice_buts = []
         y = h-256
         for choice in choices:
             but = Label(choice, color=(200, 200, 200, 255), x=w//2,
-                anchor_x='center', y=y, font_size=30)
+                anchor_x='center', y=y, font_size=20)
             y -= 64
             self.add(but)
             but.rect = Rect(but.element.x, but.element.y,
