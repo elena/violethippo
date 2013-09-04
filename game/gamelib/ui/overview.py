@@ -130,6 +130,12 @@ class Zone(Layer):
         self.but_faction = Sprite('faction button.png', position=(0, 200))
         self.active.add(self.but_faction)
 
+        self.but_privileged = Sprite('privileged button.png', position=(-128, 64))
+        self.active.add(self.but_privileged)
+
+        self.but_servitors = Sprite('servitors button.png', position=(128, -200))
+        self.active.add(self.but_servitors)
+
         self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
         self.but_logistics = Sprite('logistics button.png', position=(230, 600), anchor=(0, 0))
         self.but_military = Sprite('military button.png', position=(430, 600), anchor=(0, 0))
@@ -163,11 +169,17 @@ class Zone(Layer):
         # shift the rect accordingly
         # ALTERNATIVE: just check the relative-to-zone hits from now on, OR
         #              place the faction button absolute...
-        r = self.but_faction.get_rect()
-        r.x += self.active.x
-        r.y += self.active.y
-        if r.contains(x, y):
+        x -= self.active.x
+        y -= self.active.y
+        if self.but_faction.get_rect().contains(x, y):
             self.parent.info.show_faction(self.mode)
+            return True         # event handled
+        zone = model.game.moon.zones[self.mode]
+        if self.but_privileged.get_rect().contains(x, y):
+            self.parent.info.show_cohort(zone.privileged)
+            return True         # event handled
+        if self.but_servitors.get_rect().contains(x, y):
+            self.parent.info.show_cohort(zone.servitor)
             return True         # event handled
 
 
@@ -221,6 +233,17 @@ class Info(Layer):
         self.popup_9p.visible = False
 
     def show_faction(self, active_zone):
+        """When we click on the faction button we want to see what we know
+        about the faction here, which is limited unless we’ve gathered intel
+        through a recent Order or Resistance Plan
+
+        Contents: Name of faction, Name of leader, brief description; current
+        status (need a process here, but if you have no special intel, we
+        should know only what the most damaged stat is, eg. “Smarts impaired”;
+        balance may indicate we need rough info like this on all, but ideally
+        not; When we have intel we should see a clear indication of the stats,
+        perhaps as value *10 with one decimal place?)
+        """
         zone = model.game.moon.zones[active_zone]
         faction = zone.faction
         self.info_label.element.text = '\n'.join([
@@ -237,16 +260,42 @@ class Info(Layer):
         self.info_label.visible = True
         self.popup_9p.visible = True
 
+    def show_cohort(self, cohort):
+        """The information about cohorts is more readily available (walk the
+        streets, listen to the chatter) so we should get pretty solid
+        indicators of how the people are feeling.
+
+        Contents: current stats (Size, Liberty, Quality of Life, Cash)
+        probably in x10 on decimal place; size should perhaps be a word
+        instead - we don’t expect it to change, I think - it is more a
+        reflection of inertia. I don’t think we want to see the Willingness,
+        Rebelliousness, and Efficiency directly, but perhaps a word would be
+        ok. We want the player to know what is going on, but not have too
+        close a view of the numbers.
+        """
+        self.info_label.element.text = '\n'.join([
+            'Cohort: %s' % cohort.__class__.__name__,
+            'Size: %d' % (cohort.size * 10),
+            'Liberty: %d' % (cohort.liberty * 10),
+            'Quality of Life: %d' % (cohort.quality_of_life * 10),
+            'Cash: %d' % (cohort.cash * 10),
+            'Willingness: %d' % (cohort.willing * 10),
+            'Rebelliousness: %d' % (cohort.rebellious * 10),
+        ])
+        self.info_label.visible = True
+        self.popup_9p.visible = True
+
     def display_zone(self, active_zone):
         """It would be good not to have to summon a
         pane for this, but instead to have room on the screen all the time
-        (even if it can get buried by other panes). Contents: Brief
-        description of zone. State of production (what it last produced, state
-        of inputs this turn, notes of supply shortfalls, alerts of low
-        willingness and high rebelliousness, really summarised status for the
-        faction along the lines of “strong”, “damaged”, “shaky”, “vulnerable”,
-        “destroyed”, and the level of alert to player and resistance
-        activity)."""
+        (even if it can get buried by other panes).
+
+        Contents: Brief description of zone. State of production (what it last
+        produced, state of inputs this turn, notes of supply shortfalls,
+        alerts of low willingness and high rebelliousness, really summarised
+        status for the faction along the lines of “strong”, “damaged”,
+        “shaky”, “vulnerable”, “destroyed”, and the level of alert to player
+        and resistance activity)."""
         zone = model.game.moon.zones[active_zone]
         text = []
         descr = dict(
