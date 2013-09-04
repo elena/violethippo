@@ -221,15 +221,20 @@ class Player(JSONable):
     each additional player action costs 3 activity points (possibly some
         are more expensive when purchased this way)
     """
-    def __init__(self):
+    def __init__(self, visibility=0, activity_points=0, hideout=None):
         self.discovery_chance = 0    # TODO I think this is unnecessary...
-        self.visibility = 0   # affected by orders with "Instigator Noticeable"
-        self.activity_points = 0
+        self.visibility = visibility   # affected by orders with "Instigator Noticeable"
+        self.activity_points = activity_points
+        self.hideout = hideout   # one of the zone types, player must choose
 
     def json_dump(self):
-        return self.json_dump_simple('discovery_chance',
-            'visibility', 'activity_points')
+        return self.json_dump_simple('visibility', 'activity_points',
+            'hideout')
 
+    @classmethod
+    def json_create_args(cls,jdata):
+        return [jdata['.visibility'], jdata['.activity_points'],
+            jdata['.hideout']]
 
     def update(self, game,ui):
         ui.msg('%s update not implemented' % self)
