@@ -95,7 +95,7 @@ Industry - Goods and Food
   Staffed by Privileged Cohort
   Requires Enforcement (military)
   Requires Raw Materials (logistics)
-  Provides Resources
+  Provides Goods -> support all Cohorts in all zones
 
 Military - Force and Stability
   Run by Privileged Cohort
