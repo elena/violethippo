@@ -403,7 +403,7 @@ class Zone(JSONable):
             if prod not in self.store:
                 self.store[ prod ]=0
             self.store[ prod ] += output
-            ui.msg('   prod: %s%% %s '%( output,self.store[prod] ))
+            ui.msg('   prod: %s -> %s '%( output,self.store[prod] ))
         ui.msg('   store: %s'%( self.store ))
         # test for killing output
         ui.msg('      killing qol',self.privileged.quality_of_life)
