@@ -160,7 +160,7 @@ class Game(JSONable):
             self.game_over = True
             raise ui.SIGNAL_GAMEOVER  # player lost
         #
-        # Liam debug code
+        # Liam's debug code
         #
         # win = 0
         # tot = 0
