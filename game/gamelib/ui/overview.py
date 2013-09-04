@@ -41,7 +41,7 @@ from cocos.sprite import Sprite
 from cocos.rect import Rect
 from cocos.cocosnode import CocosNode
 
-from gamelib import model
+from gamelib import model, player_orders
 import ninepatch
 
 
@@ -55,6 +55,43 @@ class Overview(Scene):
     def __init__(self):
         super(Overview, self).__init__(ColorLayer(245, 244, 240, 255),
             Fixed())
+
+
+class ChoiceLayer(Layer):
+    is_event_handler = True
+    def __init__(self, title, choices, callback):
+        super(ChoiceLayer, self).__init__()
+        self.callback = callback
+        self.add(ColorLayer(0, 0, 0, 200))
+        w, h = director.get_window_size()
+
+        self.add(Label(title, color=(200, 200, 200, 255), x=w//2,
+            anchor_x='center', y=h-128, font_size=40))
+
+        self.choice_buts = []
+        y = h-256
+        for choice in choices:
+            but = Label(choice, color=(200, 200, 200, 255), x=w//2,
+                anchor_x='center', y=y, font_size=30)
+            y -= 64
+            self.add(but)
+            but.rect = Rect(but.element.x, but.element.y,
+                but.element.content_width, but.element.content_height)
+            self.choice_buts.append(but)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        for but in self.choice_buts:
+            if but.rect.contains(x, y):
+                self.callback(self.parent, but.element.text)
+        self.callback = None
+        self.parent.update()
+        self.kill()
+        return True
+
+    def on_key_press(self, *args):
+        self.callback = None
+        self.kill()
+        return True
 
 
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
@@ -77,6 +114,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
         self.add(self.end_turn)
 
+        self.player_action_buts = []
         self.update()
 
         self.info = Info()
@@ -86,8 +124,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.zone)
 
     def update(self):
-        self.turn_label.element.text = 'Turn: %d\nActivity_points: %d' % (
-            model.game.turn, model.game.player.activity_points)
+        self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
+            model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
         self.threat_label.element.text = 'Threat: %d' % model.game.threat
         self.visible_label.element.text = 'Visibility: %.1f' % model.game.player.visibility
 
@@ -98,12 +136,40 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             # enable turn button and all the player actions
             self.end_turn.visible = True
 
+        w, h = director.get_window_size()
+        for but in self.player_action_buts:
+            self.remove(but)
+        self.player_action_buts = []
+        y = h - 128
+        for order in player_orders.all:
+            cost = order.cost()
+            if cost is None:
+                continue
+            b = LabelNinepatch('border-9p.png', Label('%dAP: %s' % (cost,
+                order.label), x = w - 200, y=y, color=(0, 0, 0, 255),
+            anchor_x='left', anchor_y='bottom'))
+            y -= 32
+            b.order = order
+            self.player_action_buts.append(b)
+            self.add(b)
+
     def on_mouse_press(self, x, y, button, modifiers):
         if self.end_turn.get_rect().contains(x, y):
             self.on_new_turn()
             return True         # event handled
+        for action in self.player_action_buts:
+            if action.rect.contains(x, y):
+                action.order.execute(self)
+
+    def ask_choice(self, title, choices, callback):
+        '''A player order wants us to ask the user to make a choice.
+
+        We callback the callback with (self, choice from the list). Or not.
+        '''
+        self.add(ChoiceLayer(title, choices, callback), z=1)
 
     def msg(self, message, *args):
+        # TODO log this crap in something on-screen
         print message % args
 
     class SIGNAL_GAMEOVER(Exception):
@@ -234,6 +300,7 @@ class LabelNinepatch(CocosNode):
     def __init__(self, image, around):
         super(LabelNinepatch, self).__init__()
         self.label = around
+        self.add(self.label, z=1)
         self.ninepatch = ninepatch.NinePatch(pyglet.resource.image(image))
 
     def draw(self):
@@ -258,17 +325,16 @@ class Info(Layer):
 
         self.info_label = Label('', multiline=True, color=(0, 0, 0, 255),
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=500)
-        self.add(self.info_label)
         self.info_label.visible = False
 
         self.popup_9p = LabelNinepatch('border-9p.png', self.info_label)
-        self.add(self.popup_9p, z=-1)
+        self.add(self.popup_9p)
         self.popup_9p.visible = False
 
         self.active_info = None
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if self.popup_9p.rect.contains(x, y):
+        if self.popup_9p.visible and self.popup_9p.rect.contains(x, y):
             self.info_label.element.text = ''
             self.info_label.visible = False
             self.popup_9p.visible = False

@@ -1,12 +1,20 @@
-# note: Order vs Plan (plans are what NPCs do)
-class Order:
+from gamelib import model
+
+all = []
+
+
+class Order(object):
     """The player has X activity points to spend for the turn, and may take
     one free personal action at any point during the phase, in addition to any
     further actions they wish to purchase. activity points will be a base per
     turn, but might be affected by previous actions or different levels of
     difficulty or different player character stats (race or class/skills).
     """
-    pass
+    @staticmethod
+    def cost():
+        # player can't do anything except find a hideout if there's no hideout
+        if not model.game.player.hideout:
+            return None
 
 
 class Hideout(Order):
@@ -15,6 +23,24 @@ class Hideout(Order):
     orders only in same zone as hideout?) Note: first turn this is the
     player's first order, and must be done before any support is allocated
     """
+    label = 'Establish/Move Hideout'
+
+    def cost(self):
+        if not model.game.player.hideout:
+            return 0
+        if model.game.player.activity_points < 3:
+            return None
+        return 3
+
+    def execute(self, ui):
+        ui.ask_choice('Select Hideout Location', ['Industry', 'Logistics',
+            'Military'], self.chosen)
+
+    def chosen(self, ui, choice):
+        if not model.game.player.hideout:
+            model.game.player.activity_points -= 3
+        model.game.player.hideout = choice
+all.append(Hideout())
 
 
 class ZoneIntel(Order):

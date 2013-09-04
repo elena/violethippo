@@ -238,10 +238,12 @@ class NinePatch(object):
 
     def draw_around(self, x, y, width, height):
         """Draw the nine-patch around the given content area"""
-        self.draw(x - self.padding_left,
-                  y - self.padding_bottom,
-                  width + self.padding_left + self.padding_right,
-                  height + self.padding_bottom + self.padding_top)
+        x -= self.padding_left
+        y -= self.padding_bottom
+        width += self.padding_left + self.padding_right
+        height += self.padding_bottom + self.padding_top
+        self.draw(x, y, width, height)
+        return x, y, width, height
 
 if __name__ == '__main__':
     import sys
