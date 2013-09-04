@@ -88,13 +88,14 @@ class Game(JSONable):
     EASE_CUBIC=3
 
     def __init__(self):
-        self.player = Player()
         self.moon = Moon()
+        self.player = Player()
         self.turn = 0
         self.calculate_threat()
         self.created = time.time()
         self.turn_date = time.time()
         self.game_over = False
+        self.player.visibility = len(self.moon.zones)
         #
         # Seed for repeatable testing
         #
@@ -132,8 +133,8 @@ class Game(JSONable):
         return v
 
     def json_load(self, jdata):
-        self.player = Player.json_create(jdata['player'])
         self.moon = Moon.json_create(jdata['moon'])
+        self.player = Player.json_create(jdata['player'])
 
     def update(self, ui):
         self.turn_date = time.time()
@@ -152,9 +153,12 @@ class Game(JSONable):
         #
         self.calculate_threat()
         ui.msg('threat is %s' % self.threat)
-        if self.threat > 9:
+        if self.threat <= 0:
             self.game_over = True
-            raise ui.SIGNAL_GAMEOVER
+            raise ui.SIGNAL_GAMEOVER  # player won
+        if self.player.visibility <= 0:
+            self.game_over = True
+            raise ui.SIGNAL_GAMEOVER  # player lost
         #
         # Liam debug code
         #
@@ -232,7 +236,10 @@ class Player(JSONable):
 
 
     def update(self, game,ui):
-        ui.msg('%s update not implemented' % self)
+        self.visibility = len(game.moon.zones)
+        for zone in game.moon.zones:
+            self.visibility -= game.moon.zones[zone].player_found
+        # ui.msg('%s update not implemented' % self)
 
 
 class Moon(JSONable):
@@ -272,7 +279,7 @@ class Zone(JSONable):
     Utilize Servitor Cohort to carry out work
     Resource requirements must be met or dropoff in output.
     """
-    def __init__(self, name ):
+    def __init__(self, name):
         self.name = name
         # economy / production
         self.requirements = []  # what raw materials are needed, how much
@@ -282,6 +289,7 @@ class Zone(JSONable):
         self.privileged = None  # privileged cohort
         self.servitor = None    # servitor cohort
         self.faction = None
+        self.player_found = 0  # close to finding player in zone
 
     @classmethod
     def create_industry(cls):
@@ -292,9 +300,9 @@ class Zone(JSONable):
                 quality_of_life=Game.HIGH, cash=Game.HIGH)
         o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW,
                 quality_of_life=Game.LOW, cash=Game.MED)
-        o.faction = Faction('ecobaddy', threat=Game.MAX, size=Game.MED,
-            informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED, rich=Game.HIGH,
-            buffs=[])
+        o.faction = Faction('ecobaddy', alert=.01, threat=Game.MAX,
+            size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
+            rich=Game.HIGH, buffs=[])
         o.privileged.resistance_groups = [Resistance('industry-res-1',
             size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
             rich=Game.LOW, buffs=[], visibility=Game.LOW,
@@ -314,9 +322,9 @@ class Zone(JSONable):
                 quality_of_life=Game.HIGH, cash=Game.HIGH)
         o.servitor = Servitor(size=Game.MED, liberty=Game.HIGH,
                 quality_of_life=Game.MED, cash=Game.MED)
-        o.faction = Faction('mrstompy', threat=Game.MAX, size=Game.HIGH,
-            informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH, rich=Game.LOW,
-            buffs=[])
+        o.faction = Faction('mrstompy', alert=.01, threat=Game.MAX,
+            size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
+            rich=Game.LOW, buffs=[])
         o.servitor.resistance_groups = [Resistance('military-res-1',
             size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.MED, buffs=[], visibility=Game.LOW,
@@ -332,9 +340,9 @@ class Zone(JSONable):
                 quality_of_life=Game.HIGH, cash=Game.HIGH)
         o.servitor = Servitor(size=Game.LOW, liberty=Game.MED,
                 quality_of_life=Game.HIGH, cash=Game.MED)
-        o.faction = Faction('mrfedex', threat=Game.MAX, size=Game.LOW,
-            informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH, rich=Game.MED,
-            buffs=[])
+        o.faction = Faction('mrfedex', alert=.02, threat=Game.MAX,
+            size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
+            rich=Game.MED, buffs=[])
         o.privileged.resistance_groups = [Resistance('logistics-res-1',
             size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
             rich=Game.HIGH, buffs=[], visibility=Game.LOW,
@@ -346,7 +354,7 @@ class Zone(JSONable):
         return o
 
     def json_dump(self):
-        v = self.json_dump_simple('name', 'requirements')
+        v = self.json_dump_simple('name', 'requirements', 'player_found')
         v['faction'] = self.faction.json_dump()
         v['priv'] = self.privileged.json_dump()
         v['serv'] = self.servitor.json_dump()
@@ -354,7 +362,7 @@ class Zone(JSONable):
 
     @classmethod
     def json_create_args(cls,jdata):
-        return [jdata['.name'] ]
+        return [jdata['.name']]
 
     def json_load(self, jdata):
         self.privileged = Privileged.json_create(jdata['priv'])
@@ -375,26 +383,16 @@ class Zone(JSONable):
         produce += self.servitor.update_production(game, ui, self)
         ui.msg('total produce=%s'%(produce))
         self.faction.rich+=produce
-
+        # continue to search for the player
+        if self.player_found < 1:
+            self.player_found += self.faction.alert
+            self.player_found = min(self.player_found, 1)
+            ui.msg('player found in %s: %f'%(self.name, self.player_found))
 
     def produce(self,boss,workers):
       return workers * boss
 
 
-    @property
-    def state(self):
-        # TODO richard made this up
-        return self.privileged.rebellious + self.servitor.rebellious
-
-    @property
-    def state_description(self):
-        if 1 < self.state < 2:
-            return 'strong'
-        if .5 < self.state <= 1:
-            return 'shaky'
-        if .1 < self.state <= .5:
-            return 'vulnerable'
-        return 'destroyed'
 
 
 class Cohort(JSONable):
@@ -532,6 +530,27 @@ class Group(JSONable):
         # (not visible to player)
         ui.msg('%s update not implemented' % self)
 
+    @property
+    def state(self):
+        # TODO
+        # State is primarily based on our damage below starting stats
+        # perhaps our highest starting stats matter most
+        # should include the effects of temporary buffs
+        return 1.0
+
+    @property
+    def state_description(self):
+        st = self.state
+        if st > .5:
+            return 'strong'
+        if st > .2:
+            return 'shaky'
+        if st > .1:
+            return 'vulnerable'
+        if st > 0:
+            return 'turmoil'
+        return 'destroyed'
+
 
 class Faction(Group):
     """Invader Factions
@@ -543,20 +562,21 @@ class Faction(Group):
     threat = RecordedAttribute('threat')
 
     def __init__(self, name, size, informed, smart, loyal, rich, buffs,
-            threat):
+            threat, alert):
         super(Faction, self).__init__(name, size, informed, smart, loyal, rich,
             buffs)
         self.threat = threat     # potential power vs planet
+        self.alert = alert       # awareness of rebellion and player
 
     def json_dump(self):
         v = super(Faction, self).json_dump()
-        v.update(self.json_dump_simple('threat_value', 'threat_history'))
+        v.update(self.json_dump_simple('threat_value', 'threat_history', 'alert'))
         return v
 
     @classmethod
     def json_create_args(cls, jdata):
         # just dummy values that'll be filled in by load below
-        return super(Faction, cls).json_create_args(jdata) + [0]
+        return super(Faction, cls).json_create_args(jdata) + [0, 0]
 
     def json_load(self, jdata):
         super(Faction, self).json_load(jdata)

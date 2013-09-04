@@ -89,7 +89,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d' % (
             model.game.turn, model.game.player.activity_points)
         self.threat_label.element.text = 'Threat: %d' % model.game.threat
-        self.visible_label.element.text = 'Visibility: %d' % model.game.player.visibility
+        self.visible_label.element.text = 'Visibility: %.1f' % model.game.player.visibility
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.end_turn.get_rect().contains(x, y):
@@ -395,7 +395,7 @@ class Info(Layer):
             zone.servitor.willing * 10))
         text.append('Rebellious: %d & %d' % (zone.privileged.rebellious * 10,
             zone.servitor.rebellious * 10))
-        text.append('State: %s' % zone.state_description)
+        text.append('Faction Status: %s' % zone.faction.state_description)
         self.zone_label.element.text = '\n'.join(text)
 
 
