@@ -38,9 +38,12 @@ from cocos.layer import Layer, ColorLayer
 from cocos.text import Label
 from cocos.sprite import Sprite
 from cocos.rect import Rect
-
+from cocos.cocosnode import CocosNode
 
 from gamelib import model
+import ninepatch
+
+
 
 
 class Overview(Scene):
@@ -167,6 +170,17 @@ class Zone(Layer):
             return True         # event handled
 
 
+class LabelNinepatch(CocosNode):
+    def __init__(self, image, around):
+        super(LabelNinepatch, self).__init__()
+        self.label = around
+        self.ninepatch = ninepatch.NinePatch(pyglet.resource.image(image))
+
+    def draw(self):
+        self.ninepatch.draw_around(self.label.element.x, self.label.element.y,
+            self.label.element.content_width, self.label.element.content_height)
+
+
 class Info(Layer):
     is_event_handler = True
     def __init__(self):
@@ -183,6 +197,11 @@ class Info(Layer):
         self.info_label = Label('', multiline=True, color=(0, 0, 0, 255),
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=500)
         self.add(self.info_label)
+        self.info_label.visible = False
+
+        self.popup_9p = LabelNinepatch('popup-9p.png', self.info_label)
+        self.add(self.popup_9p, z=-1)
+        self.popup_9p.visible = False
 
     def on_mouse_press(self, x, y, button, modifiers):
         ix = self.info_label.element.x + self.x
@@ -192,11 +211,18 @@ class Info(Layer):
         r = Rect(ix, iy, iw, ih)
         if r.contains(x, y):
             self.info_label.element.text = ''
+            self.info_label.visible = False
+            self.popup_9p.visible = False
             return True         # event handled
 
     def show_faction(self, active_zone):
         zone = model.game.moon.zones[active_zone]
-        self.info_label.element.text = 'HAI %s FACTION' % active_zone
+        self.info_label.element.text = '''HAI %s FACTION
+            how are you today?
+
+            (click to close)''' % active_zone
+        self.info_label.visible = True
+        self.popup_9p.visible = True
 
     def display_zone(self, active_zone):
         """It would be good not to have to summon a
