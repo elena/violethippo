@@ -245,7 +245,6 @@ class Zone(JSONable):
         self.privileged = None  # privileged cohort
         self.servitor = None    # servitor cohort
         self.faction = None
-        self.resistance_groups = []   # list of resistance groups
 
     @classmethod
     def create_industry(cls):
@@ -257,14 +256,14 @@ class Zone(JSONable):
         o.faction = Faction('ecobaddy', threat=Game.MAX, size=Game.MED,
             informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED, rich=Game.HIGH,
             buffs=[])
-        o.resistance_groups.append(Resistance('industry-res-1',
+        o.privileged.resistance_groups = [Resistance('industry-res-1',
             size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
             rich=Game.LOW, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_VIOLENCE))
-        o.resistance_groups.append(Resistance('industry-res-2',
+            modus_operandi=Plan.TYPE_VIOLENCE)]
+        o.servitor.resistance_groups = [Resistance('industry-res-2',
             size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
             rich=Game.LOW, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_SABOTAGE))
+            modus_operandi=Plan.TYPE_SABOTAGE)]
         return o
 
     @classmethod
@@ -277,10 +276,10 @@ class Zone(JSONable):
         o.faction = Faction('mrstompy', threat=Game.MAX, size=Game.HIGH,
             informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH, rich=Game.LOW,
             buffs=[])
-        o.resistance_groups.append(Resistance('military-res-1',
+        o.servitor.resistance_groups = [Resistance('military-res-1',
             size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.MED, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_VIOLENCE))
+            modus_operandi=Plan.TYPE_VIOLENCE)]
         return o
 
     @classmethod
@@ -293,14 +292,14 @@ class Zone(JSONable):
         o.faction = Faction('mrfedex', threat=Game.MAX, size=Game.LOW,
             informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH, rich=Game.MED,
             buffs=[])
-        o.resistance_groups.append(Resistance('logistics-res-1',
+        o.privileged.resistance_groups = [Resistance('logistics-res-1',
             size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
             rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_SABOTAGE))
-        o.resistance_groups.append(Resistance('logistics-res-2',
+            modus_operandi=Plan.TYPE_SABOTAGE)]
+        o.servitor.resistance_groups = [Resistance('logistics-res-2',
             size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
             rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_ESPIONAGE))
+            modus_operandi=Plan.TYPE_ESPIONAGE)]
         return o
 
     def json_dump(self):
@@ -308,8 +307,6 @@ class Zone(JSONable):
         v['faction'] = self.faction.json_dump()
         v['priv'] = self.privileged.json_dump()
         v['serv'] = self.servitor.json_dump()
-        v['resistance_groups'] = [g.json_dump()
-            for g in self.resistance_groups]
         return v
 
     @classmethod
@@ -320,14 +317,10 @@ class Zone(JSONable):
         self.privileged = Privileged.json_create(jdata['priv'])
         self.servitor = Servitor.json_create(jdata['serv'])
         self.faction = Faction.json_create(jdata['faction'])
-        self.resistance_groups = [Resistance.json_create(g)
-            for g in jdata['resistance_groups']]
 
     def update(self, game, ui):
         ui.msg('%s updating zone'%(self))
         # do plans and orders
-        for group in self.resistance_groups:
-            group.update(game, ui)
         self.privileged.update(game, ui)
         self.servitor.update(game, ui)
         self.faction.update(game, ui)
@@ -372,15 +365,23 @@ class Cohort(JSONable):
         self.liberty = liberty        # freedom from rules and monitoring
         self.quality_of_life = quality_of_life        # provided services
         self.cash = cash           # additional discretionary money
+        self.resistance_groups = []   # list of resistance groups
 
     def json_dump(self):
-        return self.json_dump_simple('size', 'liberty', 'quality_of_life',
+        v = self.json_dump_simple('size', 'liberty', 'quality_of_life',
             'cash')
+        v['resistance_groups'] = [g.json_dump()
+            for g in self.resistance_groups]
+        return v
 
     @classmethod
     def json_create_args(cls,jdata):
         return [jdata['.' + n] for n in ['size', 'liberty', 'quality_of_life',
             'cash']]
+
+    def json_load(self, jdata):
+        self.resistance_groups = [Resistance.json_create(g)
+            for g in jdata['resistance_groups']]
 
     @property
     def willing(self):
@@ -396,6 +397,8 @@ class Cohort(JSONable):
         return min(self.liberty, self.quality_of_life, self.cash)
 
     def update(self, game, ui):
+        for group in self.resistance_groups:
+            group.update(game, ui)
         ui.msg('%s update not implemented' % self)
 
     def update_production(self,game,ui,zone):
