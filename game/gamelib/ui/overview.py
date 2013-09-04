@@ -146,6 +146,7 @@ class Zone(Layer):
         self.mode = zone
         self.active.image = self.zone_images[zone]
         self.parent.info.display_zone(zone)
+        self.parent.info.hide_info()
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.but_industry.get_rect().contains(x, y):
@@ -199,7 +200,7 @@ class Info(Layer):
         self.add(self.info_label)
         self.info_label.visible = False
 
-        self.popup_9p = LabelNinepatch('popup-9p.png', self.info_label)
+        self.popup_9p = LabelNinepatch('border-9p.png', self.info_label)
         self.add(self.popup_9p, z=-1)
         self.popup_9p.visible = False
 
@@ -214,6 +215,10 @@ class Info(Layer):
             self.info_label.visible = False
             self.popup_9p.visible = False
             return True         # event handled
+
+    def hide_info(self):
+        self.info_label.visible = False
+        self.popup_9p.visible = False
 
     def show_faction(self, active_zone):
         zone = model.game.moon.zones[active_zone]
