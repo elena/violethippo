@@ -188,7 +188,7 @@ class Player(JSONable):
         are more expensive when purchased this way)
     """
     def __init__(self):
-        self.discovery_chance = 0
+        self.discovery_chance = 0    # TODO I think this is unnecessary...
         self.visibility = 0   # affected by orders with "Instigator Noticeable"
         self.activity_points = 0
 
