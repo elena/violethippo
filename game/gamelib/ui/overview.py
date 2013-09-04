@@ -74,6 +74,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             anchor_x='right', anchor_y='top')
         self.add(self.turn_label)
 
+        self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
+        self.add(self.end_turn)
+
         self.update()
 
         self.info = Info()
@@ -82,14 +85,18 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.zone = Zone()
         self.add(self.zone)
 
-        self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
-        self.add(self.end_turn)
-
     def update(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d' % (
             model.game.turn, model.game.player.activity_points)
         self.threat_label.element.text = 'Threat: %d' % model.game.threat
         self.visible_label.element.text = 'Visibility: %.1f' % model.game.player.visibility
+
+        if not model.game.player.hideout:
+            # show Establish/Move hideout button only
+            self.end_turn.visible = False
+        else:
+            # enable turn button and all the player actions
+            self.end_turn.visible = True
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.end_turn.get_rect().contains(x, y):
@@ -230,8 +237,10 @@ class LabelNinepatch(CocosNode):
         self.ninepatch = ninepatch.NinePatch(pyglet.resource.image(image))
 
     def draw(self):
-        self.ninepatch.draw_around(self.label.element.x, self.label.element.y,
-            self.label.element.content_width, self.label.element.content_height)
+        x, y, w, h = self.ninepatch.draw_around(self.label.element.x,
+            self.label.element.y, self.label.element.content_width,
+            self.label.element.content_height)
+        self.rect = Rect(x, y, w, h)
 
 
 class Info(Layer):
@@ -259,12 +268,7 @@ class Info(Layer):
         self.active_info = None
 
     def on_mouse_press(self, x, y, button, modifiers):
-        ix = self.info_label.element.x + self.x
-        iy = self.info_label.element.y + self.y
-        iw = self.info_label.element.content_width
-        ih = self.info_label.element.content_height
-        r = Rect(ix, iy, iw, ih)
-        if r.contains(x, y):
+        if self.popup_9p.rect.contains(x, y):
             self.info_label.element.text = ''
             self.info_label.visible = False
             self.popup_9p.visible = False
@@ -389,8 +393,9 @@ class Info(Layer):
             military='provides force and stability',
         )
         text.append('Zone ' + descr[active_zone])
-#        text.append('Inputs: %s' % (', '.join(zone.inputs), ))
         text.append('Provides: %s' % (', '.join(zone.provides), ))
+        text.append('Requires: %s' % (', '.join(zone.requirements), ))
+        text.append('Store: %s' % (', '.join('%s: %s' % i for i in zone.store.items()), ))
         text.append('Willingness: %d & %d' % (zone.privileged.willing * 10,
             zone.servitor.willing * 10))
         text.append('Rebellious: %d & %d' % (zone.privileged.rebellious * 10,
