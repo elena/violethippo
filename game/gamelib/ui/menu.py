@@ -53,11 +53,9 @@ class MainMenu(Menu):
         director.push(Overview())
 
     def on_continue_game(self):
-        # the the latest-updated game
-        BROKEN
-        # TODO this is currently broken because the model saves the game not
-        # updating the filename to the latest turn date
-        name = sorted(n for n in os.listdir('save') if n not in '..')[-1]
+        # play the last modified game
+        name = sorted((os.stat(os.path.join('save', n)).st_mtime, n)
+            for n in os.listdir('save') if n not in '..')[-1][1]
         game = model.Game.json_loadfile(os.path.join('save', name))
         model.game = game
         director.push(Overview())
