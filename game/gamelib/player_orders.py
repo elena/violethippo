@@ -1,6 +1,9 @@
 from gamelib import model
 
 all = []
+YES = 'OK'
+NO = 'Cancel'
+YESNO = [YES, NO]
 
 
 class Order(object):
@@ -10,11 +13,20 @@ class Order(object):
     turn, but might be affected by previous actions or different levels of
     difficulty or different player character stats (race or class/skills).
     """
-    @staticmethod
-    def cost():
+    full_cost = 0
+    OUT_ZONE_PENALTY = 1
+
+    # @staticmethod
+    def cost(self, zone):
         # player can't do anything except find a hideout if there's no hideout
         if not model.game.player.hideout:
             return None
+        cost = self.full_cost
+        if zone.mode != model.game.player.hideout:
+            cost += self.OUT_ZONE_PENALTY
+        if model.game.player.activity_points < cost:
+            return None
+        return cost
 
 
 class Hideout(Order):
@@ -23,23 +35,37 @@ class Hideout(Order):
     orders only in same zone as hideout?) Note: first turn this is the
     player's first order, and must be done before any support is allocated
     """
-    label = 'Establish/Move Hideout'
+    label = 'Establish Hideout'
 
-    def cost(self):
+    def __init__(self):
+        super(Hideout, self).__init__()
+        self.full_cost = 2
+
+    def cost(self, zone):
         if not model.game.player.hideout:
             return 0
-        if model.game.player.activity_points < 3:
+        if model.game.player.hideout == zone.mode:
             return None
-        return 3
+        return super(Hideout, self).cost(zone)
+        # if model.game.player.activity_points < 3:
+        #     return None
+        # return 3
 
     def execute(self, ui):
-        ui.ask_choice('Select Hideout Location', ['Industry', 'Logistics',
-            'Military'], self.chosen)
+        ui.ask_choice('Establish your hideout in the %s zone?'%ui.zone.mode,
+            YESNO, self.chosen_yn)
+        # ui.ask_choice('Select Hideout Location', model.game.moon.zones, self.chosen)
+
+    def chosen_yn(self, ui, choice):
+        if choice == YES:
+            model.game.player.activity_points -= self.cost(ui.zone)
+            model.game.player.hideout = ui.zone.mode
+            ui.msg('setting player hideout to %s'%(ui.zone.mode))
 
     def chosen(self, ui, choice):
         # if not model.game.player.hideout:
         if model.game.player.hideout != choice:
-            model.game.player.activity_points -= self.cost()
+            model.game.player.activity_points -= self.cost(ui.zone)
             model.game.player.hideout = choice
             ui.msg('setting player hideout to %s'%(choice))
 all.append(Hideout())

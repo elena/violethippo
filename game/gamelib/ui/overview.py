@@ -186,6 +186,10 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         super(Fixed, self).__init__()
         w, h = director.get_window_size()
 
+        self.console = DebugLayer()
+        self.add(self.console, z=10)
+        self.console.visible = False
+
         self.threat_label = Label('', color=(0, 0, 0, 255), x=0, y=h, anchor_y='top')
         self.add(self.threat_label)
         self.visible_label = Label('', color=(0, 0, 0, 255), x=0, y=h-20, anchor_y='top')
@@ -199,18 +203,14 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
         self.add(self.end_turn)
 
-        self.player_action_buts = []
-        self.update()
-
         self.info = Info()
         self.add(self.info)
 
         self.zone = Zone()
         self.add(self.zone)
 
-        self.console = DebugLayer()
-        self.add(self.console, z=10)
-        self.console.visible = False
+        self.player_action_buts = []
+        self.update()
 
     def update(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
@@ -231,7 +231,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.player_action_buts = []
         y = h - 128
         for order in player_orders.all:
-            cost = order.cost()
+            cost = order.cost(self.zone)
             if cost is None:
                 continue
             b = LabelNinepatch('border-9p.png', Label('%dAP: %s' % (cost,
@@ -273,6 +273,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             model.game.update(self)
         except self.SIGNAL_GAMEOVER:
             pass
+        if model.game.player.hideout:
+            self.zone.switch_zone_to(model.game.player.hideout)
         self.update()
 
 
@@ -324,14 +326,22 @@ class Zone(Layer):
         self.but_military = Sprite('military button.png', position=(430, 600), anchor=(0, 0))
         self.resistance_buts = []
 
+        self.but_industry.visible = False
+
         self.add(self.but_industry)
         self.add(self.but_logistics)
         self.add(self.but_military)
 
     def on_enter(self):
         super(Zone, self).on_enter()
-        self.mode = None
-        self.switch_zone_to(self.MODE_INDUSTRY)
+        # self.parent.msg('setting zone based on %s'%model.game.player.hideout)
+        if model.game.player.hideout:
+            self.parent.msg('setting zone to %s'%model.game.player.hideout)
+            self.switch_zone_to(model.game.player.hideout)
+        else:
+            self.switch_zone_to(self.MODE_LOGISTICS)
+        # self.mode = None
+        # self.switch_zone_to(self.MODE_INDUSTRY)
 
     def switch_zone_to(self, active_zone):
         if self.mode == active_zone:
@@ -340,8 +350,23 @@ class Zone(Layer):
         for but in self.resistance_buts:
             self.active.remove(but)
 
+        if self.mode == self.MODE_INDUSTRY:
+            self.but_industry.visible = True
+        elif self.mode == self.MODE_LOGISTICS:
+            self.but_logistics.visible = True
+        elif self.mode == self.MODE_MILITARY:
+            self.but_military.visible = True
+
+        if active_zone == self.MODE_INDUSTRY:
+            self.but_industry.visible = False
+        elif active_zone == self.MODE_LOGISTICS:
+            self.but_logistics.visible = False
+        elif active_zone == self.MODE_MILITARY:
+            self.but_military.visible = False
+
         self.mode = active_zone
         self.active.image = self.zone_images[active_zone]
+        self.parent.update()
         self.parent.info.display_zone(active_zone)
         self.parent.info.hide_info()
 
@@ -357,13 +382,13 @@ class Zone(Layer):
                 self.active.add(but)
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if self.but_industry.get_rect().contains(x, y):
+        if not self.mode == self.MODE_INDUSTRY and self.but_industry.get_rect().contains(x, y):
             self.switch_zone_to(self.MODE_INDUSTRY)
             return True         # event handled
-        if self.but_logistics.get_rect().contains(x, y):
+        if not self.mode == self.MODE_LOGISTICS and self.but_logistics.get_rect().contains(x, y):
             self.switch_zone_to(self.MODE_LOGISTICS)
             return True         # event handled
-        if self.but_military.get_rect().contains(x, y):
+        if not self.mode == self.MODE_MILITARY and self.but_military.get_rect().contains(x, y):
             self.switch_zone_to(self.MODE_MILITARY)
             return True         # event handled
 
@@ -459,13 +484,13 @@ class Info(Layer):
         self.info_label.element.text = '\n'.join([
             'Faction: %s' % active_zone,
             'Leader: %s' % faction.name,
-            'Size: %d' % (faction.size * 10),
-            'Informed: %d' % (faction.informed * 10),
-            'Smart: %d' % (faction.smart * 10),
-            'Loyal: %d' % (faction.loyal * 10),
-            'Rich: %d' % (faction.rich * 10),
+            'Size: %.1f' % (faction.size * 10),
+            'Informed: %.1f' % (faction.informed * 10),
+            'Smart: %.1f' % (faction.smart * 10),
+            'Loyal: %.1f' % (faction.loyal * 10),
+            'Rich: %.1f' % (faction.rich * 10),
             'Buffs: %s' % ', '.join(faction.buffs),
-            'Threat: %d' % (faction.threat * 10),
+            'Threat: %.1f' % (faction.threat * 10),
             'Alert: %.2f' % (faction.alert,),
         ])
         self.info_label.visible = True
@@ -491,11 +516,11 @@ class Info(Layer):
         self.active_info = group
         self.info_label.element.text = '\n'.join([
             'Name: %s' % group.name,
-            'Size: %d' % (group.size * 10),
-            'Informed: %d' % (group.informed * 10),
-            'Smart: %d' % (group.smart * 10),
-            'Rich: %d' % (group.rich * 10),
-            'Loyal: %d' % (group.loyal * 10),
+            'Size: %.1f' % (group.size * 10),
+            'Informed: %.1f' % (group.informed * 10),
+            'Smart: %.1f' % (group.smart * 10),
+            'Rich: %.1f' % (group.rich * 10),
+            'Loyal: %.1f' % (group.loyal * 10),
             'Buffs: %s' % (', '.join(group.buffs),)
         ])
         self.info_label.visible = True
@@ -518,14 +543,18 @@ class Info(Layer):
             self.hide_info()
             return
         self.active_info = cohort
+        if cohort.is_servitor:
+            output = 'Willingness: %.1f' % (cohort.willing * 10)
+        else:
+            output = 'Efficiency: %.1f' % (cohort.efficiency * 10)
         self.info_label.element.text = '\n'.join([
             'Cohort: %s' % cohort.__class__.__name__,
-            'Size: %d' % (cohort.size * 10),
-            'Liberty: %d' % (cohort.liberty * 10),
-            'Quality of Life: %d' % (cohort.quality_of_life * 10),
-            'Cash: %d' % (cohort.cash * 10),
-            'Willingness: %d' % (cohort.willing * 10),
-            'Rebelliousness: %d' % (cohort.rebellious * 10),
+            'Size: %.1f' % (cohort.size * 10),
+            'Liberty: %.1f' % (cohort.liberty * 10),
+            'Quality of Life: %.1f' % (cohort.quality_of_life * 10),
+            'Cash: %.1f' % (cohort.cash * 10),
+            output,
+            'Rebelliousness: %.1f' % (cohort.rebellious * 10),
         ])
         self.info_label.visible = True
         self.popup_9p.visible = True
@@ -556,9 +585,9 @@ class Info(Layer):
         text.append('Provides: %s' % (', '.join(zone.provides), ))
         text.append('Requires: %s' % (', '.join(zone.requirements), ))
         text.append('Store: %s' % (', '.join('%s: %s' % i for i in zone.store.items()), ))
-        text.append('Willingness: %d & %d' % (zone.privileged.willing * 10,
-            zone.servitor.willing * 10))
-        text.append('Rebellious: %d & %d' % (zone.privileged.rebellious * 10,
+        text.append('Efficiency: %.1f' % (zone.privileged.efficiency * 10))
+        text.append('Willingness: %.1f' % (zone.servitor.willing * 10))
+        text.append('Rebellious: %.1f & %.1f' % (zone.privileged.rebellious * 10,
             zone.servitor.rebellious * 10))
         text.append('Faction Status: %s' % zone.faction.state_description)
         self.zone_label.element.text = '\n'.join(text)

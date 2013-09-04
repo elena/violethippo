@@ -517,11 +517,18 @@ class Privileged(Cohort):
     def production_output(self):
         return self.efficiency
 
+    @property
+    def is_servitor(self):
+        return False
+
 
 class Servitor(Cohort):
     def production_output(self):
         return self.willing
 
+    @property
+    def is_servitor(self):
+        return True
 
 
 
