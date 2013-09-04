@@ -224,7 +224,6 @@ class NinePatch(object):
         width = max(width, self.width + 2)
         height = max(height, self.height + 2)
         vertices = self.get_vertices(x, y, width, height)
-        print vertices
 
         glPushAttrib(GL_ENABLE_BIT)
         glEnable(GL_BLEND)

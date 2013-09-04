@@ -217,10 +217,18 @@ class Info(Layer):
 
     def show_faction(self, active_zone):
         zone = model.game.moon.zones[active_zone]
-        self.info_label.element.text = '''HAI %s FACTION
-            how are you today?
-
-            (click to close)''' % active_zone
+        faction = zone.faction
+        self.info_label.element.text = '\n'.join([
+            'Faction: %s' % active_zone,
+            'Leader: %s' % faction.name,
+            'Size: %d' % (faction.size * 10),
+            'Informed: %d' % (faction.informed * 10),
+            'Smart: %d' % (faction.smart * 10),
+            'Loyal: %d' % (faction.loyal * 10),
+            'Rich: %d' % (faction.rich * 10),
+            'Buffs: %s' % ', '.join(faction.buffs),
+            'Threat: %d' % (faction.threat * 10),
+        ])
         self.info_label.visible = True
         self.popup_9p.visible = True
 
