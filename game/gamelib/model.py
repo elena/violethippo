@@ -38,7 +38,7 @@ class JSONable(object):
     @classmethod
     def json_create(cls, jdata):
         args = cls.json_create_args(jdata)
-        print cls, args
+#        print cls, args
         o = cls(*args)
         o.json_load_simple(jdata)
         o.json_load(jdata)
@@ -365,7 +365,7 @@ class Zone(JSONable):
         return o
 
     def json_dump(self):
-        v = self.json_dump_simple('name', 'requirements', 'player_found','store')
+        v = self.json_dump_simple('name', 'requirements', 'provides', 'player_found','store')
         v['faction'] = self.faction.json_dump()
         v['priv'] = self.privileged.json_dump()
         v['serv'] = self.servitor.json_dump()
@@ -388,8 +388,10 @@ class Zone(JSONable):
         self.faction.update(game, ui)
         # Process Raw Materials and create Resources
         # (this needs work)
-        prodbase=self.privileged.production_output_turn0* self.servitor.production_output_turn0
-        prodcurr=self.privileged.production_output()* self.servitor.production_output()
+        prodbase=self.produce( self.privileged.production_output_turn0,
+                               self.servitor.production_output_turn0 )
+        prodcurr=self.produce( self.privileged.production_output(),
+                               self.servitor.production_output() )
         # requires impacts this too
         output=int(100*prodcurr/prodbase)
         ui.msg('ZONE: %s'%(self.name))
@@ -406,7 +408,7 @@ class Zone(JSONable):
             if prod not in self.store:
                 self.store[ prod ]=0
             self.store[ prod ] += output
-            ui.msg('   prod: %s -> %s '%( output,self.store[prod] ))
+            ui.msg('   ......prod: %s %s -> %s '%( prod, output,self.store[prod] ))
         ui.msg('   store: %s'%( self.store ))
         # test for killing output
         ui.msg('      killing qol: %s',self.privileged.quality_of_life)
