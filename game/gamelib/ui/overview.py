@@ -37,6 +37,7 @@ from cocos.scene import Scene
 from cocos.layer import Layer, ColorLayer
 from cocos.text import Label
 from cocos.sprite import Sprite
+from cocos.rect import Rect
 
 
 from gamelib import model
@@ -123,6 +124,9 @@ class Zone(Layer):
             position=(75+256, 75+256))
         self.add(self.active)
 
+        self.but_faction = Sprite('faction button.png', position=(0, 200))
+        self.active.add(self.but_faction)
+
         self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
         self.but_logistics = Sprite('logistics button.png', position=(230, 600), anchor=(0, 0))
         self.but_military = Sprite('military button.png', position=(430, 600), anchor=(0, 0))
@@ -151,8 +155,20 @@ class Zone(Layer):
             self.switch_zone_to(self.MODE_MILITARY)
             return True         # event handled
 
+        # faction button is placed relative to the zone image so we need to
+        # shift the rect accordingly
+        # ALTERNATIVE: just check the relative-to-zone hits from now on, OR
+        #              place the faction button absolute...
+        r = self.but_faction.get_rect()
+        r.x += self.active.x
+        r.y += self.active.y
+        if r.contains(x, y):
+            self.parent.info.show_faction(self.mode)
+            return True         # event handled
+
 
 class Info(Layer):
+    is_event_handler = True
     def __init__(self):
         super(Info, self).__init__()
 
@@ -163,6 +179,24 @@ class Info(Layer):
         self.zone_label = Label('', multiline=True, color=(0, 0, 0, 255),
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=10)
         self.add(self.zone_label)
+
+        self.info_label = Label('', multiline=True, color=(0, 0, 0, 255),
+            width=350, anchor_x='left', anchor_y='bottom', x=10, y=500)
+        self.add(self.info_label)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        ix = self.info_label.element.x + self.x
+        iy = self.info_label.element.y + self.y
+        iw = self.info_label.element.content_width
+        ih = self.info_label.element.content_height
+        r = Rect(ix, iy, iw, ih)
+        if r.contains(x, y):
+            self.info_label.element.text = ''
+            return True         # event handled
+
+    def show_faction(self, active_zone):
+        zone = model.game.moon.zones[active_zone]
+        self.info_label.element.text = 'HAI %s FACTION' % active_zone
 
     def display_zone(self, active_zone):
         """It would be good not to have to summon a
