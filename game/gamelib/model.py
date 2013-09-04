@@ -309,7 +309,7 @@ class Zone(JSONable):
 
     def setup_turn0(self):
         for n in self.requirements + self.provides:
-            print '>>>>00000 Creating:',self.name,n
+            # print '>>>>00000 Creating:',self.name,n
             self.store[n]=100.
 
     @classmethod
