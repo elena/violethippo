@@ -320,6 +320,21 @@ class Zone(JSONable):
         ui.msg('total produce=%s'%(produce))
         self.faction.rich+=produce
 
+    @property
+    def state(self):
+        # TODO richard made this up
+        return self.privileged.rebellious + self.servitor.rebellious
+
+    @property
+    def state_description(self):
+        if 1 < self.state < 2:
+            return 'strong'
+        if .5 < self.state <= 1:
+            return 'shaky'
+        if .1 < self.state <= .5:
+            return 'vulnerable'
+        return 'destroyed'
+
 
 class Cohort(JSONable):
     """Each zone has two cohorts:

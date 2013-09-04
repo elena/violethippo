@@ -63,3 +63,16 @@ def test_model_construction(savedir,*args,**kw):
     g.update(ui)
     g.update(ui)
     g.update(ui)
+
+
+def test_zone_state():
+    g = model.Game()
+    z = g.moon.zones['industry']
+    # at the start of the game, the zone should be strong
+    # TODO assert z.state_description == 'strong'
+    z.privileged.cash = z.servitor.cash = 0.6
+    assert z.state_description == 'shaky'
+    z.privileged.cash = z.servitor.cash = 0.1
+    assert z.state_description == 'vulnerable'
+    z.privileged.cash = z.servitor.cash = 0
+    assert z.state_description == 'destroyed'
