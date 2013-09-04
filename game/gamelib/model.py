@@ -307,10 +307,10 @@ class Zone(JSONable):
         o = cls('industry')
         o.requirements=[ ENFORCEMENT, RAW_MATERIAL ]
         o.provides=[ GOODS ]
-        o.privileged = Privileged(size=Game.MED, liberty=Game.MED,
-                quality_of_life=Game.HIGH, cash=Game.HIGH)
-        o.servitor = Servitor(size=Game.VHIGH, liberty=Game.LOW,
-                quality_of_life=Game.LOW, cash=Game.MED)
+        o.privileged = Privileged(size=Game.MED*2, liberty=Game.MED*2,
+                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2)
+        o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW*2,
+                quality_of_life=Game.LOW*2, cash=Game.MED*2)
         o.faction = Faction('ecobaddy', alert=.01, threat=Game.MAX,
             size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
             rich=Game.HIGH, buffs=[])
@@ -329,10 +329,10 @@ class Zone(JSONable):
         o = cls('military')
         o.requirements= [MANPOWER, GOODS]
         o.provides= [ ENFORCEMENT ]
-        o.privileged = Privileged(size=Game.LOW, liberty=Game.HIGH,
-                quality_of_life=Game.HIGH, cash=Game.HIGH)
-        o.servitor = Servitor(size=Game.MED, liberty=Game.HIGH,
-                quality_of_life=Game.MED, cash=Game.MED)
+        o.privileged = Privileged(size=Game.LOW*2, liberty=Game.HIGH*2,
+                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2)
+        o.servitor = Servitor(size=Game.MED*2, liberty=Game.HIGH*2,
+                quality_of_life=Game.MED*2, cash=Game.MED*2)
         o.faction = Faction('mrstompy', alert=.01, threat=Game.MAX,
             size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.LOW, buffs=[])
@@ -347,10 +347,10 @@ class Zone(JSONable):
         o = cls('logistics')
         o.requirements= [ENFORCEMENT,GOODS]
         o.provides= [RAW_MATERIAL,MANPOWER]
-        o.privileged = Privileged(size=Game.MED, liberty=Game.HIGH,
-                quality_of_life=Game.HIGH, cash=Game.HIGH)
-        o.servitor = Servitor(size=Game.LOW, liberty=Game.MED,
-                quality_of_life=Game.HIGH, cash=Game.MED)
+        o.privileged = Privileged(size=Game.MED*2, liberty=Game.HIGH*2,
+                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2)
+        o.servitor = Servitor(size=Game.LOW*2, liberty=Game.MED*2,
+                quality_of_life=Game.HIGH*2, cash=Game.MED*2)
         o.faction = Faction('mrfedex', alert=.02, threat=Game.MAX,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
             rich=Game.MED, buffs=[])
