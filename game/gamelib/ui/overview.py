@@ -45,29 +45,32 @@ from gamelib import model
 class Overview(Scene):
     def __init__(self):
         super(Overview, self).__init__(ColorLayer(245, 244, 240, 255),
-            Display())
+            Fixed())
 
 
-class Display(Layer):
+class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
     is_event_handler = True
 
     def __init__(self):
-        super(Display, self).__init__()
+        super(Fixed, self).__init__()
         w, h = director.get_window_size()
 
-        self.turn_label = Label('', color=(0, 0, 0, 255), x=0, y=h, anchor_y='top')
-        self.add(self.turn_label)
-        self.threat_label = Label('', color=(0, 0, 0, 255), x=0, y=h-20, anchor_y='top')
+        self.threat_label = Label('', color=(0, 0, 0, 255), x=0, y=h, anchor_y='top')
         self.add(self.threat_label)
-        self.visible_label = Label('', color=(0, 0, 0, 255), x=0, y=h-40, anchor_y='top')
+        self.visible_label = Label('', color=(0, 0, 0, 255), x=0, y=h-20, anchor_y='top')
         self.add(self.visible_label)
+
+        self.turn_label = Label('', color=(0, 0, 0, 255), x=w-64, y=h-32,
+            anchor_x='right', anchor_y='top')
+        self.add(self.turn_label)
+
         self.update()
 
-        self.industry = pyglet.resource.image('industry.png')
-        self.logistics = pyglet.resource.image('logistics.png')
-        self.military = pyglet.resource.image('military.png')
+        self.zone = Zone()
+        self.add(self.zone)
 
-        self.add(Sprite(self.industry, position=(w//2, h//2)))
+        self.info = Info()
+        self.add(self.info)
 
         self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
         self.add(self.end_turn)
@@ -80,6 +83,7 @@ class Display(Layer):
     def on_mouse_press(self, x, y, button, modifiers):
         if self.end_turn.get_rect().contains(x, y):
             self.on_new_turn()
+            return True         # event handled
 
     def msg(self, message, *args):
         print message % args
@@ -93,6 +97,62 @@ class Display(Layer):
         except self.SIGNAL_GAMEOVER:
             pass
         self.update()
+
+
+class Zone(Layer):
+    is_event_handler = True
+
+    MODE_INDUSTRY = 'industry'
+    MODE_LOGISTICS = 'logistics'
+    MODE_MILITARY = 'military'
+
+    def __init__(self):
+        super(Zone, self).__init__()
+        w, h = director.get_window_size()
+        self.mode = self.MODE_INDUSTRY
+
+        self.industry = pyglet.resource.image('industry.png')
+        self.logistics = pyglet.resource.image('logistics.png')
+        self.military = pyglet.resource.image('military.png')
+
+        self.active = Sprite(self.industry, position=(75+256, 75+256))
+        self.add(self.active)
+
+        self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
+        self.but_logistics = Sprite('logistics button.png', position=(230, 600), anchor=(0, 0))
+        self.but_military = Sprite('military button.png', position=(430, 600), anchor=(0, 0))
+
+        self.add(self.but_industry)
+        self.add(self.but_logistics)
+        self.add(self.but_military)
+
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if self.but_industry.get_rect().contains(x, y):
+            self.mode = self.MODE_INDUSTRY
+            self.active.image = self.industry
+            return True         # event handled
+        if self.but_logistics.get_rect().contains(x, y):
+            self.mode = self.MODE_LOGISTICS
+            self.active.image = self.logistics
+            return True         # event handled
+        if self.but_military.get_rect().contains(x, y):
+            self.mode = self.MODE_MILITARY
+            self.active.image = self.military
+            return True         # event handled
+
+
+class Info(Layer):
+    def __init__(self):
+        super(Info, self).__init__()
+
+        self.anchor = (0, 0)
+        self.x = 660
+        self.y = 10
+
+        self.bg = ColorLayer(200, 198, 190, 255, width=350, height=680)
+        self.add(self.bg)
+
 
 if __name__ == '__main__':
     pyglet.resource.path.append('../../data')
