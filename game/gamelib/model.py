@@ -242,19 +242,18 @@ class Zone(JSONable):
         self.name = name
         self.requirements = [] # what raw materials are needed, how much
         self.provides = []      # what are created from what volume of inputs
-        self.cohorts = []        # population groups
+        self.privileged = None  # privileged cohort
+        self.servitor = None    # servitor cohort
         self.faction = None
         self.resistance_groups = []   # list of resistance groups
 
     @classmethod
     def create_industry(cls):
         o = cls('industry')
-        o.cohorts = [
-            Privileged(size=Game.MED, liberty=Game.MED,
-                quality_of_life=Game.HIGH, cash=Game.HIGH),
-            Servitor(size=Game.MAX, liberty=Game.LOW,
+        o.privileged = Privileged(size=Game.MED, liberty=Game.MED,
+                quality_of_life=Game.HIGH, cash=Game.HIGH)
+        o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW,
                 quality_of_life=Game.LOW, cash=Game.MED)
-        ]
         o.faction = Faction('ecobaddy', threat=Game.MAX, size=Game.MED,
             informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED, rich=Game.HIGH,
             buffs=[])
@@ -263,12 +262,10 @@ class Zone(JSONable):
     @classmethod
     def create_military(cls):
         o = cls('military')
-        o.cohorts = [
-            Privileged(size=Game.LOW, liberty=Game.HIGH,
-                quality_of_life=Game.HIGH, cash=Game.HIGH),
-            Servitor(size=Game.MED, liberty=Game.HIGH,
+        o.privileged = Privileged(size=Game.LOW, liberty=Game.HIGH,
+                quality_of_life=Game.HIGH, cash=Game.HIGH)
+        o.servitor = Servitor(size=Game.MED, liberty=Game.HIGH,
                 quality_of_life=Game.MED, cash=Game.MED)
-        ]
         o.faction = Faction('mrstompy', threat=Game.MAX, size=Game.HIGH,
             informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH, rich=Game.LOW,
             buffs=[])
@@ -277,12 +274,10 @@ class Zone(JSONable):
     @classmethod
     def create_logistics(cls):
         o = cls('logistics')
-        o.cohorts = [
-            Privileged(size=Game.MED, liberty=Game.HIGH,
-                quality_of_life=Game.HIGH, cash=Game.HIGH),
-            Servitor(size=Game.LOW, liberty=Game.MED,
+        o.privileged = Privileged(size=Game.MED, liberty=Game.HIGH,
+                quality_of_life=Game.HIGH, cash=Game.HIGH)
+        o.servitor = Servitor(size=Game.LOW, liberty=Game.MED,
                 quality_of_life=Game.HIGH, cash=Game.MED)
-        ]
         o.faction = Faction('mrfedex', threat=Game.MAX, size=Game.LOW,
             informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH, rich=Game.MED,
             buffs=[])
@@ -291,8 +286,8 @@ class Zone(JSONable):
     def json_dump(self):
         v = self.json_dump_simple('name', 'requirements')
         v['faction'] = self.faction.json_dump()
-        v['cohorts.priv'] = self.cohorts[0].json_dump()
-        v['cohorts.serv'] = self.cohorts[1].json_dump()
+        v['priv'] = self.privileged.json_dump()
+        v['serv'] = self.servitor.json_dump()
         v['resistance_groups'] = [g.json_dump()
             for g in self.resistance_groups]
         return v
@@ -302,10 +297,8 @@ class Zone(JSONable):
         return [jdata['.name'] ]
 
     def json_load(self, jdata):
-        self.cohorts = [
-            Privileged.json_create(jdata['cohorts.priv']),
-            Servitor.json_create(jdata['cohorts.serv']),
-        ]
+        self.privileged = Privileged.json_create(jdata['priv'])
+        self.servitor = Servitor.json_create(jdata['serv'])
         self.faction = Faction.json_create(jdata['faction'])
         self.resistance_groups = [Resistance.json_create(g)
             for g in jdata['resistance_groups']]
@@ -315,21 +308,21 @@ class Zone(JSONable):
         # do plans and orders
         for group in self.resistance_groups:
             group.update(game, ui)
-        for group in self.cohorts:
-            group.update(game, ui)
+        self.privileged.update(game, ui)
+        self.servitor.update(game, ui)
         self.faction.update(game, ui)
         #
         # Process Raw Materials and create Resources
         # (this needs work)
         produce=0
-        for group in self.cohorts:
-            produce+= group.update_production(game,ui,self)
+        produce += self.privileged.update_production(game, ui, self)
+        produce += self.servitor.update_production(game, ui, self)
         ui.msg('total produce=%s'%(produce))
         self.faction.rich+=produce
 
 
 class Cohort(JSONable):
-    """Each zone has at least two cohorts:
+    """Each zone has two cohorts:
 
         Privileged - staff zone faction
         Servitor - create zone resource
@@ -359,7 +352,7 @@ class Cohort(JSONable):
         """Willingness can be forced through low liberty, or the product of
         high quality of life and cash in combination.
         """
-        return min(self.liberty, (self.quality_of_life+self.cash)/2)
+        return min(self.liberty, (self.quality_of_life + self.cash)/2)
 
     @property
     def rebellious(self):
