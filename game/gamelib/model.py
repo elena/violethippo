@@ -244,7 +244,9 @@ class Player(JSONable):
         self.visibility = len(game.moon.zones)
         for zone in game.moon.zones:
             self.visibility -= game.moon.zones[zone].player_found
-        # ui.msg('%s update not implemented' % self)
+
+        # refresh activity points for next turn
+        self.activity_points = 10
 
 
 class Moon(JSONable):
