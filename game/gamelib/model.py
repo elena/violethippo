@@ -8,7 +8,8 @@ from gamelib.plans.base import Plan
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '01'
+DATA_VERSION = '02'
+# 02 - added max_resistance to cohorts
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -150,10 +151,6 @@ class Game(JSONable):
         self.player.update(self, ui)
 #        self.planet.update(self, ui)     # not defined
         self.moon.update(self, ui)
-        #
-        # save to be paranoid
-        #
-        self.json_savefile_turn()
         self.turn+=1
         #
         # Check for game over condition..
@@ -178,6 +175,12 @@ class Game(JSONable):
         #         tot += ret
         # print "rolled: %d wins, avg: %.3f" % (win, (tot/win))
         #
+
+        #
+        # save to be paranoid
+        #
+        ui.msg('game: saving')
+        self.json_savefile_turn()
         ui.msg('game: update done. now turn %s'%self.turn)
 
     def calculate_threat(self):
@@ -321,20 +324,28 @@ class Zone(JSONable):
         o.requirements=[ ENFORCEMENT, RAW_MATERIAL ]
         o.provides=[ GOODS ]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.MED*2,
-                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2)
+                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW*2,
-                quality_of_life=Game.LOW*2, cash=Game.MED*2)
+                quality_of_life=Game.LOW*2, cash=Game.MED*2, max_resistance=4)
         o.faction = Faction('ecobaddy', alert=.01, threat=Game.MAX,
             size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
             rich=Game.HIGH, buffs=[])
-        o.privileged.resistance_groups = [Resistance('industry-res-1',
+        o.privileged.new_resistance('industry-res-1',
             size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
             rich=Game.LOW, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_VIOLENCE)]
-        o.servitor.resistance_groups = [Resistance('industry-res-2',
+            modus_operandi=Plan.TYPE_VIOLENCE)
+        o.servitor.new_resistance('industry-res-2',
             size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
             rich=Game.LOW, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_SABOTAGE)]
+            modus_operandi=Plan.TYPE_SABOTAGE)
+        # o.privileged.resistance_groups = [Resistance('industry-res-1',
+        #     size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
+        #     rich=Game.LOW, buffs=[], visibility=Game.LOW,
+        #     modus_operandi=Plan.TYPE_VIOLENCE)]
+        # o.servitor.resistance_groups = [Resistance('industry-res-2',
+        #     size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
+        #     rich=Game.LOW, buffs=[], visibility=Game.LOW,
+        #     modus_operandi=Plan.TYPE_SABOTAGE)]
         o.setup_turn0()
         return o
 
@@ -344,16 +355,20 @@ class Zone(JSONable):
         o.requirements= [MANPOWER, GOODS]
         o.provides= [ ENFORCEMENT ]
         o.privileged = Privileged(size=Game.LOW*2, liberty=Game.HIGH*2,
-                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2)
+                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.servitor = Servitor(size=Game.MED*2, liberty=Game.HIGH*2,
-                quality_of_life=Game.MED*2, cash=Game.MED*2)
+                quality_of_life=Game.MED*2, cash=Game.MED*2, max_resistance=4)
         o.faction = Faction('mrstompy', alert=.01, threat=Game.MAX,
             size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.LOW, buffs=[])
-        o.servitor.resistance_groups = [Resistance('military-res-1',
+        o.servitor.new_resistance('military-res-1',
             size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.MED, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_VIOLENCE)]
+            modus_operandi=Plan.TYPE_VIOLENCE)
+        # o.servitor.resistance_groups = [Resistance('military-res-1',
+        #     size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
+        #     rich=Game.MED, buffs=[], visibility=Game.LOW,
+        #     modus_operandi=Plan.TYPE_VIOLENCE)]
         o.setup_turn0()
         return o
 
@@ -363,20 +378,28 @@ class Zone(JSONable):
         o.requirements= [ENFORCEMENT,GOODS]
         o.provides= [RAW_MATERIAL,MANPOWER]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.HIGH*2,
-                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2)
+                quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.servitor = Servitor(size=Game.LOW*2, liberty=Game.MED*2,
-                quality_of_life=Game.HIGH*2, cash=Game.MED*2)
+                quality_of_life=Game.HIGH*2, cash=Game.MED*2, max_resistance=4)
         o.faction = Faction('mrfedex', alert=.02, threat=Game.MAX,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
             rich=Game.MED, buffs=[])
-        o.privileged.resistance_groups = [Resistance('logistics-res-1',
+        o.privileged.new_resistance('logistics-res-1',
             size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
             rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_SABOTAGE)]
-        o.servitor.resistance_groups = [Resistance('logistics-res-2',
+            modus_operandi=Plan.TYPE_SABOTAGE)
+        o.servitor.new_resistance('logistics-res-2',
             size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
             rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_ESPIONAGE)]
+            modus_operandi=Plan.TYPE_ESPIONAGE)
+        # o.privileged.resistance_groups = [Resistance('logistics-res-1',
+        #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
+        #     rich=Game.HIGH, buffs=[], visibility=Game.LOW,
+        #     modus_operandi=Plan.TYPE_SABOTAGE)]
+        # o.servitor.resistance_groups = [Resistance('logistics-res-2',
+        #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
+        #     rich=Game.HIGH, buffs=[], visibility=Game.LOW,
+        #     modus_operandi=Plan.TYPE_ESPIONAGE)]
         o.setup_turn0()
         return o
 
@@ -505,13 +528,14 @@ class Cohort(JSONable):
     quality_of_life = RecordedAttribute('quality_of_life')
     cash = RecordedAttribute('cash')
 
-    def __init__(self, size, liberty, quality_of_life, cash):
+    def __init__(self, size, liberty, quality_of_life, cash, max_resistance):
         self.size = size           # how many in population
         self.liberty = liberty        # freedom from rules and monitoring
         self.quality_of_life = quality_of_life        # provided services
         self.cash = cash           # additional discretionary money
         self.resistance_groups = []   # list of resistance groups
         self.production_output_turn0=self.production_output()
+        self.max_resistance = max_resistance
 
     def json_dump(self):
         names = []
@@ -519,6 +543,7 @@ class Cohort(JSONable):
             names.append(name + '_value')
             names.append(name + '_history')
         names.append('production_output_turn0')
+        names.append('max_resistance')
         v = self.json_dump_simple(*names)
         v['resistance_groups'] = [g.json_dump()
             for g in self.resistance_groups]
@@ -527,15 +552,23 @@ class Cohort(JSONable):
     @classmethod
     def json_create_args(cls, jdata):
         # just pretend it's all ok - json_load will fix things
-        return [0, 0, 0, 0]
+        return [0, 0, 0, 0, 0]
 
     def json_load(self, jdata):
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
             setattr(self, name + '_value', jdata['.%s_value' % name])
             setattr(self, name + '_history', jdata['.%s_history' % name])
         self.production_output_turn0=jdata['.production_output_turn0']
+        self.max_resistance = jdata['.max_resistance']
         self.resistance_groups = [Resistance.json_create(g)
             for g in jdata['resistance_groups']]
+
+    def new_resistance(self, name, size, informed, smart, loyal, rich, buffs,
+        visibility, modus_operandi):
+        if len(self.resistance_groups) < self.max_resistance:
+            self.resistance_groups.append(Resistance(name, size, informed, smart, loyal, rich, buffs, visibility, modus_operandi))
+            return self.resistance_groups[-1]
+        return None
 
     @property
     def willing(self):
@@ -544,15 +577,12 @@ class Cohort(JSONable):
         """
         return max(1.-self.liberty, (self.quality_of_life + self.cash)/2)
 
-
     @property
     def efficiency(self):
         """priv: efficiency is mostly QOL and somewhat influenced by
         liberty and cash
         """
         return (2* self.quality_of_life + self.liberty + self.cash)/4
-
-
 
     @property
     def rebellious(self):
