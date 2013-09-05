@@ -6,7 +6,7 @@ from cocos.sprite import Sprite
 from cocos.scene import Scene
 from cocos.text import Label
 from pyglet.window import key
-from gamelib.ui.menu import menu
+from gamelib.ui.title import title
 
 
 def splash():
@@ -23,24 +23,24 @@ class SplashControlLayer(Layer):
         logo.position = (w//2, h//2)
         self.add(logo)
 
-        title = Sprite('Title_Moon1.png')
-        title.position = (w//2, h//2 + (3*lh)//4)
-        self.add(title)
+        # title = Sprite('Title_Moon1.png')
+        # title.position = (w//2, h//2 + (3*lh)//4)
+        # self.add(title)
 
-        # self.add(Label("Hippo Moon Monkey Revolution",
-        #     font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
-        #     anchor_y='bottom'))
+        self.add(Label("Presented by the Violet Hippo",
+            font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
+            anchor_y='bottom'))
 
         self.add(Label("Click to Continue",
             font_size=16, x=w//2, y=h//2 - lh//2 - 20, anchor_x='center',
             anchor_y='top'))
 
     def on_key_press(self, *args):
-        director.replace(transitions.FadeTransition(menu()))
+        director.replace(transitions.FadeTransition(title()))
         return True
 
     def on_mouse_press(self, *args):
-        director.replace(transitions.FadeTransition(menu()))
+        director.replace(transitions.FadeTransition(title()))
         return True
 
 

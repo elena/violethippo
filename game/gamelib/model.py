@@ -577,6 +577,7 @@ class Cohort(JSONable):
                 group.loyal = min(Resistance.START_LOYAL,
                     group.loyal - (cohort_effect * 0.5))
                 group.rich = max(1, group.rich + (cohort_effect * self.cash))
+                group.visibility = max(1, group.visibility + ((1-cohort_effect)*(.1*random.random())))
                 ui.msg('boosted existing rebels %s'%group.name)
 
 

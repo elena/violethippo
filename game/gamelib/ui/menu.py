@@ -3,7 +3,8 @@ import os
 import json
 import time
 from cocos.director import director
-from cocos.layer import MultiplexLayer
+from cocos.layer import MultiplexLayer, Layer
+from cocos.sprite import Sprite
 from cocos.menu import Menu, MenuItem, zoom_in, zoom_out, CENTER
 from cocos.scene import Scene
 
@@ -39,7 +40,7 @@ def list_saves(directory='save'):
 
 class MainMenu(Menu):
     def __init__(self):
-        super(MainMenu, self).__init__("Moon Game")
+        super(MainMenu, self).__init__()
         self.menu_valign = CENTER
         self.menu_halign = CENTER
 
@@ -133,9 +134,18 @@ class LoadMenu(Menu):
     def on_quit(self):
         self.parent.switch_to(0)
 
+class TitleLayer(Layer):
+    # is_event_handler = True
+    def __init__(self):
+        super(TitleLayer, self).__init__()
+        w, h = director.get_window_size()
+        logo = Sprite('Moon_1.jpg')
+        lh = logo.height
+        logo.position = (w//2, h//2)
+        self.add(logo)
 
 def menu():
-    return Scene(MultiplexLayer(MainMenu(), OptionMenu(), LoadMenu()))
+    return Scene(TitleLayer(), MultiplexLayer(MainMenu(), OptionMenu(), LoadMenu()))
 
 if __name__ == '__main__':
     import pyglet

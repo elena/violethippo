@@ -80,6 +80,11 @@ class BlowupGoods(Order):
         super(BlowupGoods, self).__init__()
         self.full_cost = 1
 
+    def cost(self, zone):
+        if zone.mode != 'industry':
+            return None
+        return super(BlowupGoods, self).cost(zone)
+
     def execute(self, ui):
         ui.ask_choice('Attack goods stored in %s zone?'%ui.zone.mode,
             YESNO, self.chosen_yn)
