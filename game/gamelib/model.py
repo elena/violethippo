@@ -10,19 +10,48 @@ import economy
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '03'
+DATA_VERSION = '04'
 # 02 - added max_resistance to cohorts
 # 03 - removed faction threat from saved data
 #      added _base values
 #      removed history on resistance modus operandi
+# 04 - made buffs a dictionary
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
 GOODS='goods'
 MANPOWER='lifeforms'
 
+INDUSTRY='industry'
+MILITARY='military'
+LOGISTICS='logistics'
 
 
+
+class Buffable(object):
+
+    def buff_stat(self,name,*args):
+        if not name in self.buffs:
+            self.buffs[name]=[]
+        for n in range(len(args)):
+            if n==len(self.buffs[name]):
+                self.buffs[name].append( args[n] )
+            elif n>=len(self.buffs[name]):
+                raise Exception,['Should never happen?']
+            else:
+                self.buffs[name][n]+=args[n]
+    def fetch(self,name):
+        v=getattr( self,name)
+        if v is None:
+            v=0.0
+        if name in self.buffs:
+            if self.buffs[name]:
+                v+=self.buffs[name][0]
+        return v
+    def buffs_end_turn(self):
+        for k,v in self.buffs.items():
+            if v:
+                del v[0]
 
 
 
@@ -293,11 +322,10 @@ class Moon(JSONable):
         return '{{{Moon}}}'
 
     def __init__(self):
-        self.zones = dict(
-            industry=Zone.create_industry(),
-            military=Zone.create_military(),
-            logistics=Zone.create_logistics()
-        )
+        self.zones = { INDUSTRY:Zone.create_industry(),
+                       MILITARY:Zone.create_military(),
+                       LOGISTICS:Zone.create_logistics()
+                     }
 
     def json_dump(self):
         v = self.json_dump_simple()
@@ -312,13 +340,13 @@ class Moon(JSONable):
         ui.msg('%s updating moon'%self)
         for zone in self.zones:
             self.zones[zone].update(game,ui)
-        goods=self.zones['industry'].store.get(GOODS,0)
+        goods=self.zones[INDUSTRY].store.get(GOODS,0)
         ui.msg('ECONOMY.consume: %sgoods'%(goods))
         for zone in self.zones:
             z=self.zones[zone]
             z.economy_use_goods(game,ui,goods)
             z.economy_consume_rest(game,ui)
-        self.zones['industry'].economy_consume_goods(game,ui,goods)
+        self.zones[INDUSTRY].economy_consume_goods(game,ui,goods)
         ui.msg('ECONOMY.transport')
         for zone in self.zones:
             self.zones[zone].economy_transport(game,ui)
@@ -351,7 +379,7 @@ class Zone(JSONable,economy.Zone_Economy):
 
     @classmethod
     def create_industry(cls):
-        o = cls('industry')
+        o = cls(INDUSTRY)
         o.requirements=[ ENFORCEMENT, RAW_MATERIAL ]
         o.provides=[ GOODS ]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.MED*2,
@@ -360,21 +388,21 @@ class Zone(JSONable,economy.Zone_Economy):
                 quality_of_life=Game.LOW*2, cash=Game.MED*2, max_resistance=4)
         o.faction = Faction('ecobaddy', alert=.01,
             size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
-            rich=Game.HIGH, buffs=[])
+            rich=Game.HIGH, buffs={})
         # o.privileged.new_resistance('industry-res-1',
         #     size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
-        #     rich=Game.LOW, buffs=[], visibility=Game.LOW,
+        #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
         #     modus_operandi=Plan.TYPE_VIOLENCE)
         # o.servitor.new_resistance('industry-res-2',
         #     size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
-        #     rich=Game.LOW, buffs=[], visibility=Game.LOW,
+        #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
         #     modus_operandi=Plan.TYPE_SABOTAGE)
         o.setup_turn0()
         return o
 
     @classmethod
     def create_military(cls):
-        o = cls('military')
+        o = cls(MILITARY)
         o.requirements= [MANPOWER]
         o.provides= [ ENFORCEMENT ]
         o.privileged = Privileged(size=Game.LOW*2, liberty=Game.HIGH*2,
@@ -383,17 +411,17 @@ class Zone(JSONable,economy.Zone_Economy):
                 quality_of_life=Game.MED*2, cash=Game.MED*2, max_resistance=4)
         o.faction = Faction('mrstompy', alert=.01,
             size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
-            rich=Game.LOW, buffs=[])
+            rich=Game.LOW, buffs={})
         # o.servitor.new_resistance('military-res-1',
         #     size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
-        #     rich=Game.MED, buffs=[], visibility=Game.LOW,
+        #     rich=Game.MED, buffs={}, visibility=Game.LOW,
         #     modus_operandi=Plan.TYPE_VIOLENCE)
         o.setup_turn0()
         return o
 
     @classmethod
     def create_logistics(cls):
-        o = cls('logistics')
+        o = cls(LOGISTICS)
         o.requirements= [ENFORCEMENT]
         o.provides= [RAW_MATERIAL,MANPOWER]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.HIGH*2,
@@ -402,14 +430,14 @@ class Zone(JSONable,economy.Zone_Economy):
                 quality_of_life=Game.HIGH*2, cash=Game.MED*2, max_resistance=4)
         o.faction = Faction('mrfedex', alert=.02,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
-            rich=Game.MED, buffs=[])
+            rich=Game.MED, buffs={})
         # o.privileged.new_resistance('logistics-res-1',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
-        #     rich=Game.HIGH, buffs=[], visibility=Game.LOW,
+        #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
         #     modus_operandi=Plan.TYPE_SABOTAGE)
         # o.servitor.new_resistance('logistics-res-2',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
-        #     rich=Game.HIGH, buffs=[], visibility=Game.LOW,
+        #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
         #     modus_operandi=Plan.TYPE_ESPIONAGE)
         o.setup_turn0()
         return o
@@ -461,13 +489,14 @@ class Zone(JSONable,economy.Zone_Economy):
         for c in [ self.privileged, self.servitor]:
             for n in ['size','liberty','quality_of_life','cash','willing','efficiency']:
                 ui.msg('GRAPH: %s.pop %s %s.%s %s'%(self.name,game.turn,c.NAME,n,getattr(c,n)))
+            ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name,c.NAME,c.liberty,c.fetch('liberty'),c.buffs))
 
 
 
 
 
 
-class Cohort(JSONable):
+class Cohort(JSONable,Buffable):
     """Each zone has two cohorts:
 
         Privileged - staff zone faction
@@ -494,6 +523,7 @@ class Cohort(JSONable):
         self.resistance_groups = []   # list of resistance groups
         self.production_output_turn0=self.production_output()
         self.max_resistance = max_resistance
+        self.buffs= {}
 
     def json_dump(self):
         names = []
@@ -503,6 +533,7 @@ class Cohort(JSONable):
             names.append(name + '_history')
         names.append('production_output_turn0')
         names.append('max_resistance')
+        names.append('buffs')
         v = self.json_dump_simple(*names)
         v['resistance_groups'] = [g.json_dump()
             for g in self.resistance_groups]
@@ -559,6 +590,7 @@ class Cohort(JSONable):
             group.update(game, ui)
         # check for new rebellion
         self.spawn_rebels(game, ui)
+        self.buffs_end_turn()
         ui.msg('cohort %s update done' % self)
 
     def spawn_rebels(self, game, ui):

@@ -70,7 +70,9 @@ class Hideout(Order):
             model.game.player.hideout = choice
             ui.msg('setting player hideout to %s'%(choice))
             ui.update_info()
+
 all.append(Hideout())
+
 
 class BlowupGoods(Order):
     """Attack goods in an area"""
@@ -107,6 +109,44 @@ class BlowupGoods(Order):
             ui.update_info()
 
 all.append(BlowupGoods())
+
+
+class ReplaceWithPlanHurtLiberty(Order):
+    """Hurt liberty... this needs to be replaced with a rebel plan"""
+    label = 'Hurt liberty'
+
+    def __init__(self):
+        super(ReplaceWithPlanHurtLiberty, self).__init__()
+        self.full_cost = 1
+
+    def cost(self, zone):
+        return super(ReplaceWithPlanHurtLiberty, self).cost(zone)
+
+    PRIV="privileged"
+    SERV="servitor"
+    def execute(self, ui):
+        ui.ask_choice('Attack LIBERTY in cohort in %s zone?'%ui.zone.mode,
+            [self.PRIV,self.SERV,NO], self.chosen_target)
+
+    def chosen_target(self, ui, choice):
+        if choice == NO:
+            return
+        zone=model.game.moon.zones[ ui.zone.mode ]
+        co=None
+        if choice==self.PRIV:
+            co=zone.privileged
+        elif choice==self.SERV:
+            co=zone.servitor
+        if co is None:
+            return
+        model.game.player.activity_points -= self.cost(ui.zone)
+        ui.msg('un-liberty up %s %s'%(choice,co))
+        co.buff_stat('liberty',-.5,-.4,-.3,-.2)
+        ui.msg('          buffs %s'%(co.buffs))
+        ui.update_info()
+
+
+all.append(ReplaceWithPlanHurtLiberty())
 
 
 

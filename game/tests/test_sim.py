@@ -27,11 +27,13 @@ class FakeUI:
         self.savedir = savedir
         self.game=game
         model.game=game
+        self.messages_on=True
         self.messages = []
         self.zone=FakeUIZone(self)
         self.enter=None
         #
-        self.logging_begin(savedir)
+        if savedir:
+            self.logging_begin(savedir)
 
     def update_info(self):
         pass
@@ -58,8 +60,9 @@ class FakeUI:
 
 
     def msgdump(self):
-        for m in self.messages:
-            print self.msgfix(*m)
+        if self.messages_on:
+            for m in self.messages:
+                print self.msgfix(*m)
         self.messages=[]
     def msgfix(self, msg, args):
         if args:
@@ -145,7 +148,46 @@ def test_model_construction(savedir,*args,**kw):
 
 def test_zone_state():
     g = model.Game()
-    z = g.moon.zones['industry']
+    z = g.moon.zones[model.INDUSTRY]
     # at the start of the game, the zone should be strong
     assert z.faction.state_description == 'strong'
     # TODO - when the state can change, test it here
+
+
+@savedir
+def test_buffing(savedir,*args,**kw):
+
+    g = model.Game()
+    ui = FakeUI(savedir,g)
+    ui.messages_on=False
+    g.init_new_game(ui)
+    g.json_savefile(os.path.join(savedir, 'save.json'))
+
+    bufftest=[.1,.2,.3,.4]
+    buff=[]
+    priv=g.moon.zones[ model.INDUSTRY ].privileged
+    for n in range(100):
+        if n in [ 5 ]:
+            ui.msg('about to order')
+            if n==5:
+                ui.entered='OK'
+                ui.zone.setzone(model.INDUSTRY)
+                player_orders.Hideout().execute(ui)
+            priv.buff_stat('liberty',*bufftest)
+            buff=bufftest[:]
+
+        dm=0
+        if buff:
+            dm=buff[0]
+            del buff[0]
+        print 'gturn %s'%(g.turn)
+        print 'buff %s'%(buff)
+        print 'testing %s with %s'%( priv.liberty,priv.buffs )
+        print 'testing %s == %s'%( priv.liberty,priv.fetch('liberty') )
+        assert( priv.liberty==g.MED*2 )
+        assert( priv.fetch('liberty')==g.MED*2+dm )
+        ui.on_new_turn()
+
+
+
+
