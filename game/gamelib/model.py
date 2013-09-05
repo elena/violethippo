@@ -558,7 +558,8 @@ class Cohort(JSONable):
     def rebellious(self):
         """Rebellion is caused by low liberty, quality of life, and cash.
         """
-        return min(self.liberty, self.quality_of_life, self.cash)
+        vals = [self.liberty, self.quality_of_life, self.cash]
+        return 1. - sum(vals + [min(vals)]) / 4
 
     def update(self, game, ui):
         for group in self.resistance_groups:
