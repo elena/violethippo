@@ -96,6 +96,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
         self.threat_label.element.text = 'Threat: %d' % model.game.threat
         self.visible_label.element.text = 'Visibility: %.1f' % model.game.player.visibility
+        self.info.display_zone(self.zone.mode)
 
         if not model.game.player.hideout:
             # show Establish/Move hideout button only
@@ -246,7 +247,6 @@ class Zone(Layer):
         self.mode = active_zone
         self.active.image = self.zone_images[active_zone]
         self.parent.update()
-        self.parent.info.display_zone(active_zone)
         self.parent.info.hide_info()
 
         self.resistance_buts = []
