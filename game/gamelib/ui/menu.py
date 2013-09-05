@@ -14,9 +14,8 @@ from overview import Overview
 
 
 def list_saves(directory='save'):
-    # TODO: ignore saves which don't match model.DATA_VERSION
-    # version is last part of the filename, after last '_' and
-    # before the last '.'
+    if not os.path.exists(directory):
+        return []
     r = []
     for m, n in sorted((os.stat(os.path.join('save', n)).st_mtime, n)
         for n in os.listdir('save') if n not in '..'):
