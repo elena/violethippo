@@ -44,7 +44,7 @@ class Buffable(object):
         v=getattr( self,name)
         if v is None:
             v=0.0
-        if name in self.buffs:
+        if name in self.buffs.keys():
             if self.buffs[name]:
                 v+=self.buffs[name][0]
         return v
@@ -521,9 +521,9 @@ class Cohort(JSONable,Buffable):
         self.quality_of_life = quality_of_life        # provided services
         self.cash = cash           # additional discretionary money
         self.resistance_groups = []   # list of resistance groups
+        self.buffs= {}
         self.production_output_turn0=self.production_output()
         self.max_resistance = max_resistance
-        self.buffs= {}
 
     def json_dump(self):
         names = []
@@ -567,14 +567,14 @@ class Cohort(JSONable,Buffable):
         """Servitors: Willingness can be forced through low liberty,
            or the product of high quality of life and cash in combination.
         """
-        return max(1.-self.liberty, (self.quality_of_life + self.cash)/2)
+        return max(1.-self.fetch('liberty'), (self.quality_of_life + self.cash)/2)
 
     @property
     def efficiency(self):
         """priv: efficiency is mostly QOL and somewhat influenced by
         liberty and cash
         """
-        return (2* self.quality_of_life + self.liberty + self.cash)/4.
+        return (2* self.quality_of_life + self.fetch('liberty') + self.cash)/4.
 
     @property
     def rebellious(self):

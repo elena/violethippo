@@ -125,10 +125,10 @@ def test_model_construction(savedir,*args,**kw):
 
 
     for n in range(100):
-        #if n in [ 5,6,7,8,9 ]:
+        if n in [ 5,6,7,8,9 ]:
         #if n in [ 5,6,7,8 ]:
         #if n in [ 5,6,7 ]:
-        if n in [ 5,6 ]:
+        #if n in [ 5,6 ]:
         #if n in [ 5, ]:
         #if n in [ 5,7,8,9,11 ]:
         #if n in [ 5,7,8,9 ]:
@@ -139,8 +139,10 @@ def test_model_construction(savedir,*args,**kw):
                 ui.entered='OK'
                 ui.zone.setzone('industry')
                 player_orders.Hideout().execute(ui)
-            ui.entered='OK'
-            player_orders.BlowupGoods().execute(ui)
+            #ui.entered='OK'
+            #player_orders.BlowupGoods().execute(ui)
+            ui.entered=player_orders.ReplaceWithPlanHurtLiberty.PRIV
+            player_orders.ReplaceWithPlanHurtLiberty().execute(ui)
             ui.msg('done order')
             ui.update()
         ui.on_new_turn()

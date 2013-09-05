@@ -141,7 +141,8 @@ class ReplaceWithPlanHurtLiberty(Order):
             return
         model.game.player.activity_points -= self.cost(ui.zone)
         ui.msg('un-liberty up %s %s'%(choice,co))
-        co.buff_stat('liberty',-.5,-.4,-.3,-.2)
+        #co.buff_stat('liberty',-.5,-.4,-.3,-.2)
+        co.buff_stat('liberty',-.5,-.1)
         ui.msg('          buffs %s'%(co.buffs))
         ui.update_info()
 
