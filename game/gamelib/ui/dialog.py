@@ -10,6 +10,16 @@ from ninepatch import NinePatch
 
 
 class OkLayer(Layer):
+    '''A Layer that asks a question and consumes keyboard and mouse clicks to
+    dismiss.
+
+    The title is the message you wish to convey; the explanation is additional
+    optional text that may go over multiple lines. If the explanation is
+    provided you may also specify the width of the dialog (default 400px).
+
+    The callback is invoked with the parent scene (the "ui") when the dialog
+    is dismissed.
+    '''
     is_event_handler = True
 
     def __init__(self, title, callback, explanation=None, width=400):
@@ -72,6 +82,18 @@ class OkLayer(Layer):
         return True
 
 class ChoiceLayer(Layer):
+    '''A Layer that asks a question with a choice of answers and consumes
+    keyboard and mouse clicks to dismiss.
+
+    Supply a 'cancel' choice if you wish that to be an option for the user.
+
+    The title is the message you wish to convey; the explanation is additional
+    optional text that may go over multiple lines. If the explanation is
+    provided you may also specify the width of the dialog (default 400px).
+
+    The callback is invoked with the parent scene (the "ui") and the choice
+    selected by the user when the dialog is dismissed.
+    '''
     is_event_handler = True
 
     def __init__(self, title, choices, callback, explanation=None, width=400):
