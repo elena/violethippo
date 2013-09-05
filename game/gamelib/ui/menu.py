@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+import time
 from cocos.director import director
 from cocos.layer import MultiplexLayer
 from cocos.menu import Menu, MenuItem, zoom_in, zoom_out, CENTER
@@ -21,7 +22,18 @@ def list_saves(directory='save'):
         with open(os.path.join('save', n)) as f:
             d = json.load(f)
             if d['.data_version'] == model.DATA_VERSION:
-                r.append(n)
+                # TODO use a nice-date printer of some sort here
+                t = time.localtime(d['.turn_date'])
+                mon = time.strftime('%b', t)
+                h = t.tm_hour
+                if h > 12:
+                    h -= 12
+                    ap = 'PM'
+                else:
+                    ap = 'AM'
+                ds = '%s %d %d:%02d%s' % (mon, t.tm_mday, h, t.tm_min, ap)
+                title = '%s (turn %d)' % (ds, d['.turn'])
+                r.append((n, title, d))
     return r
 
 
@@ -37,15 +49,17 @@ class MainMenu(Menu):
         self.title_label = "Menu"
 
         items = []
+        saves = list_saves()
         if os.path.exists('save'):
-            num_saves = len(list_saves())
+            num_saves = len(saves)
         else:
             num_saves = 0
         if num_saves < 5:
             # that restriction is to keep the load menu fitting on the screen
             items.append(MenuItem('New Game', self.on_new_game))
         if num_saves:
-            items.append(MenuItem('Continue Game', self.on_continue_game))
+            items.append(MenuItem('Continue Game - %s' % saves[-1][1],
+                self.on_continue_game))
             items.append(MenuItem('Load Game', self.on_load_game))
         items.append(MenuItem('Options', self.on_options))
         items.append(MenuItem('Quit', self.on_quit))
@@ -68,7 +82,7 @@ class MainMenu(Menu):
 
     def on_continue_game(self):
         # play the last modified game
-        name = list_saves()[-1]
+        name = list_saves()[-1][0]
         game = model.Game.json_loadfile(os.path.join('save', name))
         model.game = game
         director.push(Overview())
@@ -107,6 +121,7 @@ class OptionMenu(Menu):
 
 
 class LoadMenu(Menu):
+    # TODO finish me
     def on_select_game(self, filename):
         game = model.Game.json_loadfile(os.path.join('save', filename))
         model.game = game
