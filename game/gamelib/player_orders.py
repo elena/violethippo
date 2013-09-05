@@ -98,7 +98,7 @@ class BlowupGoods(Order):
             if model.GOODS in zone.store:
                 ui.msg('blowing up goods in %s'%(zone.store))
                 boom=zone.store[model.GOODS]
-                boom=max( 0, boom-2.5 )
+                boom=max( 0, boom-2.0 )
                 zone.store[model.GOODS]=boom
                 ui.msg('booooooooooooooooom %s'%(zone.store))
             else:

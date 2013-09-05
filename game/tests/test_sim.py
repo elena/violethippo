@@ -122,11 +122,20 @@ def test_model_construction(savedir,*args,**kw):
 
 
     for n in range(100):
-        if n==5:
+        #if n in [ 5,6,7,8,9 ]:
+        #if n in [ 5,6,7,8 ]:
+        #if n in [ 5,6,7 ]:
+        if n in [ 5,6 ]:
+        #if n in [ 5, ]:
+        #if n in [ 5,7,8,9,11 ]:
+        #if n in [ 5,7,8,9 ]:
+        #if n in [ 5,7,8 ]:
+        #if n in [ 5,7 ]:
             ui.msg('about to order')
-            ui.entered='OK'
-            ui.zone.setzone('industry')
-            player_orders.Hideout().execute(ui)
+            if n==5:
+                ui.entered='OK'
+                ui.zone.setzone('industry')
+                player_orders.Hideout().execute(ui)
             ui.entered='OK'
             player_orders.BlowupGoods().execute(ui)
             ui.msg('done order')

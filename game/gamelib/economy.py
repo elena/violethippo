@@ -49,7 +49,7 @@ class Zone_Economy:
         self.supply_efficiency=10.
         for n in self.requirements:
             self.supply_efficiency=min( self.supply_efficiency,
-                                        self.store.get(n,0)+.333
+                                        self.store.get(n,0)+1.
                                       )
         ui.msg('    %s %s'%(self.name,self.store) )
         ui.msg('    %s         %s %s'%(self.name,self.supply_efficiency,self.requirements))
