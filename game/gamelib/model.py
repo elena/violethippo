@@ -92,6 +92,8 @@ class Game(JSONable):
     EASE_QUAD=2
     EASE_CUBIC=3
 
+    def __str__(self):
+        return '{{{GAME}}}'
     def __init__(self):
         self.moon = Moon()
         self.player = Player()
@@ -239,6 +241,8 @@ class Player(JSONable):
     each additional player action costs 3 activity points (possibly some
         are more expensive when purchased this way)
     """
+    def __str__(self):
+        return '{{{Player}}}'
     def __init__(self, visibility=0, activity_points=0, max_activity_points=3, hideout=None):
         self.discovery_chance = 0    # TODO I think this is unnecessary...
         self.visibility = visibility   # affected by orders with "Instigator Noticeable"
@@ -270,6 +274,8 @@ class Moon(JSONable):
     should be represented, or able to be derived from detailed zone/faction
     status.
     """
+    def __str__(self):
+        return '{{{Moon}}}'
     def __init__(self):
         self.zones = dict(
             industry=Zone.create_industry(),
@@ -307,6 +313,8 @@ class Zone(JSONable,economy.Zone_Economy):
     Utilize Servitor Cohort to carry out work
     Resource requirements must be met or dropoff in output.
     """
+    def __str__(self):
+        return '{{{Zone:%s}}}'%(self.name)
     def __init__(self, name):
         self.name = name
         # economy / production
@@ -472,6 +480,8 @@ class Cohort(JSONable):
     quality_of_life = RecordedAttribute('quality_of_life')
     cash = RecordedAttribute('cash')
 
+    def __str__(self):
+        return '{{{Cohort}}}'
     def __init__(self, size, liberty, quality_of_life, cash, max_resistance):
         self.size = size           # how many in population
         self.liberty = liberty        # freedom from rules and monitoring
@@ -547,6 +557,8 @@ class Cohort(JSONable):
 
 
 class Privileged(Cohort):
+    def __str__(self):
+        return '{{{Cohort.priv}}}'
     def production_output(self):
         return self.efficiency
 
@@ -556,6 +568,8 @@ class Privileged(Cohort):
 
 
 class Servitor(Cohort):
+    def __str__(self):
+        return '{{{Cohort.serv}}}'
     def production_output(self):
         return self.willing
 
@@ -575,6 +589,8 @@ class Group(JSONable):
     loyal = RecordedAttribute('loyal')
     rich = RecordedAttribute('rich')
 
+    def __str__(self):
+        return '{{{Group:%s}}}'%(self.name)
     def __init__(self, name, size, informed, smart, loyal, rich, buffs):
         self.name = name
         self.size = size
@@ -671,6 +687,8 @@ class Resistance(Group):
     visibility = RecordedAttribute('visibility')
     modus_operandi = RecordedAttribute('modus_operandi')
 
+    def __str__(self):
+        return '{{{Resistance:%s}}}'%(self.name)
     def __init__(self, name, size, informed, smart, loyal, rich, buffs,
             visibility, modus_operandi):
         super(Resistance, self).__init__(name, size, informed, smart, loyal,
