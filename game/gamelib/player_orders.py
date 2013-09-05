@@ -70,6 +70,48 @@ class Hideout(Order):
             ui.msg('setting player hideout to %s'%(choice))
 all.append(Hideout())
 
+class BlowupGoods(Order):
+    """Attack goods in an area"""
+    label = 'Blow up Goods'
+
+    def __init__(self):
+        super(BlowupGoods, self).__init__()
+        self.full_cost = 1
+
+    def cost(self, zone):
+        if not model.game.player.hideout:
+            return 0
+        if model.game.player.hideout == zone.mode:
+            return None
+        return super(BlowupGoods, self).cost(zone)
+
+    def execute(self, ui):
+        ui.ask_choice('Attack goods stored in %s zone?'%ui.zone.mode,
+            YESNO, self.chosen_yn)
+
+    def chosen_yn(self, ui, choice):
+        ui.msg('blowing up %s'%(choice))
+        if choice == YES:
+            zone=model.game.moon.zones[ ui.zone.mode ]
+            ui.msg('blowing up goods in %s'%(ui.zone.mode))
+            ui.msg('blowing up goods in %s'%(zone.name))
+            model.game.player.activity_points -= self.cost(ui.zone)
+            ui.msg('blowing up goods in %s'%(zone.store))
+            if model.GOODS in zone.store:
+                ui.msg('blowing up goods in %s'%(zone.store))
+                boom=zone.store[model.GOODS]
+                boom=max( 0, boom-25 )
+                zone.store[model.GOODS]=boom
+                ui.msg('booooooooooooooooom %s'%(zone.store))
+            else:
+                ui.msg('no goods in %s'%(zone.store))
+            ui.msg('blowing up goods in %s'%(zone.store[model.GOODS]))
+            ui.msg('blowing up goods in %s'%(zone.store[model.GOODS]))
+            ui.msg('blowing up goods in %s'%(zone.store[model.GOODS]))
+
+all.append(BlowupGoods())
+
+
 
 class ZoneIntel(Order):
     """Information on the disposition of the cohorts and the zone itself. We

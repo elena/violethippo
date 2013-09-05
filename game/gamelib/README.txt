@@ -95,25 +95,26 @@ Industry - Goods and Food
   Staffed by Privileged Cohort
   Requires Enforcement (military)
   Requires Raw Materials (logistics)
+  **Requires Goods (Industry == self!)
   Provides Goods -> support all Cohorts in all zones
 
 Military - Force and Stability
   Run by Privileged Cohort
   Staffed by Servitor/Warrior Cohort (harder to infiltrate than others)
-  Requires Resources (economic)
+  **Requires Goods (economic)
   Requires Manpower (logistics)
   Provides Enforcement
 
 Logistics - Transport to and from Planet
   Staffed by Privileged Cohort
   Supported by small Servitor Cohort
-  Requires Resources (economic)
+  **Requires Goods (economic)
   Requires Enforcement (military)
   Provides Raw Material from planet
   Provides Manpower from planet
 
 
-quality of life   <-- resources
+quality of life   <-- goods
 liberty <-- faction plan setting
 cash  <-- constant
 
@@ -122,6 +123,6 @@ Production method is:
   turn N+1: ship out to other zones from local stocks
   turn N+2: used in other zone
 This is one by performing the following steps each turn:
-  * consume resources in prep for production
-  * transport last turns output to a new destination
-  * produce (based on consume availaibilty )
+  * consume <things> in prep for production
+  * transport last turns <things> to a new destination
+  * produce <things> (based on consume availaibilty )

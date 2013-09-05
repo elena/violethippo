@@ -6,6 +6,8 @@ import random
 
 from gamelib.plans.base import Plan
 
+import economy
+
 # please update this when saves will not be valid
 # do not use '.' or '_'
 DATA_VERSION = '02'
@@ -181,7 +183,9 @@ class Game(JSONable):
         #
         ui.msg('game: saving')
         self.json_savefile_turn()
-        ui.msg('game: update done. now turn %s'%self.turn)
+        ui.msg('-'*70)
+        ui.msg('game: update DONE. now turn %s'%self.turn)
+        ui.msg('-'*70)
 
     def calculate_threat(self):
         self.threat = 0
@@ -286,14 +290,16 @@ class Moon(JSONable):
         ui.msg('%s updating moon'%self)
         supply_use={}
         for zone in self.zones:
-            self.zones[zone].update_pre_consume(game,ui)
-        for zone in self.zones:
-            self.zones[zone].update_pre_transport(game,ui)
-        for zone in self.zones:
             self.zones[zone].update(game,ui)
+        for zone in self.zones:
+            self.zones[zone].economy_consume(game,ui)
+        for zone in self.zones:
+            self.zones[zone].economy_transport(game,ui)
+        for zone in self.zones:
+            self.zones[zone].economy_produce(game,ui)
 
 
-class Zone(JSONable):
+class Zone(JSONable,economy.Zone_Economy):
     """Convert a raw material into a resource
 
     Contain two Cohorts (population groups)
@@ -304,19 +310,13 @@ class Zone(JSONable):
     def __init__(self, name):
         self.name = name
         # economy / production
-        self.requirements = []  # what raw materials are needed, how much
-        self.provides = []      # what are created from what volume of inputs
-        self.store= {}          # moving stuff around
+        economy.Zone_Economy.__init__(self)
         # groups
         self.privileged = None  # privileged cohort
         self.servitor = None    # servitor cohort
         self.faction = None
         self.player_found = 0  # close to finding player in zone
 
-    def setup_turn0(self):
-        for n in self.requirements + self.provides:
-            # print '>>>>00000 Creating:',self.name,n
-            self.store[n]=100.
 
     @classmethod
     def create_industry(cls):
@@ -421,35 +421,6 @@ class Zone(JSONable):
 
 
 
-    def update_pre_consume(self,game,ui):
-        #
-        # Consume:
-        ui.msg('ZONE: production.consume %s'%(self.name))
-        self.supply_use=100
-        for n in self.requirements:
-            self.supply_use=min( self.supply_use, self.store.get(n,0) )
-        ui.msg('  +++pre   consume store: %s'%(self.store) )
-        for n in self.requirements:
-            ui.msg('     consume: %s %s'%(n,self.supply_use))
-            if n not in self.store:
-                self.store[n]=0
-            self.store[n]-= self.supply_use
-        ui.msg('  +++final consume store: %s'%(self.store) )
-
-    def update_pre_transport(self,game,ui):
-        #
-        # Transport:
-        ui.msg('ZONE: production.transport %s'%(self.name))
-        for n in self.provides:
-            trans=self.store.get(n,0)
-            self.store[n]-=trans
-            for z in game.moon.zones.values():
-                if n in z.requirements:
-                    if z!=self:
-                        z.store[n]+=trans
-                        ui.msg('     mv %s->-%s: %s %s'%(self.name,z.name,n,trans))
-        ui.msg('  +++final trans store: %s'%(self.store) )
-
 
 
     def update(self, game, ui):
@@ -458,37 +429,6 @@ class Zone(JSONable):
         self.privileged.update(game, ui)
         self.servitor.update(game, ui)
         self.faction.update(game, ui)
-        # Process Raw Materials and create Resources
-        # (this needs work)
-        #
-        # To pipeline the economy, we must:
-        #     consume, transport, produce
-        #     those first two steps have been done already
-        #
-        # Produce:
-        ui.msg('ZONE: production.produce %s'%(self.name))
-        ui.msg('  +++final pre store: %s'%(self.store) )
-        prodbase=self.produce( self.privileged.production_output_turn0,
-                               self.servitor.production_output_turn0 )
-        prodcurr=self.produce( self.privileged.production_output(),
-                               self.servitor.production_output() )
-        # requires impacts this too
-        output=int(self.supply_use*prodcurr/prodbase)
-        ui.msg('   supply use (man 100): %s'%(self.supply_use))
-        ui.msg('   req: %s'%(self.requirements) )
-        ui.msg('   provides: %s'%(self.provides))
-        ui.msg('     priv:base: %s'%(self.privileged.production_output_turn0))
-        ui.msg('     serv:base: %s'%(self.servitor.production_output_turn0))
-        ui.msg('     priv:curr: %s'%(self.privileged.production_output()))
-        ui.msg('     serv:curr: %s'%(self.servitor.production_output()))
-        ui.msg('   base: %s  curr: %s'%(prodbase,prodcurr))
-        ui.msg('   prod: %s(percent)'%( output ))
-        for prod in self.provides:
-            if prod not in self.store:
-                self.store[ prod ]=0
-            self.store[ prod ] += output
-            ui.msg('   ......prod: %s %s -> %s '%( prod, output,self.store[prod] ))
-        ui.msg('  +++final prod store: %s'%(self.store) )
         # test for killing output
         ui.msg('      killing qol: %s',self.privileged.quality_of_life)
         self.privileged.quality_of_life=self.privileged.quality_of_life*.9
@@ -503,6 +443,10 @@ class Zone(JSONable):
                 # perhaps not able to be found unless hideout in zone?
             self.player_found = min(self.player_found, 1)
             ui.msg('player found in %s: %f'%(self.name, self.player_found))
+        #
+        # Economy is now updated *after* update via moon.update.
+        # Economy code is now in economy.py
+        #
 
 
 

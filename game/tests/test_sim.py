@@ -5,23 +5,49 @@ import time
 import functools
 
 from gamelib import model, player_orders
-from gamelib.plans.base import Plan
+#from gamelib.plans.base import Plan
+
+
+class FakeUIZone:
+    def __init__(self,ui):
+        self.ui=ui
+        self.mode=ui.game.moon.zones.keys()[0]
+        ui.msg('inside zone %s'%(self.mode))
 
 class FakeUI:
     class SIGNAL_GAMEOVER(Exception):
         pass
 
+    def ask_choice(self,title,choices,callback):
+        self.msg('ASK: %s'%([title,choices]))
+        while True:
+            ask=raw_input('     %s'%([title,choices]))
+            try:
+                self.msg("   === %s"%(choices[int(ask)]))
+                ask=choices[int(ask)]
+            except:
+                pass
+            for c in choices:
+                if c.lower()==ask.lower():
+                    self.msg("   === %s"%(c))
+                    return callback(self,c)
+            self.msg("      ? dunno ? %s"%([ask]))
+        raise Exception
+
+
     def __init__(self, savedir,game):
         self.savedir = savedir
         self.game=game
         model.game=game
+        self.messages = []
+        self.zone=FakeUIZone(self)
         #
         self.logging_begin(savedir)
-        self.messages = []
 
     def msgdump(self):
         for m in self.messages:
             print self.msgfix(*m)
+        self.messages=[]
     def msgfix(self, msg, args):
         if args:
             try:
@@ -41,7 +67,6 @@ class FakeUI:
 
 
     def on_new_turn(self):
-        self.messages=[]
         try:
             model.game.update(self)
         except self.SIGNAL_GAMEOVER:
@@ -73,7 +98,6 @@ def test_model_construction(savedir,*args,**kw):
     ui = FakeUI(savedir,g)
     ui.on_new_turn()
 
-    print 'save'
     g2 = g.json_loadfile(os.path.join(savedir, 'save.json'))
     g2.json_savefile(os.path.join(savedir, 'save.json.verify'))
     # diffing save.json and save.json.verify should be equal...
@@ -83,6 +107,11 @@ def test_model_construction(savedir,*args,**kw):
         assert f1.read() == f2.read()
 
     ui.on_new_turn()
+    order=player_orders.BlowupGoods()
+    ui.msg('about to order')
+    order.execute(ui)
+    ui.msg('done order')
+    ui.update()
     ui.on_new_turn()
     ui.on_new_turn()
     ui.on_new_turn()
