@@ -170,6 +170,12 @@ class Zone(Layer):
     MODE_LOGISTICS = 'logistics'
     MODE_MILITARY = 'military'
 
+    ZONE_BUTTONS = {
+        MODE_INDUSTRY: {MODE_LOGISTICS: (30, 95), MODE_MILITARY: (70, 15)},
+        MODE_LOGISTICS: {MODE_INDUSTRY: (45, 530), MODE_MILITARY: (70, 15)},
+        MODE_MILITARY: {MODE_INDUSTRY: (45, 530), MODE_LOGISTICS: (15, 450)},
+    }
+
     def __init__(self):
         super(Zone, self).__init__()
         w, h = director.get_window_size()
@@ -206,9 +212,12 @@ class Zone(Layer):
             (self.MODE_MILITARY, 'servitor'): shuffled(serv_locs),
         }
 
-        self.but_industry = Sprite('industry button.png', position=(30, 600), anchor=(0, 0))
-        self.but_logistics = Sprite('logistics button.png', position=(230, 600), anchor=(0, 0))
-        self.but_military = Sprite('military button.png', position=(430, 600), anchor=(0, 0))
+        self.but_industry = Sprite('industry button.png',
+            position=(45, 530), anchor=(0, 0))
+        self.but_logistics = Sprite('logistics button.png',
+            position=(30, 95), anchor=(0, 0))
+        self.but_military = Sprite('military button.png',
+            position=(70, 15), anchor=(0, 0))
         self.resistance_buts = []
 
         self.but_industry.visible = False
@@ -244,10 +253,12 @@ class Zone(Layer):
 
         if active_zone == self.MODE_INDUSTRY:
             self.but_industry.visible = False
+            self.but_logistics.position = (30, 95)
         elif active_zone == self.MODE_LOGISTICS:
             self.but_logistics.visible = False
         elif active_zone == self.MODE_MILITARY:
             self.but_military.visible = False
+            self.but_logistics.position = (15, 450)
 
         self.mode = active_zone
         self.active.image = self.zone_images[active_zone]
