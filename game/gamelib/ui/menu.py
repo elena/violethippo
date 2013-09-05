@@ -54,9 +54,11 @@ class MainMenu(Menu):
             num_saves = len(saves)
         else:
             num_saves = 0
-        if num_saves < 5:
+        # if num_saves < 5:
             # that restriction is to keep the load menu fitting on the screen
-            items.append(MenuItem('New Game', self.on_new_game))
+            # items.append(MenuItem('New Game', self.on_new_game))
+        # new game is more important at the moment (and load game no work)
+        items.append(MenuItem('New Game', self.on_new_game))
         if num_saves:
             items.append(MenuItem('Continue Game - %s' % saves[-1][1],
                 self.on_continue_game))
