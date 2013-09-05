@@ -452,6 +452,13 @@ class Zone(JSONable,economy.Zone_Economy):
         # Economy is now updated *after* update via moon.update.
         # Economy code is now in economy.py
         #
+        for n in [ ENFORCEMENT,RAW_MATERIAL,GOODS,MANPOWER ]:
+            v=self.store.get(n,0)
+            ui.msg('GRAPH: store %s %s.%s %s'%(game.turn,self.name,n,v))
+        for c in [ self.privileged, self.servitor]:
+            for n in ['size','liberty','quality_of_life','cash','willing','efficiency']:
+                ui.msg('GRAPH: %s.pop %s %s.%s %s'%(self.name,game.turn,c.NAME,n,getattr(c,n)))
+
 
 
 
@@ -472,7 +479,7 @@ class Cohort(JSONable):
     liberty = RecordedAttribute('liberty')
     quality_of_life = RecordedAttribute('quality_of_life')
     cash = RecordedAttribute('cash')
-
+    NAME='cohort'
     def __repr__(self):
         return '{{{Cohort}}}'
 

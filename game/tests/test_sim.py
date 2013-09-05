@@ -109,8 +109,6 @@ def test_model_construction(savedir,*args,**kw):
     g.init_new_game(ui)
 
     g.json_savefile(os.path.join(savedir, 'save.json'))
-    ui.on_new_turn()
-
     g2 = g.json_loadfile(os.path.join(savedir, 'save.json'))
     g2.json_savefile(os.path.join(savedir, 'save.json.verify'))
     # diffing save.json and save.json.verify should be equal...
@@ -119,18 +117,18 @@ def test_model_construction(savedir,*args,**kw):
     with open(n) as f1, open(n + '.verify') as f2:
         assert f1.read() == f2.read()
 
-    ui.on_new_turn()
-    ui.msg('about to order')
-    ui.entered='OK'
-    ui.zone.setzone('industry')
-    player_orders.Hideout().execute(ui)
-    ui.entered='OK'
-    player_orders.BlowupGoods().execute(ui)
-    ui.msg('done order')
-    ui.update()
-    ui.on_new_turn()
-    ui.on_new_turn()
-    ui.on_new_turn()
+
+    for n in range(50):
+        if n==5:
+            ui.msg('about to order')
+            ui.entered='OK'
+            ui.zone.setzone('industry')
+            player_orders.Hideout().execute(ui)
+            ui.entered='OK'
+            player_orders.BlowupGoods().execute(ui)
+            ui.msg('done order')
+            ui.update()
+        ui.on_new_turn()
 
 
 def test_zone_state():
