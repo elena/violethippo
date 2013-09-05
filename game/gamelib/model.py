@@ -437,10 +437,6 @@ class Zone(JSONable,economy.Zone_Economy):
         self.privileged.update(game, ui)
         self.servitor.update(game, ui)
         self.faction.update(game, ui)
-        # test for killing output
-        ui.msg('      killing qol: %s',self.privileged.quality_of_life)
-        self.privileged.quality_of_life=self.privileged.quality_of_life*.9
-        ui.msg('       killed qol: %s',self.privileged.quality_of_life)
         #
         # continue to search for the player
         if self.player_found < 1:
@@ -456,10 +452,6 @@ class Zone(JSONable,economy.Zone_Economy):
         # Economy code is now in economy.py
         #
 
-
-
-    def produce(self,boss,workers):
-      return workers * boss
 
 
 

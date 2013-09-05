@@ -26,14 +26,14 @@ class Zone_Economy:
     def setup_turn0(self):
         for n in self.requirements + self.provides:
             # print '>>>>00000 Creating:',self.name,n
-            self.store[n]=100.
+            self.store[n]=10.
 
 
     def economy_consume(self,game,ui):
         #
         # Consume:
         ui.msg('ZONE.economy: production.consume %s'%(self.name))
-        self.supply_use=100
+        self.supply_use=10.
         for n in self.requirements:
             self.supply_use=min( self.supply_use, self.store.get(n,0) )
         ui.msg('  +++pre   consume store: %s'%(self.store) )
@@ -77,7 +77,7 @@ class Zone_Economy:
                                self.servitor.production_output() )
         # requires impacts this too
         output=int(self.supply_use*prodcurr/prodbase)
-        ui.msg('   supply use (man 100): %s'%(self.supply_use))
+        ui.msg('   supply use (max 10): %s'%(self.supply_use))
         ui.msg('   req: %s'%(self.requirements) )
         ui.msg('   provides: %s'%(self.provides))
         ui.msg('     priv:base: %s'%(self.privileged.production_output_turn0))
