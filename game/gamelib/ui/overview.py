@@ -124,19 +124,20 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             # enable turn button and all the player actions
             self.end_turn.visible = True
 
+        # update player action buttons
         w, h = director.get_window_size()
         for but in self.player_action_buts:
             self.remove(but)
         self.player_action_buts = []
-        y = h - 128
+        y = 560
         for order in player_orders.all:
             cost = order.cost(self.zone)
             if cost is None:
                 continue
             b = LabelNinepatch('border-9p.png', Label('%dAP: %s' % (cost,
-                order.label), x = w - 200, y=y, color=(0, 0, 0, 255),
-            anchor_x='left', anchor_y='bottom'))
-            y -= 32
+                order.label), x = 730, y=y, color=(0, 0, 0, 255),
+                anchor_x='left', anchor_y='bottom'))
+            y -= 40
             b.order = order
             self.player_action_buts.append(b)
             self.add(b)
@@ -225,19 +226,17 @@ class Zone(Layer):
             (self.MODE_MILITARY, 'servitor'): shuffled(serv_locs),
         }
 
-        self.but_industry = Sprite('industry button.png',
-            position=(45, 530), anchor=(0, 0))
-        self.but_logistics = Sprite('logistics button.png',
-            position=(30, 95), anchor=(0, 0))
-        self.but_military = Sprite('military button.png',
-            position=(70, 15), anchor=(0, 0))
+        self.zone_buts = {
+            self.MODE_INDUSTRY: Sprite('industry button.png', anchor=(0, 0)),
+            self.MODE_LOGISTICS: Sprite('logistics button.png', anchor=(0, 0)),
+            self.MODE_MILITARY: Sprite('military button.png', anchor=(0, 0)),
+        }
+
         self.resistance_buts = []
 
-        self.but_industry.visible = False
-
-        self.add(self.but_industry)
-        self.add(self.but_logistics)
-        self.add(self.but_military)
+        self.add(self.zone_buts[self.MODE_INDUSTRY])
+        self.add(self.zone_buts[self.MODE_LOGISTICS])
+        self.add(self.zone_buts[self.MODE_MILITARY])
 
     def on_enter(self):
         super(Zone, self).on_enter()
@@ -257,20 +256,10 @@ class Zone(Layer):
         for but in self.resistance_buts:
             self.remove(but)
 
-        if active_zone == self.MODE_INDUSTRY:
-            self.but_industry.visible = False
-            self.but_logistics.visible = True
-            self.but_military.visible = True
-            self.but_logistics.position = (30, 95)
-        elif active_zone == self.MODE_LOGISTICS:
-            self.but_industry.visible = True
-            self.but_logistics.visible = False
-            self.but_military.visible = True
-        elif active_zone == self.MODE_MILITARY:
-            self.but_industry.visible = True
-            self.but_logistics.visible = True
-            self.but_military.visible = False
-            self.but_logistics.position = (15, 450)
+        # move buttons around
+        self.zone_buts[active_zone].position = (730, 630)
+        for other, location in self.ZONE_BUTTONS[active_zone].items():
+            self.zone_buts[other].position = location
 
         self.mode = active_zone
         self.active.image = self.zone_images[active_zone]
@@ -289,22 +278,14 @@ class Zone(Layer):
                 self.add(but, 2)
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if not self.mode == self.MODE_INDUSTRY and self.but_industry.get_rect().contains(x, y):
-            self.switch_zone_to(self.MODE_INDUSTRY)
-            return True         # event handled
-        if not self.mode == self.MODE_LOGISTICS and self.but_logistics.get_rect().contains(x, y):
-            self.switch_zone_to(self.MODE_LOGISTICS)
-            return True         # event handled
-        if not self.mode == self.MODE_MILITARY and self.but_military.get_rect().contains(x, y):
-            self.switch_zone_to(self.MODE_MILITARY)
-            return True         # event handled
+        for zone, but in self.zone_buts.items():
+            if zone == self.mode:
+                continue
+            if but.get_rect().contains(x, y):
+                self.switch_zone_to(zone)
+                return True         # event handled
 
-        # faction button is placed relative to the zone image so we need to
-        # shift the rect accordingly
-        # ALTERNATIVE: just check the relative-to-zone hits from now on, OR
-        #              place the faction button absolute...
-        x -= self.active.x
-        y -= self.active.y
+        # check other info display buttons
         if self.but_faction.get_rect().contains(x, y):
             self.parent.info.show_faction(self.mode)
             return True         # event handled
@@ -335,7 +316,7 @@ class Info(Layer):
         self.add(self.zone_label)
 
         self.info_label = Label('', multiline=True, color=(0, 0, 0, 255),
-            width=350, anchor_x='left', anchor_y='bottom', x=10, y=500)
+            width=350, anchor_x='left', anchor_y='bottom', x=10, y=250)
         self.info_label.visible = False
 
         self.popup_9p = LabelNinepatch('border-9p.png', self.info_label)
