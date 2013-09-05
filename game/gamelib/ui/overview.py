@@ -62,12 +62,30 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
     def __init__(self):
         super(Fixed, self).__init__()
-        w, h = director.get_window_size()
 
         self.console = DebugLayer()
         self.add(self.console, z=10)
         self.console.visible = False
 
+        # delay the rest of the initialisation so we can finish creating the
+        # game while the debug console is available
+        self.initialised = False
+
+        self.player_action_buts = []
+
+    def on_enter(self):
+        super(Fixed, self).on_enter()
+        if self.initialised:
+            return
+
+        # ok, do we need to finish creating the game?
+        if model.game.turn == 0:
+            # prior to first turn
+            model.game.init_new_game(self)
+
+        w, h = director.get_window_size()
+
+        # now it's safe to show information about the game
         self.threat_label = Label('', color=(0, 0, 0, 255), x=0, y=h, anchor_y='top')
         self.add(self.threat_label)
         self.visible_label = Label('', color=(0, 0, 0, 255), x=0, y=h-20, anchor_y='top')
@@ -87,16 +105,12 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.zone = Zone()
         self.add(self.zone)
 
-        self.player_action_buts = []
-        self.update()
+        self.update_info()
 
-    def on_enter(self):
-        super(Fixed, self).on_enter()
-        if model.game.turn == 0:
-            # prior to first turn
-            model.game.init_new_game(self)
+        # now we're done
+        self.initialised = True
 
-    def update(self):
+    def update_info(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
             model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
         self.threat_label.element.text = 'Threat: %d' % model.game.threat
@@ -160,7 +174,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             pass
         if model.game.player.hideout:
             self.zone.switch_zone_to(model.game.player.hideout)
-        self.update()
+        self.update_info()
 
 
 class Zone(Layer):
@@ -191,18 +205,17 @@ class Zone(Layer):
             position=(75+256, 75+256))
         self.add(self.active)
 
-        self.but_faction = Sprite('faction button.png', position=(0, 200))
-        self.active.add(self.but_faction)
+        self.but_faction = Sprite('faction button.png', position=(270, 460), anchor=(0, 0))
+        self.add(self.but_faction, z=1)
 
-        self.but_privileged = Sprite('privileged button.png', position=(-128, 64))
-        self.active.add(self.but_privileged)
+        self.but_privileged = Sprite('privileged button.png', position=(85, 361), anchor=(0, 0))
+        self.add(self.but_privileged, z=1)
 
-        self.but_servitors = Sprite('servitors button.png', position=(128, -200))
-        self.active.add(self.but_servitors)
+        self.but_servitors = Sprite('servitors button.png', position=(340, 200), anchor=(0, 0))
+        self.add(self.but_servitors, z=1)
 
-        priv_locs = [(60, 164), (160, 64)]
-        serv_locs = [(-128, -256), (-100, -200), (-60, -256),
-            (160, -64)]
+        priv_locs = [(340, 385), (440, 400)]
+        serv_locs = [(120, 280), (220, 220), (300, 285), (420, 275)]
         self.resistance_locations = {
             (self.MODE_INDUSTRY, 'privileged'): shuffled(priv_locs),
             (self.MODE_LOGISTICS, 'privileged'): shuffled(priv_locs),
@@ -231,38 +244,37 @@ class Zone(Layer):
         # self.parent.msg('setting zone based on %s'%model.game.player.hideout)
         if model.game.player.hideout:
             self.parent.msg('setting zone to %s'%model.game.player.hideout)
+            self.mode = None
             self.switch_zone_to(model.game.player.hideout)
         else:
+            self.mode = None
             self.switch_zone_to(self.MODE_LOGISTICS)
-        # self.mode = None
-        # self.switch_zone_to(self.MODE_INDUSTRY)
 
     def switch_zone_to(self, active_zone):
         if self.mode == active_zone:
             return
 
         for but in self.resistance_buts:
-            self.active.remove(but)
-
-        if self.mode == self.MODE_INDUSTRY:
-            self.but_industry.visible = True
-        elif self.mode == self.MODE_LOGISTICS:
-            self.but_logistics.visible = True
-        elif self.mode == self.MODE_MILITARY:
-            self.but_military.visible = True
+            self.remove(but)
 
         if active_zone == self.MODE_INDUSTRY:
             self.but_industry.visible = False
+            self.but_logistics.visible = True
+            self.but_military.visible = True
             self.but_logistics.position = (30, 95)
         elif active_zone == self.MODE_LOGISTICS:
+            self.but_industry.visible = True
             self.but_logistics.visible = False
+            self.but_military.visible = True
         elif active_zone == self.MODE_MILITARY:
+            self.but_industry.visible = True
+            self.but_logistics.visible = True
             self.but_military.visible = False
             self.but_logistics.position = (15, 450)
 
         self.mode = active_zone
         self.active.image = self.zone_images[active_zone]
-        self.parent.update()
+        self.parent.update_info()
         self.parent.info.hide_info()
 
         self.resistance_buts = []
@@ -271,10 +283,10 @@ class Zone(Layer):
                 ('servitor', zone.servitor.resistance_groups)]:
             for n, group in enumerate(l):
                 position = self.resistance_locations[active_zone, name][n]
-                but = Sprite('resistance button.png', position=position)
+                but = Sprite('resistance button.png', position=position, anchor=(0, 0))
                 but.resistance_group = group
                 self.resistance_buts.append(but)
-                self.active.add(but)
+                self.add(but, 2)
 
     def on_mouse_press(self, x, y, button, modifiers):
         if not self.mode == self.MODE_INDUSTRY and self.but_industry.get_rect().contains(x, y):

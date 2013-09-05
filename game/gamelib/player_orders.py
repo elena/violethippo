@@ -61,7 +61,7 @@ class Hideout(Order):
             model.game.player.activity_points -= self.cost(ui.zone)
             model.game.player.hideout = ui.zone.mode
             ui.msg('setting player hideout to %s'%(ui.zone.mode))
-            ui.update()
+            ui.update_info()
 
     def chosen(self, ui, choice):
         # if not model.game.player.hideout:
@@ -69,7 +69,7 @@ class Hideout(Order):
             model.game.player.activity_points -= self.cost(ui.zone)
             model.game.player.hideout = choice
             ui.msg('setting player hideout to %s'%(choice))
-            ui.update()
+            ui.update_info()
 all.append(Hideout())
 
 class BlowupGoods(Order):
@@ -104,7 +104,7 @@ class BlowupGoods(Order):
             else:
                 ui.msg('no goods in %s'%(zone.store))
             ui.msg('blowing up goods in %s %s'%(zone.name,zone.store))
-            ui.update()
+            ui.update_info()
 
 all.append(BlowupGoods())
 
