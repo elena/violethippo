@@ -6,8 +6,9 @@ import random
 
 from gamelib.plans.base import Plan
 
-
-
+# please update this when saves will not be valid
+# do not use '.' or '_'
+DATA_VERSION = '01'
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -97,6 +98,8 @@ class Game(JSONable):
         self.turn_date = time.time()
         self.game_over = False
         self.player.visibility = len(self.moon.zones)
+        self.player.activity_points = self.player.max_activity_points
+        self.data_version = DATA_VERSION
         #
         # Seed for repeatable testing
         #
@@ -106,7 +109,7 @@ class Game(JSONable):
     def json_savefile_turn(self):
         p = self.json_path
         fn, ext = os.path.splitext(p)
-        self.json_savefile('%s_turn_%03d.json' % (fn, self.turn))
+        self.json_savefile('%s_turn_%03d_%s.json' % (fn, self.turn, self.data_version))
         # save again under the original name
         self.json_savefile(p)
 
@@ -128,7 +131,7 @@ class Game(JSONable):
 
     def json_dump(self):
         v = self.json_dump_simple('turn', 'threat', 'created', 'turn_date',
-            'game_over')
+            'game_over', 'data_version')
         v['player'] = self.player.json_dump()
         v['moon'] = self.moon.json_dump()
         return v
