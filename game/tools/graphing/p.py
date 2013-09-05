@@ -17,6 +17,7 @@ for l in open('l.txt'):
 
 GNUPLOT='''
 set term png
+set title "%s"
 set output "gnuplot.%s.png"
 #plot "g.txt" using 1:2:3 title "stat+stat", "g.txt" using 1:3  title "post munge"
 '''
@@ -41,7 +42,7 @@ for gname,ginfo in graph.items():
   fd.close()
   print headers
   fd=open('gnuplot.%s.run'%(gname),'w')
-  fd.write(GNUPLOT%(gname))
+  fd.write(GNUPLOT%(gname,gname))
   fd.write('plot ')
   fd.write(','.join( [ GNUPLOTLINE%(gname,2+headers.index(hname),hname) for hname in headers ] ))
   fd.write('\n')
