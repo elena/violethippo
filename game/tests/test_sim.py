@@ -101,11 +101,14 @@ def savedir(test):
 
 @savedir
 def test_model_construction(savedir,*args,**kw):
-    g = model.Game()
-    g.json_savefile(os.path.join(savedir, 'save.json'))
     random.seed(1)
 
+    g = model.Game()
     ui = FakeUI(savedir,g)
+
+    g.init_new_game(ui)
+
+    g.json_savefile(os.path.join(savedir, 'save.json'))
     ui.on_new_turn()
 
     g2 = g.json_loadfile(os.path.join(savedir, 'save.json'))
