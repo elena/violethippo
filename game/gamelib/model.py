@@ -64,6 +64,8 @@ class RecordedAttribute(object):
     def __get__(self, instance, owner):
         return getattr(instance, self.name + '_value', None)
     def __set__(self, instance, value):
+        if not hasattr(instance, self.name + '_base'):
+            setattr(instance, self.name + '_base', value)
         old_val = getattr(instance, self.name + '_value', None)
         if value == old_val:
             return
@@ -302,13 +304,19 @@ class Moon(JSONable):
 
     def update(self, game, ui):
         ui.msg('%s updating moon'%self)
-        supply_use={}
         for zone in self.zones:
             self.zones[zone].update(game,ui)
+        goods=self.zones['industry'].store.get(GOODS,0)
+        ui.msg('ECONOMY.consume: %sgoods'%(goods))
         for zone in self.zones:
-            self.zones[zone].economy_consume(game,ui)
+            z=self.zones[zone]
+            z.economy_use_goods(game,ui,goods)
+            z.economy_consume_rest(game,ui)
+        self.zones['industry'].economy_consume_goods(game,ui,goods)
+        ui.msg('ECONOMY.transport')
         for zone in self.zones:
             self.zones[zone].economy_transport(game,ui)
+        ui.msg('ECONOMY.produce')
         for zone in self.zones:
             self.zones[zone].economy_produce(game,ui)
 
@@ -360,7 +368,7 @@ class Zone(JSONable,economy.Zone_Economy):
     @classmethod
     def create_military(cls):
         o = cls('military')
-        o.requirements= [MANPOWER, GOODS]
+        o.requirements= [MANPOWER]
         o.provides= [ ENFORCEMENT ]
         o.privileged = Privileged(size=Game.LOW*2, liberty=Game.HIGH*2,
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
@@ -379,7 +387,7 @@ class Zone(JSONable,economy.Zone_Economy):
     @classmethod
     def create_logistics(cls):
         o = cls('logistics')
-        o.requirements= [ENFORCEMENT,GOODS]
+        o.requirements= [ENFORCEMENT]
         o.provides= [RAW_MATERIAL,MANPOWER]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.HIGH*2,
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)

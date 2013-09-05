@@ -86,21 +86,17 @@ class BlowupGoods(Order):
         ui.msg('blowing up %s'%(choice))
         if choice == YES:
             zone=model.game.moon.zones[ ui.zone.mode ]
-            ui.msg('blowing up goods in %s'%(ui.zone.mode))
-            ui.msg('blowing up goods in %s'%(zone.name))
             model.game.player.activity_points -= self.cost(ui.zone)
-            ui.msg('blowing up goods in %s'%(zone.store))
+            ui.msg('blowing up goods in %s %s'%(zone.name,zone.store))
             if model.GOODS in zone.store:
                 ui.msg('blowing up goods in %s'%(zone.store))
                 boom=zone.store[model.GOODS]
-                boom=max( 0, boom-25 )
+                boom=max( 0, boom-2.5 )
                 zone.store[model.GOODS]=boom
                 ui.msg('booooooooooooooooom %s'%(zone.store))
             else:
                 ui.msg('no goods in %s'%(zone.store))
-            ui.msg('blowing up goods in %s'%(zone.store[model.GOODS]))
-            ui.msg('blowing up goods in %s'%(zone.store[model.GOODS]))
-            ui.msg('blowing up goods in %s'%(zone.store[model.GOODS]))
+            ui.msg('blowing up goods in %s %s'%(zone.name,zone.store))
 
 all.append(BlowupGoods())
 
