@@ -11,17 +11,36 @@ from gamelib import model, player_orders
 class FakeUIZone:
     def __init__(self,ui):
         self.ui=ui
-        self.mode=ui.game.moon.zones.keys()[0]
-        ui.msg('inside zone %s'%(self.mode))
+        self.setzone( ui.game.moon.zones.keys()[0] )
+    def setzone(self,area):
+        self.ui.msg('setting UI zone %s %s'%(area, self.ui.game.moon.zones.keys()))
+        if area in self.ui.game.moon.zones.keys():
+          self.mode=area
+          self.ui.msg('        UI zone %s'%(self.mode))
+
 
 class FakeUI:
     class SIGNAL_GAMEOVER(Exception):
         pass
 
+    def __init__(self, savedir,game):
+        self.savedir = savedir
+        self.game=game
+        model.game=game
+        self.messages = []
+        self.zone=FakeUIZone(self)
+        self.enter=None
+        #
+        self.logging_begin(savedir)
+
     def ask_choice(self,title,choices,callback):
         self.msg('ASK: %s'%([title,choices]))
         while True:
-            ask=raw_input('     %s'%([title,choices]))
+            if self.entered:
+                ask=self.entered
+                self.entered=None
+            else:
+                ask=raw_input('     %s'%([title,choices]))
             try:
                 self.msg("   === %s"%(choices[int(ask)]))
                 ask=choices[int(ask)]
@@ -34,15 +53,6 @@ class FakeUI:
             self.msg("      ? dunno ? %s"%([ask]))
         raise Exception
 
-
-    def __init__(self, savedir,game):
-        self.savedir = savedir
-        self.game=game
-        model.game=game
-        self.messages = []
-        self.zone=FakeUIZone(self)
-        #
-        self.logging_begin(savedir)
 
     def msgdump(self):
         for m in self.messages:
@@ -108,7 +118,10 @@ def test_model_construction(savedir,*args,**kw):
 
     ui.on_new_turn()
     ui.msg('about to order')
+    ui.entered='OK'
+    ui.zone.setzone('industry')
     player_orders.Hideout().execute(ui)
+    ui.entered='OK'
     player_orders.BlowupGoods().execute(ui)
     ui.msg('done order')
     ui.update()

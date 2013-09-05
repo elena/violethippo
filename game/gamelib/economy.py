@@ -1,4 +1,5 @@
 
+import model
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -29,20 +30,32 @@ class Zone_Economy:
             self.store[n]=10.
 
 
-    def economy_consume(self,game,ui):
+    def economy_use_goods(self,game,ui,goods):
         #
-        # Consume:
-        ui.msg('ZONE.economy: production.consume %s'%(self.name))
-        self.supply_use=10.
+        # goods are used by 'people' and impact happiness etc
+        ui.msg('  USE goods:  %s %s'%(self.name,goods))
+        for co in [ self.privileged, self.servitor]:
+            co.quality_of_life= co.quality_of_life_base * min(10.,goods+1.)/10.
+            ui.msg('    setting qol %s * %s = %s'%(co.quality_of_life_base,goods/10.,co.quality_of_life))
+
+    def economy_consume_goods(self,game,ui,goods):
+        ui.msg('   EAT goods:  %s %s'%(self.name,self.store))
+        self.store[model.GOODS]=min(0, self.store[model.GOODS]-goods)
+        ui.msg('            :  %s %s'%(self.name,self.store))
+
+    def economy_consume_rest(self,game,ui):
+        #
+        # Consume: in factory
+        self.supply_efficiency=10.
         for n in self.requirements:
-            self.supply_use=min( self.supply_use, self.store.get(n,0) )
-        ui.msg('  +++pre   consume store: %s'%(self.store) )
+            self.supply_efficiency=min( self.supply_efficiency, self.store.get(n,0) )
+        ui.msg('    %s %s'%(self.name,self.store) )
+        ui.msg('    %s         %s %s'%(self.name,self.supply_efficiency,self.requirements))
         for n in self.requirements:
-            ui.msg('     consume: %s %s'%(n,self.supply_use))
             if n not in self.store:
                 self.store[n]=0
-            self.store[n]-= self.supply_use
-        ui.msg('  +++final consume store: %s'%(self.store) )
+            self.store[n]-= self.supply_efficiency
+        ui.msg('    %s %s'%(self.name,self.store) )
 
     def economy_transport(self,game,ui):
         #
@@ -56,7 +69,7 @@ class Zone_Economy:
                     if z!=self:
                         z.store[n]+=trans
                         ui.msg('     mv %s->-%s: %s %s'%(self.name,z.name,n,trans))
-        ui.msg('  +++final trans store: %s'%(self.store) )
+        ui.msg('  +++      store: %s'%(self.store) )
 
 
 
@@ -76,8 +89,8 @@ class Zone_Economy:
         prodcurr=self.produce( self.privileged.production_output(),
                                self.servitor.production_output() )
         # requires impacts this too
-        output=int(self.supply_use*prodcurr/prodbase)
-        ui.msg('   supply use (max 10): %s'%(self.supply_use))
+        output=self.supply_efficiency*prodcurr/prodbase
+        ui.msg('   supply use (max 10): %s'%(self.supply_efficiency))
         ui.msg('   req: %s'%(self.requirements) )
         ui.msg('   provides: %s'%(self.provides))
         ui.msg('     priv:base: %s'%(self.privileged.production_output_turn0))
