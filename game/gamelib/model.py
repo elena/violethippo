@@ -562,7 +562,7 @@ class Cohort(JSONable):
             # TODO should have some more random in here
             new_group.size += Resistance.START_SIZE * cohort_effect
             new_group.rich = self.cash * cohort_effect
-            new_group.loyal = min(Resistance.START_LOYAL,
+            new_group.loyal = max(Resistance.START_LOYAL,
                 random.random() * cohort_effect)
             # TODO should affect all stats somehow
             ui.msg('new rebels created: %s'%new_group.name)
@@ -572,12 +572,12 @@ class Cohort(JSONable):
                 cohort_effect /= 5.
                 group = self.resistance_groups[random.randint(0,
                     len(self.resistance_groups)-1)]
-                group.size = max(1,
+                group.size = min(1,
                     group.size + (cohort_effect * self.rebellious))
-                group.loyal = min(Resistance.START_LOYAL,
+                group.loyal = max(Resistance.START_LOYAL,
                     group.loyal - (cohort_effect * 0.5))
-                group.rich = max(1, group.rich + (cohort_effect * self.cash))
-                group.visibility = max(1, group.visibility + ((1-cohort_effect)*(.1*random.random())))
+                group.rich = min(1, group.rich + (cohort_effect * self.cash))
+                group.visibility = min(1, group.visibility + ((1-cohort_effect)*(.1*random.random())))
                 ui.msg('boosted existing rebels %s'%group.name)
 
 
