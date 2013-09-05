@@ -29,30 +29,28 @@ LOGISTICS='logistics'
 
 
 class Buffable(object):
-
-    def buff_stat(self,name,*args):
-        if not name in self.buffs:
-            self.buffs[name]=[]
+    def buff_stat(self, name, *args):
+        if name not in self.buffs:
+            self.buffs[name] = []
         for n in range(len(args)):
-            if n==len(self.buffs[name]):
+            if n == len(self.buffs[name]):
                 self.buffs[name].append( args[n] )
-            elif n>=len(self.buffs[name]):
+            elif n >= len(self.buffs[name]):
                 raise Exception,['Should never happen?']
             else:
-                self.buffs[name][n]+=args[n]
-    def fetch(self,name):
-        v=getattr( self,name)
-        if v is None:
-            v=0.0
-        if name in self.buffs.keys():
-            if self.buffs[name]:
-                v+=self.buffs[name][0]
+                self.buffs[name][n] += args[n]
+
+    def buffed(self,name):
+        v = getattr(self, name, 0.0)
+        buffs = self.buffs.get(name, [])
+        if buffs:
+            v += buffs[0]
         return v
+
     def buffs_end_turn(self):
-        for k,v in self.buffs.items():
+        for v in self.buffs.values():
             if v:
                 del v[0]
-
 
 
 class JSONable(object):
@@ -489,7 +487,7 @@ class Zone(JSONable,economy.Zone_Economy):
         for c in [ self.privileged, self.servitor]:
             for n in ['size','liberty','quality_of_life','cash','willing','efficiency']:
                 ui.msg('GRAPH: %s.pop %s %s.%s %s'%(self.name,game.turn,c.NAME,n,getattr(c,n)))
-            ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name,c.NAME,c.liberty,c.fetch('liberty'),c.buffs))
+            ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name,c.NAME,c.liberty,c.buffed('liberty'),c.buffs))
 
 
 
@@ -567,14 +565,14 @@ class Cohort(JSONable,Buffable):
         """Servitors: Willingness can be forced through low liberty,
            or the product of high quality of life and cash in combination.
         """
-        return max(1.-self.fetch('liberty'), (self.quality_of_life + self.cash)/2)
+        return max(1.-self.buffed('liberty'), (self.quality_of_life + self.cash)/2)
 
     @property
     def efficiency(self):
         """priv: efficiency is mostly QOL and somewhat influenced by
         liberty and cash
         """
-        return (2* self.quality_of_life + self.fetch('liberty') + self.cash)/4.
+        return (2* self.quality_of_life + self.buffed('liberty') + self.cash)/4.
 
     @property
     def rebellious(self):

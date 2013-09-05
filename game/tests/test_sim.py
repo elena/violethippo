@@ -185,9 +185,9 @@ def test_buffing(savedir,*args,**kw):
         print 'gturn %s'%(g.turn)
         print 'buff %s'%(buff)
         print 'testing %s with %s'%( priv.liberty,priv.buffs )
-        print 'testing %s == %s'%( priv.liberty,priv.fetch('liberty') )
+        print 'testing %s == %s'%( priv.liberty,priv.buffed('liberty') )
         assert( priv.liberty==g.MED*2 )
-        assert( priv.fetch('liberty')==g.MED*2+dm )
+        assert( priv.buffed('liberty')==g.MED*2+dm )
         ui.on_new_turn()
 
 
