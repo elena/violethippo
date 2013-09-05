@@ -57,7 +57,6 @@ class Overview(Scene):
         super(Overview, self).__init__(ColorLayer(245, 244, 240, 255),
             Fixed())
 
-
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
     is_event_handler = True
 
@@ -90,6 +89,12 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
         self.player_action_buts = []
         self.update()
+
+    def on_enter(self):
+        super(Fixed, self).on_enter()
+        if model.game.turn == 0:
+            # prior to first turn
+            model.game.init_new_game(self)
 
     def update(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (

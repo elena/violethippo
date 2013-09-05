@@ -145,6 +145,14 @@ class Game(JSONable):
         self.moon = Moon.json_create(jdata['moon'])
         self.player = Player.json_create(jdata['player'])
 
+    def init_new_game(self, ui):
+        ui.msg('game: initializing game at start')
+        for t in range(3):
+            for z in self.moon.zones:
+                self.moon.zones[z].privileged.spawn_rebels(self, ui)
+                self.moon.zones[z].servitor.spawn_rebels(self, ui)
+        self.turn = 1
+
     def update(self, ui):
         ui.msg('-'*70)
         ui.msg('game: update starting. turn %s'%self.turn)
@@ -338,22 +346,14 @@ class Zone(JSONable,economy.Zone_Economy):
         o.faction = Faction('ecobaddy', alert=.01, threat=Game.MAX,
             size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
             rich=Game.HIGH, buffs=[])
-        o.privileged.new_resistance('industry-res-1',
-            size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
-            rich=Game.LOW, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_VIOLENCE)
-        o.servitor.new_resistance('industry-res-2',
-            size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
-            rich=Game.LOW, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_SABOTAGE)
-        # o.privileged.resistance_groups = [Resistance('industry-res-1',
+        # o.privileged.new_resistance('industry-res-1',
         #     size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
         #     rich=Game.LOW, buffs=[], visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_VIOLENCE)]
-        # o.servitor.resistance_groups = [Resistance('industry-res-2',
+        #     modus_operandi=Plan.TYPE_VIOLENCE)
+        # o.servitor.new_resistance('industry-res-2',
         #     size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
         #     rich=Game.LOW, buffs=[], visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_SABOTAGE)]
+        #     modus_operandi=Plan.TYPE_SABOTAGE)
         o.setup_turn0()
         return o
 
@@ -369,14 +369,10 @@ class Zone(JSONable,economy.Zone_Economy):
         o.faction = Faction('mrstompy', alert=.01, threat=Game.MAX,
             size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.LOW, buffs=[])
-        o.servitor.new_resistance('military-res-1',
-            size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
-            rich=Game.MED, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_VIOLENCE)
-        # o.servitor.resistance_groups = [Resistance('military-res-1',
+        # o.servitor.new_resistance('military-res-1',
         #     size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
         #     rich=Game.MED, buffs=[], visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_VIOLENCE)]
+        #     modus_operandi=Plan.TYPE_VIOLENCE)
         o.setup_turn0()
         return o
 
@@ -392,27 +388,20 @@ class Zone(JSONable,economy.Zone_Economy):
         o.faction = Faction('mrfedex', alert=.02, threat=Game.MAX,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
             rich=Game.MED, buffs=[])
-        o.privileged.new_resistance('logistics-res-1',
-            size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
-            rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_SABOTAGE)
-        o.servitor.new_resistance('logistics-res-2',
-            size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
-            rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-            modus_operandi=Plan.TYPE_ESPIONAGE)
-        # o.privileged.resistance_groups = [Resistance('logistics-res-1',
+        # o.privileged.new_resistance('logistics-res-1',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
         #     rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_SABOTAGE)]
-        # o.servitor.resistance_groups = [Resistance('logistics-res-2',
+        #     modus_operandi=Plan.TYPE_SABOTAGE)
+        # o.servitor.new_resistance('logistics-res-2',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
         #     rich=Game.HIGH, buffs=[], visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_ESPIONAGE)]
+        #     modus_operandi=Plan.TYPE_ESPIONAGE)
         o.setup_turn0()
         return o
 
     def json_dump(self):
-        v = self.json_dump_simple('name', 'requirements', 'provides', 'player_found','store')
+        v = self.json_dump_simple('name', 'requirements', 'provides',
+            'player_found','store')
         v['faction'] = self.faction.json_dump()
         v['priv'] = self.privileged.json_dump()
         v['serv'] = self.servitor.json_dump()
@@ -512,7 +501,8 @@ class Cohort(JSONable):
     def new_resistance(self, name, size, informed, smart, loyal, rich, buffs,
         visibility, modus_operandi):
         if len(self.resistance_groups) < self.max_resistance:
-            self.resistance_groups.append(Resistance(name, size, informed, smart, loyal, rich, buffs, visibility, modus_operandi))
+            self.resistance_groups.append(Resistance(name, size, informed,
+                smart, loyal, rich, buffs, visibility, modus_operandi))
             return self.resistance_groups[-1]
         return None
 
@@ -528,19 +518,58 @@ class Cohort(JSONable):
         """priv: efficiency is mostly QOL and somewhat influenced by
         liberty and cash
         """
-        return (2* self.quality_of_life + self.liberty + self.cash)/4
+        return (2* self.quality_of_life + self.liberty + self.cash)/4.
 
     @property
     def rebellious(self):
         """Rebellion is caused by low liberty, quality of life, and cash.
         """
+        # TODO: temporary changes to quality of life should not lower rebellion
+        # - shortfalls in food do not make more rebels, only long term loss
         vals = [self.liberty, self.quality_of_life, self.cash]
-        return 1. - sum(vals + [min(vals)]) / 4
+        return 1. - sum(vals + [min(vals)]) / 4.
 
     def update(self, game, ui):
         for group in self.resistance_groups:
             group.update(game, ui)
-        ui.msg('%s update not implemented' % self)
+        # check for new rebellion
+        self.spawn_rebels(game, ui)
+        ui.msg('cohort %s update done' % self)
+
+    def spawn_rebels(self, game, ui):
+        rebelchance = game.ease(self.rebellious)
+        ui.msg('rebel chance: %.1f'%(rebelchance*100.))
+        if not random.random() <= rebelchance:
+            return
+        ui.msg('rebels spawned in %s'%self)
+        new_group=None
+        if not (len(self.resistance_groups)) or (random.random() <= self.size):
+            new_group = self.new_resistance('res%d'%random.randint(1,1000),
+                Resistance.START_SIZE, Resistance.START_INFORMED,
+                Resistance.START_SMART, Resistance.START_LOYAL,
+                Resistance.START_RICH, [], 0, Plan.TYPE_NOOP)
+        cohort_effect = game.ease(self.size)
+        if new_group :
+            # change defaults to fit this cohort
+            # TODO should have some more random in here
+            new_group.size += Resistance.START_SIZE * cohort_effect
+            new_group.rich = self.cash * cohort_effect
+            new_group.loyal = min(Resistance.START_LOYAL,
+                random.random() * cohort_effect)
+            # TODO should affect all stats somehow
+            ui.msg('new rebels created: %s'%new_group.name)
+        else:
+            # no new group, so boost an existing group
+            if len(self.resistance_groups):
+                cohort_effect /= 5.
+                group = self.resistance_groups[random.randint(0,
+                    len(self.resistance_groups)-1)]
+                group.size = max(1,
+                    group.size + (cohort_effect * self.rebellious))
+                group.loyal = min(Resistance.START_LOYAL,
+                    group.loyal - (cohort_effect * 0.5))
+                group.rich = max(1, group.rich + (cohort_effect * self.cash))
+                ui.msg('boosted existing rebels %s'%group.name)
 
 
 
@@ -676,6 +705,11 @@ class Faction(Group):
 class Resistance(Group):
     """Resistance Group
     """
+    START_SIZE=.1
+    START_INFORMED=.1
+    START_SMART=.1
+    START_LOYAL=.1
+    START_RICH=.1
     visibility = RecordedAttribute('visibility')
     modus_operandi = RecordedAttribute('modus_operandi')
 
