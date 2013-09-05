@@ -107,9 +107,9 @@ def test_model_construction(savedir,*args,**kw):
         assert f1.read() == f2.read()
 
     ui.on_new_turn()
-    order=player_orders.BlowupGoods()
     ui.msg('about to order')
-    order.execute(ui)
+    player_orders.Hideout().execute(ui)
+    player_orders.BlowupGoods().execute(ui)
     ui.msg('done order')
     ui.update()
     ui.on_new_turn()
