@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import json
 from cocos.director import director
 from cocos.layer import MultiplexLayer
 from cocos.menu import Menu, MenuItem, zoom_in, zoom_out, CENTER
@@ -14,8 +15,14 @@ def list_saves(directory='save'):
     # TODO: ignore saves which don't match model.DATA_VERSION
     # version is last part of the filename, after last '_' and
     # before the last '.'
-    return sorted((os.stat(os.path.join('save', n)).st_mtime, n)
-        for n in os.listdir('save') if n not in '..')
+    r = []
+    for m, n in sorted((os.stat(os.path.join('save', n)).st_mtime, n)
+        for n in os.listdir('save') if n not in '..'):
+        with open(os.path.join('save', n)) as f:
+            d = json.load(f)
+            if d['.data_version'] == model.DATA_VERSION:
+                r.append(n)
+    return r
 
 
 class MainMenu(Menu):
@@ -46,7 +53,6 @@ class MainMenu(Menu):
         self.create_menu(items, zoom_in(), zoom_out())
 
     def on_enter(self):
-        print 'Menu.on_enter'
         # when we enter this view - either in from starting up or by returning
         # from the overview screen, we need to clear the global in model.game
         model.game = None
@@ -62,7 +68,7 @@ class MainMenu(Menu):
 
     def on_continue_game(self):
         # play the last modified game
-        name = list_saves()[-1][1]
+        name = list_saves()[-1]
         game = model.Game.json_loadfile(os.path.join('save', name))
         model.game = game
         director.push(Overview())
