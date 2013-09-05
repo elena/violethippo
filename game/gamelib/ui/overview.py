@@ -92,7 +92,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.visible_label)
 
         self.turn_label = Label('Turn: %d\nActivitiy Points: %d',
-            multiline=True, color=(0, 0, 0, 255), x=w-64, y=h, width=140,
+            multiline=True, color=(0, 0, 0, 255), x=w-200, y=h, width=200,
             anchor_x='right', anchor_y='top')
         self.add(self.turn_label)
 
