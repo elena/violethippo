@@ -192,3 +192,34 @@ class AttackFactionLeader(Order):
     minimal resources, taking no Faction actions. But also increases awareness
     for all other Factions significantly
     """
+
+class AttackFaction(Order):
+    """Attack a faction and damage its size
+    Just a debug attack useful against military
+    """
+    label = 'Kill Faction Hoods'
+
+    def __init__(self):
+        super(AttackFaction, self).__init__()
+        self.full_cost = 2
+
+    def execute(self, ui):
+        ui.ask_choice('All out war against the faction in the %s zone?'%ui.zone.mode,
+            YESNO, self.chosen_yn)
+
+    def chosen_yn(self, ui, choice):
+        if choice == YES:
+            zone=model.game.moon.zones[ui.zone.mode]
+            fact=zone.faction
+            model.game.player.activity_points -= self.cost(ui.zone)
+            fact.size = max(0, fact.size - 0.15)
+            fact.loyal = max(0, fact.loyal - 0.15)
+            # fact.size = max(0, fact.size - 0.15)
+            # fact.size = max(0, fact.size - 0.15)
+            # fact.size = max(0, fact.size - 0.15)
+            zone.player_found = min(1, zone.player_found + 0.15)
+            ui.msg('Player slaughtered faction in %s'%ui.zone.mode)
+            ui.info.display_zone(ui.zone.mode)
+            ui.update_info()
+
+all.append(AttackFaction())

@@ -10,8 +10,11 @@ import economy
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '02'
+DATA_VERSION = '03'
 # 02 - added max_resistance to cohorts
+# 03 - removed faction threat from saved data
+#      added _base values
+#      removed history on resistance modus operandi
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -101,7 +104,6 @@ class Game(JSONable):
         self.moon = Moon()
         self.player = Player()
         self.turn = 0
-        self.calculate_threat()
         self.created = time.time()
         self.turn_date = time.time()
         self.game_over = False
@@ -138,7 +140,7 @@ class Game(JSONable):
         return o
 
     def json_dump(self):
-        v = self.json_dump_simple('turn', 'threat', 'created', 'turn_date',
+        v = self.json_dump_simple('turn', 'created', 'turn_date',
             'game_over', 'data_version')
         v['player'] = self.player.json_dump()
         v['moon'] = self.moon.json_dump()
@@ -170,7 +172,6 @@ class Game(JSONable):
         #
         # Check for game over condition..
         #
-        self.calculate_threat()
         ui.msg('threat is %s' % self.threat)
         if self.threat <= 0:
             self.game_over = True
@@ -200,10 +201,12 @@ class Game(JSONable):
         ui.msg('game: update DONE. now turn %s'%self.turn)
         ui.msg('-'*70)
 
-    def calculate_threat(self):
-        self.threat = 0
+    @property
+    def threat(self):
+        threat = 0
         for zone in self.moon.zones:
-            self.threat += self.moon.zones[zone].faction.threat
+            threat += self.moon.zones[zone].faction.threat
+        return threat
 
     def roll(self, d1, d2=0.0):
         total = d1+d2
@@ -355,7 +358,7 @@ class Zone(JSONable,economy.Zone_Economy):
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW*2,
                 quality_of_life=Game.LOW*2, cash=Game.MED*2, max_resistance=4)
-        o.faction = Faction('ecobaddy', alert=.01, threat=Game.MAX,
+        o.faction = Faction('ecobaddy', alert=.01,
             size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
             rich=Game.HIGH, buffs=[])
         # o.privileged.new_resistance('industry-res-1',
@@ -378,7 +381,7 @@ class Zone(JSONable,economy.Zone_Economy):
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.servitor = Servitor(size=Game.MED*2, liberty=Game.HIGH*2,
                 quality_of_life=Game.MED*2, cash=Game.MED*2, max_resistance=4)
-        o.faction = Faction('mrstompy', alert=.01, threat=Game.MAX,
+        o.faction = Faction('mrstompy', alert=.01,
             size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.LOW, buffs=[])
         # o.servitor.new_resistance('military-res-1',
@@ -397,7 +400,7 @@ class Zone(JSONable,economy.Zone_Economy):
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.servitor = Servitor(size=Game.LOW*2, liberty=Game.MED*2,
                 quality_of_life=Game.HIGH*2, cash=Game.MED*2, max_resistance=4)
-        o.faction = Faction('mrfedex', alert=.02, threat=Game.MAX,
+        o.faction = Faction('mrfedex', alert=.02,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
             rich=Game.MED, buffs=[])
         # o.privileged.new_resistance('logistics-res-1',
@@ -496,6 +499,7 @@ class Cohort(JSONable):
         names = []
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
             names.append(name + '_value')
+            names.append(name + '_base')
             names.append(name + '_history')
         names.append('production_output_turn0')
         names.append('max_resistance')
@@ -512,6 +516,7 @@ class Cohort(JSONable):
     def json_load(self, jdata):
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
             setattr(self, name + '_value', jdata['.%s_value' % name])
+            setattr(self, name + '_base', jdata['.%s_base' % name])
             setattr(self, name + '_history', jdata['.%s_history' % name])
         self.production_output_turn0=jdata['.production_output_turn0']
         self.max_resistance = jdata['.max_resistance']
@@ -651,6 +656,7 @@ class Group(JSONable):
         names = ['buffs', 'name']
         for name in ['size', 'informed', 'smart', 'loyal', 'rich']:
             names.append(name + '_value')
+            names.append(name + '_base')
             names.append(name + '_history')
         return self.json_dump_simple(*names)
 
@@ -662,6 +668,7 @@ class Group(JSONable):
     def json_load(self, jdata):
         for name in ['size', 'informed', 'smart', 'loyal', 'rich']:
             setattr(self, name + '_value', jdata['.%s_value' % name])
+            setattr(self, name + '_base', jdata['.%s_base' % name])
             setattr(self, name + '_history', jdata['.%s_history' % name])
 
     def update(self, game, ui):
@@ -675,14 +682,33 @@ class Group(JSONable):
         # State is primarily based on our damage below starting stats
         # perhaps our highest starting stats matter most
         # should include the effects of temporary buffs
-        return 1.0
+        # find the stats which were HIGH or better at the start
+        # the damage to them is 2/3 our state
+        # the avg of the rest is the other 1/3
+        main = []
+        rest = []
+        for stat in ['size', 'informed', 'smart', 'loyal', 'rich']:
+            base = getattr(self, stat + '_base')
+            diff = (getattr(self, stat + '_base') - getattr(self, stat))/getattr(self, stat + '_base')
+            if base >= Game.HIGH:
+                main.append(diff)
+            else:
+                rest.append(diff)
+        if not len(main):
+            return 1-sum(rest)/len(rest)
+        if not len(rest):
+            return 1-sum(main)/len(main)
+        return 1-((3*(sum(main)/len(main))) + (sum(rest)/len(rest)))/4.
+        # return 1.0
 
     @property
     def state_description(self):
         st = self.state
-        if st > .5:
+        if st > .75:
             return 'strong'
-        if st > .2:
+        if st > .5:
+            return 'battered'
+        if st > .3:
             return 'shaky'
         if st > .1:
             return 'vulnerable'
@@ -698,29 +724,29 @@ class Faction(Group):
     controls a power projector (threat to the planet)
     requires support (resource or resources)
     """
-    threat = RecordedAttribute('threat')
 
     def __init__(self, name, size, informed, smart, loyal, rich, buffs,
-            threat, alert):
+        alert):
         super(Faction, self).__init__(name, size, informed, smart, loyal, rich,
             buffs)
-        self.threat = threat     # potential power vs planet
         self.alert = alert       # awareness of rebellion and player
 
     def json_dump(self):
         v = super(Faction, self).json_dump()
-        v.update(self.json_dump_simple('threat_value', 'threat_history', 'alert'))
+        v.update(self.json_dump_simple('alert'))
         return v
 
     @classmethod
     def json_create_args(cls, jdata):
         # just dummy values that'll be filled in by load below
-        return super(Faction, cls).json_create_args(jdata) + [0, 0]
+        return super(Faction, cls).json_create_args(jdata) + [0]
 
     def json_load(self, jdata):
         super(Faction, self).json_load(jdata)
-        self.threat_value = jdata['.threat_value']
-        self.threat_history = jdata['.threat_history']
+
+    @property
+    def threat(self):
+        return self.state
 
     def update(self, game, ui):
         super(Faction, self).update(game, ui)
@@ -737,7 +763,6 @@ class Resistance(Group):
     START_LOYAL=.1
     START_RICH=.1
     visibility = RecordedAttribute('visibility')
-    modus_operandi = RecordedAttribute('modus_operandi')
 
     def __repr__(self):
         return '{{{Resistance:%s}}}'%(self.name)
@@ -753,8 +778,8 @@ class Resistance(Group):
 
     def json_dump(self):
         v = super(Resistance, self).json_dump()
-        v.update(self.json_dump_simple('visibility_value', 'visibility_history'))
-        v.update(self.json_dump_simple('modus_operandi_value', 'modus_operandi_history'))
+        v.update(self.json_dump_simple('visibility_value', 'visibility_base','visibility_history'))
+        v.update(self.json_dump_simple('modus_operandi'))
         return v
 
     @classmethod
@@ -765,9 +790,9 @@ class Resistance(Group):
     def json_load(self, jdata):
         super(Resistance, self).json_load(jdata)
         self.visibility_value = jdata['.visibility_value']
+        self.visibility_base = jdata['.visibility_base']
         self.visibility_history = jdata['.visibility_history']
-        self.modus_operandi_value = jdata['.modus_operandi_value']
-        self.modus_operandi_history = jdata['.modus_operandi_history']
+        self.modus_operandi = jdata['.modus_operandi']
 
     def update(self, game, ui):
         super(Resistance, self).update(game, ui)

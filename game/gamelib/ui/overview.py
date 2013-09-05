@@ -113,7 +113,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
     def update_info(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
             model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
-        self.threat_label.element.text = 'Threat: %d' % model.game.threat
+        self.threat_label.element.text = 'Threat: %.2f' % model.game.threat
         self.visible_label.element.text = 'Visibility: %.1f' % model.game.player.visibility
         self.info.display_zone(self.zone.mode)
 
