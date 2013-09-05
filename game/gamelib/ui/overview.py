@@ -454,7 +454,7 @@ class Info(Layer):
         text.append('Zone ' + descr[active_zone])
         text.append('Provides: %s' % (', '.join(zone.provides), ))
         text.append('Requires: %s' % (', '.join(zone.requirements), ))
-        text.append('Store: %s' % (', '.join('%s: %s' % i for i in zone.store.items()), ))
+        text.append('Store:\n    %s' % ('\n    '.join('%s: %.1f' % i for i in zone.store.items()), ))
         text.append('Efficiency: %.1f' % (zone.privileged.efficiency * 10))
         text.append('Willingness: %.1f' % (zone.servitor.willing * 10))
         text.append('Rebellious: %.1f & %.1f' % (zone.privileged.rebellious * 10,
