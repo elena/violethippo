@@ -78,13 +78,6 @@ class BlowupGoods(Order):
         super(BlowupGoods, self).__init__()
         self.full_cost = 1
 
-    def cost(self, zone):
-        if not model.game.player.hideout:
-            return 0
-        if model.game.player.hideout == zone.mode:
-            return None
-        return super(BlowupGoods, self).cost(zone)
-
     def execute(self, ui):
         ui.ask_choice('Attack goods stored in %s zone?'%ui.zone.mode,
             YESNO, self.chosen_yn)
