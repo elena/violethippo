@@ -33,6 +33,9 @@ class FakeUI:
         #
         self.logging_begin(savedir)
 
+    def update_info(self):
+        pass
+
     def ask_choice(self,title,choices,callback):
         self.msg('ASK: %s'%([title,choices]))
         while True:
@@ -118,7 +121,7 @@ def test_model_construction(savedir,*args,**kw):
         assert f1.read() == f2.read()
 
 
-    for n in range(50):
+    for n in range(100):
         if n==5:
             ui.msg('about to order')
             ui.entered='OK'

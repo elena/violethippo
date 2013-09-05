@@ -599,6 +599,7 @@ class Cohort(JSONable):
 
 
 class Privileged(Cohort):
+    NAME='coh_priv'
     def __repr__(self):
         return '{{{Cohort.priv}}}'
 
@@ -611,6 +612,7 @@ class Privileged(Cohort):
 
 
 class Servitor(Cohort):
+    NAME='coh_serv'
     def __repr__(self):
         return '{{{Cohort.serv}}}'
 
