@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
 TODO:
-- At the top of the screen is the total threat bar, this is what the player is
-  trying to lower. It perhaps should have three (named/labeled?) segements,
-  one for each zone.
-- Below that is the current “time to being arrested” bar for the player, which
-  is related to this zone (they have a separate visible for each zone)
 - The player mouses over or selects the points which represent the resistance
   groups and is shown their name, their modus operandi, maybe some other
   stats? Along with the list of plans they are working on.
@@ -22,11 +17,6 @@ TODO:
   box with a detailed description of what it does and an “Do this” button (as
   well as a close). Note that costs will change after the first (free) action
   - ie the costs are 0 for the first action, and then change.
-- Not shown here: the zone has a servitor and privileged section, with a
-  clickable area for the faction and for each cohort, which will show whatever
-  info is known about them. I think this means the illustration needs to take
-  up more space, but that should be ok.
-- The city is also shown, which is important, as it sets our context.
 '''
 
 import os
@@ -71,12 +61,14 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         # game while the debug console is available
         self.initialised = False
 
-        self.player_action_buts = []
+        self.buttons = []
 
     def on_enter(self):
         super(Fixed, self).on_enter()
         if self.initialised:
             return
+
+        self.buttons = []
 
         # ok, do we need to finish creating the game?
         if model.game.turn == 0:
@@ -97,6 +89,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.turn_label)
 
         self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
+        self.end_turn.on_click = self.on_new_turn
+        self.buttons.append(self.end_turn)
         self.add(self.end_turn)
 
         self.info = Info()
@@ -136,11 +130,15 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             # enable turn button and all the player actions
             self.end_turn.visible = True
 
-        # update player action buttons
+        # remove old player order buttons
+        for but in list(self.buttons):
+            # player order buttons have an 'order' attribute
+            if hasattr(but, 'order'):
+                self.remove(but)
+                self.buttons.remove(but)
+
+        # add appropriate player order buttons
         w, h = director.get_window_size()
-        for but in self.player_action_buts:
-            self.remove(but)
-        self.player_action_buts = []
         y = 560
         for order in player_orders.all:
             cost = order.cost(self.zone)
@@ -151,17 +149,30 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                 anchor_x='left', anchor_y='bottom'))
             y -= 40
             b.order = order
-            self.player_action_buts.append(b)
+            b.on_click = self.on_player_order
+            self.buttons.append(b)
             self.add(b)
 
+    class SIGNAL_GAMEOVER(Exception):
+        pass
+
+    def on_new_turn(self, button):
+        try:
+            model.game.update(self)
+        except self.SIGNAL_GAMEOVER:
+            pass
+        if model.game.player.hideout:
+            self.zone.switch_zone_to(model.game.player.hideout)
+        self.update_info()
+
     def on_mouse_press(self, x, y, button, modifiers):
-        if self.end_turn.get_rect().contains(x, y):
-            self.on_new_turn()
-            return True         # event handled
-        for action in self.player_action_buts:
-            if action.rect.contains(x, y):
-                action.order.execute(self)
+        for button in self.buttons:
+            if button.get_rect().contains(x, y):
+                button.on_click(button)
                 return True         # event handled
+
+    def on_player_order(self, button):
+        button.order.execute(self)
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.GRAVE:
@@ -177,21 +188,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
     def msg(self, message, *args):
         self.console.write(message % args)
-    def graph(self,graph,line,turn,value):
+
+    def graph(self, graph, line, turn, value):
         pass
-
-
-    class SIGNAL_GAMEOVER(Exception):
-        pass
-
-    def on_new_turn(self):
-        try:
-            model.game.update(self)
-        except self.SIGNAL_GAMEOVER:
-            pass
-        if model.game.player.hideout:
-            self.zone.switch_zone_to(model.game.player.hideout)
-        self.update_info()
 
 
 class Zone(Layer):

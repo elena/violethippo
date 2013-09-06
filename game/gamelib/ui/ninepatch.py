@@ -264,6 +264,8 @@ class LabelNinepatch(CocosNode):
             self.label.element.content_height)
         self.rect = Rect(x, y, w, h)
 
+    def get_rect(self):
+        return self.rect
 
 class NinepatchLayer(Layer):
     def __init__(self, image):
