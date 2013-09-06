@@ -113,8 +113,12 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
     def update_info(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
             model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
-        self.threat_label.element.text = 'Threat: %.2f' % model.game.threat
-        self.visible_label.element.text = 'Visibility: %.1f' % model.game.player.visibility
+        assert(len(model.game.moon.zones) == 3)
+        zone1 = model.game.moon.zones[model.game.moon.zones.keys()[0]]
+        zone2 = model.game.moon.zones[model.game.moon.zones.keys()[1]]
+        zone3 = model.game.moon.zones[model.game.moon.zones.keys()[2]]
+        self.threat_label.element.text = 'Threat: %d | %d | %d' % (zone1.faction.threat * 100, zone2.faction.threat * 100, zone3.faction.threat * 100)
+        self.visible_label.element.text = 'Hidden: %d | %d | %d' % ((1-zone1.player_found)*100, (1-zone2.player_found)*100, (1-zone3.player_found)*100)
         self.info.display_zone(self.zone.mode)
 
         if not model.game.player.hideout:
@@ -445,10 +449,10 @@ class Info(Layer):
         “shaky”, “vulnerable”, “destroyed”, and the level of alert to player
         and resistance activity)."""
         zone = model.game.moon.zones[active_zone]
-        if self.active_info == zone:
-            self.hide_info()
-            return
-        self.active_info = zone
+        # if self.active_info == zone:
+        #     self.hide_info()
+        #     return
+        # self.active_info = zone
         text = []
         descr = dict(
             industry='produces goods and food',
@@ -458,7 +462,7 @@ class Info(Layer):
         text.append('Zone ' + descr[active_zone])
         text.append('Provides: %s' % (', '.join(zone.provides), ))
         text.append('Requires: %s' % (', '.join(zone.requirements), ))
-        text.append('Store:\n    %s' % ('\n    '.join('%s: %.1f' % i for i in zone.store.items()), ))
+        text.append('Store:\n    %s' % ('\n    '.join('%s: %d%%' % (n, v*10) for (n,v) in zone.store.items()), ))
         text.append('Efficiency: %.1f' % (zone.privileged.efficiency * 10))
         text.append('Willingness: %.1f' % (zone.servitor.willing * 10))
         text.append('Rebellious: %.1f & %.1f' % (zone.privileged.rebellious * 10,
