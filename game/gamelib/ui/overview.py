@@ -114,9 +114,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
             model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
         assert(len(model.game.moon.zones) == 3)
-        zone1 = model.game.moon.zones[model.game.moon.zones.keys()[0]]
-        zone2 = model.game.moon.zones[model.game.moon.zones.keys()[1]]
-        zone3 = model.game.moon.zones[model.game.moon.zones.keys()[2]]
+        zone1 = model.game.moon.zones[model.INDUSTRY]
+        zone2 = model.game.moon.zones[model.LOGISTICS]
+        zone3 = model.game.moon.zones[model.MILITARY]
         self.threat_label.element.text = 'Threat: %d | %d | %d' % (zone1.faction.threat * 100, zone2.faction.threat * 100, zone3.faction.threat * 100)
         self.visible_label.element.text = 'Hidden: %d | %d | %d' % ((1-zone1.player_found)*100, (1-zone2.player_found)*100, (1-zone3.player_found)*100)
         self.info.display_zone(self.zone.mode)
@@ -185,62 +185,61 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 class Zone(Layer):
     is_event_handler = True
 
-    MODE_INDUSTRY = 'industry'
-    MODE_LOGISTICS = 'logistics'
-    MODE_MILITARY = 'military'
-
     ZONE_BUTTONS = {
-        MODE_INDUSTRY: {MODE_LOGISTICS: (30, 95), MODE_MILITARY: (70, 15)},
-        MODE_LOGISTICS: {MODE_INDUSTRY: (45, 530), MODE_MILITARY: (70, 15)},
-        MODE_MILITARY: {MODE_INDUSTRY: (45, 530), MODE_LOGISTICS: (15, 450)},
+        model.INDUSTRY: {model.LOGISTICS: (30, 95), model.MILITARY: (70, 15)},
+        model.LOGISTICS: {model.INDUSTRY: (45, 530), model.MILITARY: (70, 15)},
+        model.MILITARY: {model.INDUSTRY: (45, 530), model.LOGISTICS: (15, 450)},
     }
 
     def __init__(self):
         super(Zone, self).__init__()
         w, h = director.get_window_size()
-        self.mode = self.MODE_INDUSTRY
+        self.mode = model.INDUSTRY
 
         self.zone_images = {
-            self.MODE_INDUSTRY: pyglet.resource.image('industry.png'),
-            self.MODE_LOGISTICS: pyglet.resource.image('logistics.png'),
-            self.MODE_MILITARY: pyglet.resource.image('military.png')
+            model.INDUSTRY: pyglet.resource.image('industry.png'),
+            model.LOGISTICS: pyglet.resource.image('logistics.png'),
+            model.MILITARY: pyglet.resource.image('military.png')
         }
 
-        self.active = Sprite(self.zone_images[self.MODE_INDUSTRY],
+        self.active = Sprite(self.zone_images[model.INDUSTRY],
             position=(75+256, 75+256))
         self.add(self.active)
 
-        self.but_faction = Sprite('faction button.png', position=(270, 460), anchor=(0, 0))
+        self.but_faction = Sprite('faction button.png', position=(270, 460),
+            anchor=(0, 0))
         self.add(self.but_faction, z=1)
 
-        self.but_privileged = Sprite('privileged button.png', position=(85, 361), anchor=(0, 0))
+        self.but_privileged = Sprite('privileged button.png',
+            position=(85, 361), anchor=(0, 0))
         self.add(self.but_privileged, z=1)
 
-        self.but_servitors = Sprite('servitors button.png', position=(340, 200), anchor=(0, 0))
+        self.but_servitors = Sprite('servitors button.png',
+            position=(340, 200), anchor=(0, 0))
         self.add(self.but_servitors, z=1)
 
         priv_locs = [(340, 385), (440, 400)]
         serv_locs = [(120, 280), (220, 220), (300, 285), (420, 275)]
         self.resistance_locations = {
-            (self.MODE_INDUSTRY, 'privileged'): shuffled(priv_locs),
-            (self.MODE_LOGISTICS, 'privileged'): shuffled(priv_locs),
-            (self.MODE_MILITARY, 'privileged'): shuffled(priv_locs),
-            (self.MODE_INDUSTRY, 'servitor'): shuffled(serv_locs),
-            (self.MODE_LOGISTICS, 'servitor'): shuffled(serv_locs),
-            (self.MODE_MILITARY, 'servitor'): shuffled(serv_locs),
+            (model.INDUSTRY, 'privileged'): shuffled(priv_locs),
+            (model.LOGISTICS, 'privileged'): shuffled(priv_locs),
+            (model.MILITARY, 'privileged'): shuffled(priv_locs),
+            (model.INDUSTRY, 'servitor'): shuffled(serv_locs),
+            (model.LOGISTICS, 'servitor'): shuffled(serv_locs),
+            (model.MILITARY, 'servitor'): shuffled(serv_locs),
         }
 
         self.zone_buts = {
-            self.MODE_INDUSTRY: Sprite('industry button.png', anchor=(0, 0)),
-            self.MODE_LOGISTICS: Sprite('logistics button.png', anchor=(0, 0)),
-            self.MODE_MILITARY: Sprite('military button.png', anchor=(0, 0)),
+            model.INDUSTRY: Sprite('industry button.png', anchor=(0, 0)),
+            model.LOGISTICS: Sprite('logistics button.png', anchor=(0, 0)),
+            model.MILITARY: Sprite('military button.png', anchor=(0, 0)),
         }
 
         self.resistance_buts = []
 
-        self.add(self.zone_buts[self.MODE_INDUSTRY])
-        self.add(self.zone_buts[self.MODE_LOGISTICS])
-        self.add(self.zone_buts[self.MODE_MILITARY])
+        self.add(self.zone_buts[model.INDUSTRY])
+        self.add(self.zone_buts[model.LOGISTICS])
+        self.add(self.zone_buts[model.MILITARY])
 
     def on_enter(self):
         super(Zone, self).on_enter()
@@ -251,7 +250,7 @@ class Zone(Layer):
             self.switch_zone_to(model.game.player.hideout)
         else:
             self.mode = None
-            self.switch_zone_to(self.MODE_LOGISTICS)
+            self.switch_zone_to(model.LOGISTICS)
 
     def switch_zone_to(self, active_zone):
         if self.mode == active_zone:

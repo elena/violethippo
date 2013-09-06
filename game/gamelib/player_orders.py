@@ -83,7 +83,7 @@ class BlowupGoods(Order):
         self.full_cost = 1
 
     def cost(self, zone):
-        if zone.mode != 'industry':
+        if zone.mode != model.INDUSTRY:
             return None
         return super(BlowupGoods, self).cost(zone)
 

@@ -137,7 +137,7 @@ def test_model_construction(savedir,*args,**kw):
             ui.msg('about to order')
             if n==5:
                 ui.entered='OK'
-                ui.zone.setzone('industry')
+                ui.zone.setzone(model.INDUSTRY)
                 player_orders.Hideout().execute(ui)
             #ui.entered='OK'
             #player_orders.BlowupGoods().execute(ui)
