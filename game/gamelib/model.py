@@ -302,7 +302,7 @@ class Player(JSONable):
     @classmethod
     def json_create_args(cls,jdata):
         return [jdata['.visibility'], jdata['.activity_points'],
-            jdata['.max_activity_points'], jdata['free_order'],
+            jdata['.max_activity_points'], jdata['.free_order'],
             jdata['.hideout']]
 
     def pay_order_cost(self, cost):
