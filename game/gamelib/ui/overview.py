@@ -112,13 +112,18 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
     def update_info(self):
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
-            model.game.turn, model.game.player.activity_points, model.game.player.hideout or 'Not Chosen')
+            model.game.turn, model.game.player.activity_points,
+            model.game.player.hideout or 'Not Chosen')
         assert(len(model.game.moon.zones) == 3)
         zone1 = model.game.moon.zones[model.INDUSTRY]
         zone2 = model.game.moon.zones[model.LOGISTICS]
         zone3 = model.game.moon.zones[model.MILITARY]
-        self.threat_label.element.text = 'Threat: %d | %d | %d' % (zone1.faction.threat * 100, zone2.faction.threat * 100, zone3.faction.threat * 100)
-        self.visible_label.element.text = 'Hidden: %d | %d | %d' % ((1-zone1.player_found)*100, (1-zone2.player_found)*100, (1-zone3.player_found)*100)
+        self.threat_label.element.text = 'Threat: %d | %d | %d' % (
+            zone1.faction.threat * 100, zone2.faction.threat * 100,
+            zone3.faction.threat * 100)
+        self.visible_label.element.text = 'Hidden: %d | %d | %d' % (
+            (1-zone1.player_found)*100, (1-zone2.player_found)*100,
+            (1-zone3.player_found)*100)
         self.info.display_zone(self.zone.mode)
 
         if not model.game.player.hideout:
