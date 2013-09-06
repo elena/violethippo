@@ -167,7 +167,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
     def on_mouse_press(self, x, y, button, modifiers):
         for button in self.buttons:
-            if button.get_rect().contains(x, y):
+            if button.visible and button.get_rect().contains(x, y):
                 button.on_click(button)
                 return True         # event handled
 
@@ -213,21 +213,19 @@ class Zone(Layer):
             model.MILITARY: pyglet.resource.image('military.png')
         }
 
+        self.buttons = []
+
         self.active = Sprite(self.zone_images[model.INDUSTRY],
             position=(75+256, 75+256))
         self.add(self.active)
 
-        self.but_faction = Sprite('faction button.png', position=(270, 460),
-            anchor=(0, 0))
-        self.add(self.but_faction, z=1)
-
-        self.but_privileged = Sprite('privileged button.png',
-            position=(85, 361), anchor=(0, 0))
-        self.add(self.but_privileged, z=1)
-
-        self.but_servitors = Sprite('servitors button.png',
-            position=(340, 200), anchor=(0, 0))
-        self.add(self.but_servitors, z=1)
+        for name, pos in [('faction', (270, 460)), ('privileged', (85, 361)),
+                ('servitors', (340, 200))]:
+            but = Sprite('%s button.png' % name, position=pos, anchor=(0, 0))
+            but.info = name
+            but.on_click = self.on_show_info
+            self.add(but, z=1)
+            self.buttons.append(but)
 
         priv_locs = [(340, 385), (440, 400)]
         serv_locs = [(120, 280), (220, 220), (300, 285), (420, 275)]
@@ -245,8 +243,6 @@ class Zone(Layer):
             model.LOGISTICS: Sprite('logistics button.png', anchor=(0, 0)),
             model.MILITARY: Sprite('military button.png', anchor=(0, 0)),
         }
-
-        self.resistance_buts = []
 
         self.add(self.zone_buts[model.INDUSTRY])
         self.add(self.zone_buts[model.LOGISTICS])
@@ -267,8 +263,11 @@ class Zone(Layer):
         if self.mode == active_zone:
             return
 
-        for but in self.resistance_buts:
-            self.remove(but)
+        # remove old resistance buttons
+        for but in list(self.buttons):
+            if hasattr(but, 'resistance_group'):
+                self.remove(but)
+                self.buttons.remove(but)
 
         # move buttons around
         self.zone_buts[active_zone].position = (730, 630)
@@ -280,7 +279,6 @@ class Zone(Layer):
         self.parent.update_info()
         self.parent.info.hide_info()
 
-        self.resistance_buts = []
         zone = model.game.moon.zones[active_zone]
         for name, l in [('privileged', zone.privileged.resistance_groups),
                 ('servitor', zone.servitor.resistance_groups)]:
@@ -288,7 +286,8 @@ class Zone(Layer):
                 position = self.resistance_locations[active_zone, name][n]
                 but = Sprite('resistance button.png', position=position, anchor=(0, 0))
                 but.resistance_group = group
-                self.resistance_buts.append(but)
+                but.on_click = self.on_resistance
+                self.buttons.append(but)
                 self.add(but, 2)
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -300,20 +299,22 @@ class Zone(Layer):
                 return True         # event handled
 
         # check other info display buttons
-        if self.but_faction.get_rect().contains(x, y):
-            self.parent.info.show_faction(self.mode)
-            return True         # event handled
-        zone = model.game.moon.zones[self.mode]
-        if self.but_privileged.get_rect().contains(x, y):
-            self.parent.info.show_cohort(zone.privileged)
-            return True         # event handled
-        if self.but_servitors.get_rect().contains(x, y):
-            self.parent.info.show_cohort(zone.servitor)
-            return True         # event handled
-        for but in self.resistance_buts:
+        for but in self.buttons:
             if but.get_rect().contains(x, y):
-                self.parent.info.show_resistance(but.resistance_group)
+                but.on_click(but)
                 return True         # event handled
+
+    def on_show_info(self, but):
+        zone = model.game.moon.zones[self.mode]
+        if but.info == 'faction':
+            self.parent.info.show_faction(self.mode)
+        elif but.info == 'privileged':
+            self.parent.info.show_cohort(zone.privileged)
+        elif but.info == 'servitors':
+            self.parent.info.show_cohort(zone.servitor)
+
+    def on_resistance(self, but):
+        self.parent.info.show_resistance(but.resistance_group)
 
 
 class Info(Layer):
