@@ -49,15 +49,16 @@ class Zone_Economy:
         self.supply_efficiency=10.
         for n in self.requirements:
             self.supply_efficiency=min( self.supply_efficiency,
-                                        self.store.get(n,0)+1.
+                                        self.store.get(n,0)
                                       )
-        ui.msg('    %s %s'%(self.name,self.store) )
         ui.msg('    %s         %s %s'%(self.name,self.supply_efficiency,self.requirements))
+        ui.msg('    %s %s'%(self.name,self.store) )
         for n in self.requirements:
             if n not in self.store:
                 self.store[n]=0
             self.store[n]-= self.supply_efficiency
-        ui.msg('    %s %s'%(self.name,self.store) )
+        self.supply_efficiency=min( self.supply_efficiency+.5,10.)
+        ui.msg('    %s %s final eff %s'%(self.name,self.store,self.supply_efficiency) )
 
     def economy_transport(self,game,ui):
         #
@@ -104,7 +105,7 @@ class Zone_Economy:
         for prod in self.provides:
             if prod not in self.store:
                 self.store[ prod ]=0
-            self.store[ prod ] += output
+            self.store[ prod ] = min( self.store[ prod ]+output, 11. )
             ui.msg('   ......prod: %s %s -> %s '%( prod, output,self.store[prod] ))
         ui.msg('  +++final prod store: %s'%(self.store) )
 
