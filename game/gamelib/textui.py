@@ -1,4 +1,5 @@
 import os
+import sys
 import random
 import shutil
 import time
@@ -22,6 +23,22 @@ class FakeUIZone:
 class FakeUI:
     class SIGNAL_GAMEOVER(Exception):
         pass
+
+    def helper_all_stores(self):
+        rv={}
+        for n,o in self.game.moon.zones.items():
+            for k,v in o.store.items():
+                rv[ n+'/'+k]=v
+        return rv
+
+    def helper_ratio_under(self,number,vals):
+        n=0
+        t=0
+        for k,v in vals.items():
+            t+=1
+            if v>number: n+=1
+        return float(n)/t
+
 
     def __init__(self, savedir,game):
         self.savedir = savedir
@@ -60,10 +77,7 @@ class FakeUI:
 
 
     def msgdump(self):
-        if self.messages_on:
-            for m in self.messages:
-                print self.msgfix(*m)
-        self.messages=[]
+        pass
     def msgfix(self, msg, args):
         if args:
             try:
@@ -71,9 +85,12 @@ class FakeUI:
             except:
                 msg='%s %s'%(msg,args)
         return  msg
-    def msg(self, msg, *args):
-        self.messages.append((msg, args))
 
+    def msg(self, msg, *args):
+        print self.msgfix(msg,args)
+    def critical(self, msg, *args):
+        sys.stderr.write( self.msgfix(msg,args)+'\n' )
+        self.msg(msg,*args)
     def graph(self,graph,line,turn,value):
         self.msg("GRAPH: %s %s %s %s"%(graph,line,turn,value))
 

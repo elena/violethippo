@@ -1,7 +1,6 @@
-import tests.test_sim
+import tests.test_economy
 
 
 if __name__=="__main__":
-    tests.test_sim.test_model_construction(leave_my_save_data_alone_you_bastard=True)
-    print dir( tests.test_sim.test_model_construction )
+    tests.test_economy.test_economy(None,leave_my_save_data_alone_you_bastard=True)
 
