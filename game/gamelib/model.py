@@ -494,10 +494,10 @@ class Zone(JSONable,economy.Zone_Economy):
         #
         for n in [ ENFORCEMENT,RAW_MATERIAL,GOODS,MANPOWER ]:
             v=self.store.get(n,0)
-            ui.msg('GRAPH: store %s %s.%s %s'%(game.turn,self.name,n,v))
+            ui.graph('store',self.name+'.'+n,game.turn,v)
         for c in [ self.privileged, self.servitor]:
             for n in ['size','liberty','quality_of_life','cash','willing','efficiency']:
-                ui.msg('GRAPH: %s.pop %s %s.%s %s'%(self.name,game.turn,c.NAME,n,getattr(c,n)))
+                ui.graph(self.name+'.pop',c.NAME+'/'+n,game.turn,getattr(c,n))
             ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name,c.NAME,c.liberty,c.buffed('liberty'),c.buffs))
 
 

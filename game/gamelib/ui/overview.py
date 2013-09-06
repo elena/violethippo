@@ -177,6 +177,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 
     def msg(self, message, *args):
         self.console.write(message % args)
+    def graph(self,graph,line,turn,value):
+        pass
+
 
     class SIGNAL_GAMEOVER(Exception):
         pass

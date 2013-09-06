@@ -74,6 +74,9 @@ class FakeUI:
     def msg(self, msg, *args):
         self.messages.append((msg, args))
 
+    def graph(self,graph,line,turn,value):
+        self.msg("GRAPH: %s %s %s %s"%(graph,line,turn,value))
+
     def logging_begin(self, sdir):
         if os.path.exists(sdir):
             shutil.rmtree(sdir)
