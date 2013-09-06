@@ -10,12 +10,13 @@ import economy
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '04'
+DATA_VERSION = '05'
 # 02 - added max_resistance to cohorts
 # 03 - removed faction threat from saved data
 #      added _base values
 #      removed history on resistance modus operandi
 # 04 - made buffs a dictionary
+# 05 - added free_order to player
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -285,21 +286,30 @@ class Player(JSONable):
     def __repr__(self):
         return '{{{Player}}}'
 
-    def __init__(self, visibility=0, activity_points=0, max_activity_points=3, hideout=None):
+    def __init__(self, visibility=0, activity_points=0, max_activity_points=3,
+        free_order=True, hideout=None):
         self.discovery_chance = 0    # TODO I think this is unnecessary...
         self.visibility = visibility   # affected by orders with "Instigator Noticeable"
         self.activity_points = activity_points
         self.max_activity_points = max_activity_points
         self.hideout = hideout   # one of the zone types, player must choose
+        self.free_order = free_order  # is free order available this turn?
 
     def json_dump(self):
         return self.json_dump_simple('visibility', 'activity_points',
-            'max_activity_points', 'hideout')
+            'max_activity_points', 'free_order', 'hideout')
 
     @classmethod
     def json_create_args(cls,jdata):
         return [jdata['.visibility'], jdata['.activity_points'],
-            jdata['.max_activity_points'], jdata['.hideout']]
+            jdata['.max_activity_points'], jdata['free_order'],
+            jdata['.hideout']]
+
+    def pay_order_cost(self, cost):
+        if self.free_order:
+            self.free_order = False
+        else:
+            self.activity_points = max(0, self.activity_points - cost)
 
     def update(self, game,ui):
         ui.msg('%s update player'% self)
@@ -307,6 +317,7 @@ class Player(JSONable):
         for zone in game.moon.zones:
             self.visibility += 1 - game.moon.zones[zone].player_found
         self.activity_points = self.max_activity_points
+        self.free_order = True
 
 
 class Moon(JSONable):

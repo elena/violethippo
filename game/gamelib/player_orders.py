@@ -21,8 +21,13 @@ class Order(object):
         # player can't do anything except find a hideout if there's no hideout
         if not model.game.player.hideout:
             return None
-        cost = self.full_cost
-        if zone.mode != model.game.player.hideout:
+        return self._determine_cost(zone)
+
+    def _determine_cost(self, zone):
+        cost = 0
+        if not model.game.player.free_order:
+            cost = self.full_cost
+        if zone.mode != model.game.player.hideout and not (not model.game.player.hideout and model.game.turn == 1):
             cost += self.OUT_ZONE_PENALTY
         if model.game.player.activity_points < cost:
             return None
@@ -42,40 +47,28 @@ class Hideout(Order):
         self.full_cost = 2
 
     def cost(self, zone):
-        if not model.game.player.hideout:
-            return 0
+        if model.game.moon.zones[zone.mode].player_found >= 1:
+            return None
         if model.game.player.hideout == zone.mode:
             return None
-        return super(Hideout, self).cost(zone)
-        # if model.game.player.activity_points < 3:
-        #     return None
-        # return 3
+        return super(Hideout, self)._determine_cost(zone)
 
     def execute(self, ui):
         ui.ask_choice('Establish your hideout in the %s zone?'%ui.zone.mode,
             YESNO, self.chosen_yn)
-        # ui.ask_choice('Select Hideout Location', model.game.moon.zones, self.chosen)
 
     def chosen_yn(self, ui, choice):
         if choice == YES:
-            model.game.player.activity_points -= self.cost(ui.zone)
+            model.game.player.pay_order_cost(self.cost(ui.zone))
             model.game.player.hideout = ui.zone.mode
             ui.msg('setting player hideout to %s'%(ui.zone.mode))
-            ui.update_info()
-
-    def chosen(self, ui, choice):
-        # if not model.game.player.hideout:
-        if model.game.player.hideout != choice:
-            model.game.player.activity_points -= self.cost(ui.zone)
-            model.game.player.hideout = choice
-            ui.msg('setting player hideout to %s'%(choice))
             ui.update_info()
 
 all.append(Hideout())
 
 
 class BlowupGoods(Order):
-    """Attack goods in an area"""
+    """DEBUG: Attack goods in an area"""
     label = 'Blow up Goods'
 
     def __init__(self):
@@ -92,20 +85,18 @@ class BlowupGoods(Order):
             YESNO, self.chosen_yn)
 
     def chosen_yn(self, ui, choice):
-        ui.msg('blowing up %s'%(choice))
+        ui.msg('blowing up goods: %s'%(choice))
         if choice == YES:
+            model.game.player.pay_order_cost(self.cost(ui.zone))
             zone=model.game.moon.zones[ ui.zone.mode ]
-            model.game.player.activity_points -= self.cost(ui.zone)
-            ui.msg('blowing up goods in %s %s'%(zone.name,zone.store))
             if model.GOODS in zone.store:
-                ui.msg('blowing up goods in %s'%(zone.store))
+                ui.msg('blowing up goods in %s: %s'%(zone.name, zone.store))
                 boom=zone.store[model.GOODS]
                 boom=max( 0, boom-2.0 )
                 zone.store[model.GOODS]=boom
                 ui.msg('booooooooooooooooom %s'%(zone.store))
             else:
-                ui.msg('no goods in %s'%(zone.store))
-            ui.msg('blowing up goods in %s %s'%(zone.name,zone.store))
+                ui.msg('no goods to blow up in %s: %s'%(zone.name, zone.store))
             ui.update_info()
 
 all.append(BlowupGoods())
@@ -131,6 +122,7 @@ class ReplaceWithPlanHurtLiberty(Order):
     def chosen_target(self, ui, choice):
         if choice == NO:
             return
+        model.game.player.pay_order_cost(self.cost(ui.zone))
         zone=model.game.moon.zones[ ui.zone.mode ]
         co=None
         if choice==self.PRIV:
@@ -139,13 +131,11 @@ class ReplaceWithPlanHurtLiberty(Order):
             co=zone.servitor
         if co is None:
             return
-        model.game.player.activity_points -= self.cost(ui.zone)
         ui.msg('un-liberty up %s %s'%(choice,co))
         #co.buff_stat('liberty',-.5,-.4,-.3,-.2)
         co.buff_stat('liberty',-.5,-.1)
         ui.msg('          buffs %s'%(co.buffs))
         ui.update_info()
-
 
 all.append(ReplaceWithPlanHurtLiberty())
 
@@ -250,9 +240,9 @@ class AttackFaction(Order):
 
     def chosen_yn(self, ui, choice):
         if choice == YES:
+            model.game.player.pay_order_cost(self.cost(ui.zone))
             zone=model.game.moon.zones[ui.zone.mode]
             fact=zone.faction
-            model.game.player.activity_points -= self.cost(ui.zone)
             fact.size = max(0, fact.size - 0.15)
             fact.loyal = max(0, fact.loyal - 0.15)
             # fact.size = max(0, fact.size - 0.15)

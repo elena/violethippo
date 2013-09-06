@@ -111,8 +111,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.initialised = True
 
     def update_info(self):
-        self.turn_label.element.text = 'Turn: %d\nActivity_points: %d\nHideout: %s' % (
-            model.game.turn, model.game.player.activity_points,
+        free = ''
+        if model.game.player.free_order:
+            free = ' + free'
+        self.turn_label.element.text = 'Turn: %d\nActivity_points: %d%s\nHideout: %s' % (
+            model.game.turn, model.game.player.activity_points, free,
             model.game.player.hideout or 'Not Chosen')
         assert(len(model.game.moon.zones) == 3)
         zone1 = model.game.moon.zones[model.INDUSTRY]
