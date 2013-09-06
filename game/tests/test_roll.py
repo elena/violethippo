@@ -4,23 +4,20 @@ import shutil
 import time
 import functools
 
-from gamelib import model, player_orders
-from gamelib.plans.base import Plan
+from gamelib import chance
 
 # TODO this is a weak test now, just how many successes within 50 out of 1000
 #      we get, nothing about quality of success, although we save that
 
 
 def test_rolls():
-    g = model.Game()
-
     accuracy=50
 
     for tskill,want in [ [0,0], [.5,500],[1.000000,1000],[1.500000, 1000], [2.000000,1000] ]:
         won = 0
         tot = 0
         for r in range(0,1000):
-            result=g.roll(tskill)
+            result= chance.roll(tskill)
             if result > 0:
                 tot += result
                 won += 1

@@ -2,4 +2,4 @@ registry = []
 
 register = registry.append
 
-import gamelib.plans.noop
+import gamelib.plans.damage

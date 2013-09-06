@@ -7,16 +7,18 @@ import random
 from gamelib.plans.base import Plan
 
 import economy
+from chance import roll, ease
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '05'
+DATA_VERSION = '06'
 # 02 - added max_resistance to cohorts
 # 03 - removed faction threat from saved data
 #      added _base values
 #      removed history on resistance modus operandi
 # 04 - made buffs a dictionary
 # 05 - added free_order to player
+# 06 - added plans to groups
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -104,7 +106,9 @@ class RecordedAttribute(object):
             setattr(instance, self.name + '_history', [])
         if game is not None:
             turn = game.turn
-            getattr(instance, self.name + '_history').append((turn, value))
+        else:
+            turn = 0
+        getattr(instance, self.name + '_history').append((turn, value))
         setattr(instance, self.name + '_value', value)
 
 
@@ -119,11 +123,6 @@ class Game(JSONable):
     HIGH=.4
     VHIGH=.6
     MAX=1.0
-
-    EASE_LINEAR=0
-    EASE_HERMITE=1
-    EASE_QUAD=2
-    EASE_CUBIC=3
 
     def __repr__(self):
         return '{{{GAME}}}'
@@ -213,7 +212,7 @@ class Game(JSONable):
         # win = 0
         # tot = 0
         # for rollnum in range(0,100):
-        #     ret = self.roll(0.2, 0.3)
+        #     ret = roll(0.2, 0.3)
         #     if ret > 0:
         #         win += 1
         #         tot += ret
@@ -235,45 +234,6 @@ class Game(JSONable):
         for zone in self.moon.zones:
             threat += self.moon.zones[zone].faction.threat
         return threat
-
-    def roll(self, d1, d2=0.0):
-        total = d1+d2
-        if total >= 1.:
-            return max(random.random(), random.random()) + (total - 1.)
-        #
-        # Use if want to extend optimal requirements (lower chance of success)
-        # if total > 1.5:
-        #     return total - .5
-        # total *= 2./3.
-        #
-        total = self.ease(total)
-        ran = random.random()
-        return max(0, total-ran)
-
-    def ease(self, total, ease=EASE_CUBIC):
-        if total > 2:
-            raise Exception('EasingValueTooLarge')
-        if total > 1:
-            return self.ease(total-1, ease) + 1
-        if ease == self.EASE_LINEAR:
-            return total
-        elif ease == self.EASE_HERMITE:
-            return (3 * total**2) - (2 * total**3)
-        elif ease == self.EASE_QUAD:
-            total *= 2
-            if total < 1:
-                return .5 * total**2
-            total -= 1
-            return -.5 * (total*(total-2) - 1)
-        elif ease == self.EASE_CUBIC:
-            total *= 2
-            if total < 1:
-               return .5 * total**3
-            total -= 2
-            return .5 * (total**3 + 2)
-        else:
-            return 0
-
 
 
 class Player(JSONable):
@@ -368,7 +328,7 @@ class Moon(JSONable):
             self.zones[zone].economy_produce(game,ui)
 
 
-class Zone(JSONable,economy.Zone_Economy):
+class Zone(JSONable, economy.Zone_Economy):
     """Convert a raw material into a resource
 
     Contain two Cohorts (population groups)
@@ -382,13 +342,12 @@ class Zone(JSONable,economy.Zone_Economy):
     def __init__(self, name):
         self.name = name
         # economy / production
-        economy.Zone_Economy.__init__(self)
+        super(Zone, self).__init__()
         # groups
         self.privileged = None  # privileged cohort
         self.servitor = None    # servitor cohort
         self.faction = None
         self.player_found = 0  # close to finding player in zone
-
 
     @classmethod
     def create_industry(cls):
@@ -405,11 +364,11 @@ class Zone(JSONable,economy.Zone_Economy):
         # o.privileged.new_resistance('industry-res-1',
         #     size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
         #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_VIOLENCE)
+        #     modus_operandi=Plan.VIOLENCE)
         # o.servitor.new_resistance('industry-res-2',
         #     size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
         #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_SABOTAGE)
+        #     modus_operandi=Plan.SABOTAGE)
         o.setup_turn0()
         return o
 
@@ -428,7 +387,7 @@ class Zone(JSONable,economy.Zone_Economy):
         # o.servitor.new_resistance('military-res-1',
         #     size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
         #     rich=Game.MED, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_VIOLENCE)
+        #     modus_operandi=Plan.VIOLENCE)
         o.setup_turn0()
         return o
 
@@ -447,11 +406,11 @@ class Zone(JSONable,economy.Zone_Economy):
         # o.privileged.new_resistance('logistics-res-1',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
         #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_SABOTAGE)
+        #     modus_operandi=Plan.SABOTAGE)
         # o.servitor.new_resistance('logistics-res-2',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
         #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.TYPE_ESPIONAGE)
+        #     modus_operandi=Plan.ESPIONAGE)
         o.setup_turn0()
         return o
 
@@ -471,10 +430,6 @@ class Zone(JSONable,economy.Zone_Economy):
         self.privileged = Privileged.json_create(jdata['priv'])
         self.servitor = Servitor.json_create(jdata['serv'])
         self.faction = Faction.json_create(jdata['faction'])
-
-
-
-
 
     def update(self, game, ui):
         ui.msg('%s updating zone'%(self))
@@ -502,14 +457,11 @@ class Zone(JSONable,economy.Zone_Economy):
         for c in [ self.privileged, self.servitor]:
             for n in ['size','liberty','quality_of_life','cash','willing','efficiency']:
                 ui.graph(self.name+'.pop',c.NAME+'/'+n,game.turn,getattr(c,n))
-            ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name,c.NAME,c.liberty,c.buffed('liberty'),c.buffs))
+            ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name, c.NAME,
+                c.liberty, c.buffed('liberty'), c.buffs))
 
 
-
-
-
-
-class Cohort(JSONable,Buffable):
+class Cohort(JSONable, Buffable):
     """Each zone has two cohorts:
 
         Privileged - staff zone faction
@@ -534,7 +486,7 @@ class Cohort(JSONable,Buffable):
         self.quality_of_life = quality_of_life        # provided services
         self.cash = cash           # additional discretionary money
         self.resistance_groups = []   # list of resistance groups
-        self.buffs= {}
+        self.buffs = {}
         self.production_output_turn0=self.production_output()
         self.max_resistance = max_resistance
 
@@ -607,19 +559,19 @@ class Cohort(JSONable,Buffable):
         ui.msg('cohort %s update done' % self)
 
     def spawn_rebels(self, game, ui):
-        rebelchance = game.ease(self.rebellious)
-        ui.msg('rebel chance: %.1f'%(rebelchance*100.))
+        rebelchance = ease(self.rebellious)
+        ui.msg('rebel chance: %.1f' % (rebelchance * 100., ))
         if not random.random() <= rebelchance:
             return
-        ui.msg('rebels spawned in %s'%self)
-        new_group=None
+        ui.msg('rebels spawned in %s' % self)
+        new_group = None
         if not (len(self.resistance_groups)) or (random.random() <= self.size):
-            new_group = self.new_resistance('res%d'%random.randint(1,1000),
+            new_group = self.new_resistance('res%d ' % random.randint(1, 1000),
                 Resistance.START_SIZE, Resistance.START_INFORMED,
                 Resistance.START_SMART, Resistance.START_LOYAL,
-                Resistance.START_RICH, [], 0, Plan.TYPE_NOOP)
-        cohort_effect = game.ease(self.size)
-        if new_group :
+                Resistance.START_RICH, {}, 0, Plan.NOOP)
+        cohort_effect = ease(self.size)
+        if new_group:
             # change defaults to fit this cohort
             # TODO should have some more random in here
             new_group.size += Resistance.START_SIZE * cohort_effect
@@ -628,24 +580,18 @@ class Cohort(JSONable,Buffable):
                 random.random() * cohort_effect)
             # TODO should affect all stats somehow
             ui.msg('new rebels created: %s'%new_group.name)
-        else:
+        elif len(self.resistance_groups):
             # no new group, so boost an existing group
-            if len(self.resistance_groups):
-                cohort_effect /= 5.
-                group = self.resistance_groups[random.randint(0,
-                    len(self.resistance_groups)-1)]
-                group.size = min(1,
-                    group.size + (cohort_effect * self.rebellious))
-                group.loyal = max(Resistance.START_LOYAL,
-                    group.loyal - (cohort_effect * 0.5))
-                group.rich = min(1, group.rich + (cohort_effect * self.cash))
-                group.visibility = min(1, group.visibility + ((1-cohort_effect)*(.1*random.random())))
-                ui.msg('boosted existing rebels %s'%group.name)
-
-
-
-
-
+            cohort_effect /= 5.
+            group = self.resistance_groups[random.randint(0,
+                len(self.resistance_groups)-1)]
+            group.size = min(1,
+                group.size + (cohort_effect * self.rebellious))
+            group.loyal = max(Resistance.START_LOYAL,
+                group.loyal - (cohort_effect * 0.5))
+            group.rich = min(1, group.rich + (cohort_effect * self.cash))
+            group.visibility = min(1, group.visibility + ((1-cohort_effect)*(.1*random.random())))
+            ui.msg('boosted existing rebels %s' % group.name)
 
 
 class Privileged(Cohort):
@@ -674,9 +620,7 @@ class Servitor(Cohort):
         return True
 
 
-
-
-class Group(JSONable):
+class Group(JSONable, Buffable):
     """A group of non-rabble that actually do stuff in the game.
     """
     size = RecordedAttribute('size')
@@ -696,6 +640,7 @@ class Group(JSONable):
         self.loyal = loyal
         self.rich = rich
         self.buffs = buffs
+        self.plans = []
 
     def json_dump(self):
         names = ['buffs', 'name']
@@ -703,7 +648,9 @@ class Group(JSONable):
             names.append(name + '_value')
             names.append(name + '_base')
             names.append(name + '_history')
-        return self.json_dump_simple(*names)
+        v = self.json_dump_simple(*names)
+        v['plans'] = [p.to_json() for p in self.plans]
+        return v
 
     @classmethod
     def json_create_args(cls, jdata):
@@ -715,6 +662,7 @@ class Group(JSONable):
             setattr(self, name + '_value', jdata['.%s_value' % name])
             setattr(self, name + '_base', jdata['.%s_base' % name])
             setattr(self, name + '_history', jdata['.%s_history' % name])
+        self.plans = [Plan.from_json(d) for d in jdata['plans']]
 
     def update(self, game, ui):
         # Groups plan - plan the action they will take next turn
@@ -776,6 +724,7 @@ class Faction(Group):
             buffs)
         self.alert = alert       # awareness of rebellion and player
 
+
     def json_dump(self):
         v = super(Faction, self).json_dump()
         v.update(self.json_dump_simple('alert'))
@@ -823,7 +772,8 @@ class Resistance(Group):
 
     def json_dump(self):
         v = super(Resistance, self).json_dump()
-        v.update(self.json_dump_simple('visibility_value', 'visibility_base','visibility_history'))
+        v.update(self.json_dump_simple('visibility_value', 'visibility_base',
+            'visibility_history'))
         v.update(self.json_dump_simple('modus_operandi'))
         return v
 

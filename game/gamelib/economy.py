@@ -10,7 +10,7 @@ MANPOWER='lifeforms'
 
 
 
-class Zone_Economy:
+class Zone_Economy(object):
     """Convert a raw material into a resource
 
     Contain two Cohorts (population groups)

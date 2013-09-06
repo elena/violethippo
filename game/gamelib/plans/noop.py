@@ -3,15 +3,12 @@ from gamelib.plans.base import Plan
 
 
 class Noop(Plan):
-    type = Plan.TYPE_NOOP
+    type = Plan.NOOP
 
-    def check(self, game, group):
-        return True
+    def score(self, game, zone, group):
+        return 1
 
-    def consume_buff(self, game, group, ui):
+    def enact(self, game, zone, ui, group):
         pass
 
-    def enact(self, game, ui):
-        pass
-
-register(Noop)
+# register(Noop)
