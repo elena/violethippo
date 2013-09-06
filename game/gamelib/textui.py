@@ -40,17 +40,23 @@ class FakeUI:
         return float(n)/t
 
 
-    def __init__(self, savedir,game):
+    def __init__(self, savedir,game,printnow):
         self.savedir = savedir
         self.game=game
         model.game=game
-        self.messages_on=True
-        self.messages = []
+        if printnow:
+            self.messages = None # if None: prints  if [] stores
+        else:
+            self.messages = []   # if None: prints  if [] stores
         self.zone=FakeUIZone(self)
         self.enter=None
         #
-        if savedir:
+        if savedir is not None:
             self.logging_begin(savedir)
+    def logging_begin(self, sdir):
+        if os.path.exists(sdir):
+            shutil.rmtree(sdir)
+        os.mkdir(sdir)
 
     def update_info(self):
         pass
@@ -76,8 +82,6 @@ class FakeUI:
         raise Exception
 
 
-    def msgdump(self):
-        pass
     def msgfix(self, msg, args):
         if args:
             try:
@@ -85,21 +89,28 @@ class FakeUI:
             except:
                 msg='%s %s'%(msg,args)
         return  msg
+    def msgsave(self,fname):
+        if self.messages is not None:
+            open(os.path.join(self.savedir,fname),'w').write( '\n'.join(self.messages)+'\n' )
+    def msgdump(self):
+        if self.messages is not None:
+            for m in self.messages:
+                print m
 
     def msg(self, msg, *args):
-        print self.msgfix(msg,args)
+        m=self.msgfix(msg,args)
+        if self.messages is None:
+            print m
+        else:
+            self.messages.append(m)
     def critical(self, msg, *args):
         sys.stderr.write( self.msgfix(msg,args)+'\n' )
         self.msg(msg,*args)
     def graph(self,graph,line,turn,value):
         self.msg("GRAPH: %s %s %s %s"%(graph,line,turn,value))
 
-    def logging_begin(self, sdir):
-        if os.path.exists(sdir):
-            shutil.rmtree(sdir)
-        os.mkdir(sdir)
     def update(self):
-        self.msgdump()
+        pass
 
 
     def on_new_turn(self):
@@ -114,7 +125,8 @@ class FakeUI:
 def savedir(test):
     @functools.wraps(test)
     def wrapper(*args, **kw):
-        tempdir = os.path.join('save.test', test.__name__)
+        dname=kw.get('newsavedir',test.__name__)
+        tempdir = os.path.join('save.test', dname)
         if os.path.exists(tempdir):
             shutil.rmtree(tempdir)
         os.makedirs(tempdir)

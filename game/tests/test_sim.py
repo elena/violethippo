@@ -15,7 +15,7 @@ def test_model_construction(savedir,*args,**kw):
     random.seed(1)
 
     g = model.Game()
-    ui = textui.FakeUI(savedir,g)
+    ui = textui.FakeUI(savedir,g,True)
 
     g.init_new_game(ui)
 

@@ -1,8 +1,6 @@
 from gamelib.plans import register
 from gamelib.plans.base import Plan
 
-from gamelib.model import game
-
 class DamageProduction(Plan):
     type = Plan.VIOLENCE
 
