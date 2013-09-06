@@ -153,6 +153,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         for action in self.player_action_buts:
             if action.rect.contains(x, y):
                 action.order.execute(self)
+                return True         # event handled
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.GRAVE:
