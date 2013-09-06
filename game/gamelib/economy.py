@@ -57,7 +57,7 @@ class Zone_Economy:
             if n not in self.store:
                 self.store[n]=0
             self.store[n]-= self.supply_efficiency
-        self.supply_efficiency=min( self.supply_efficiency+.5,10.)
+        self.supply_efficiency=min( self.supply_efficiency+.3333,10.)
         ui.msg('    %s %s final eff %s'%(self.name,self.store,self.supply_efficiency) )
 
     def economy_transport(self,game,ui):

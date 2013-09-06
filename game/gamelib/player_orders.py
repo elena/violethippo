@@ -133,7 +133,7 @@ class ReplaceWithPlanHurtLiberty(Order):
             return
         ui.msg('un-liberty up %s %s'%(choice,co))
         #co.buff_stat('liberty',-.5,-.4,-.3,-.2)
-        co.buff_stat('liberty',-.5,-.1)
+        co.buff_stat('liberty',-1.5)
         ui.msg('          buffs %s'%(co.buffs))
         ui.update_info()
 
