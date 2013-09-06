@@ -251,6 +251,10 @@ class Game(JSONable):
         return max(0, total-ran)
 
     def ease(self, total, ease=EASE_CUBIC):
+        if total > 2:
+            raise Exception('EasingValueTooLarge')
+        if total > 1:
+            return self.ease(total-1, ease) + 1
         if ease == self.EASE_LINEAR:
             return total
         elif ease == self.EASE_HERMITE:
