@@ -29,11 +29,13 @@ from cocos.layer import Layer, ColorLayer, PythonInterpreterLayer
 from cocos.text import Label
 from cocos.sprite import Sprite
 
-from gamelib import model, player_orders
 from ninepatch import LabelNinepatch
+
+from gamelib import model, player_orders
 
 from dialog import ChoiceLayer
 from debug import DebugLayer
+from widgets import Button, TextButton
 
 
 def shuffled(l):
@@ -88,8 +90,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             anchor_x='right', anchor_y='top')
         self.add(self.turn_label)
 
-        self.end_turn = Sprite('end turn button.png', position=(w-32, h-32))
-        self.end_turn.on_click = self.on_new_turn
+        self.end_turn = Button('end turn button.png', (w-32, h-32), None,
+            self.on_new_turn)
         self.buttons.append(self.end_turn)
         self.add(self.end_turn)
 
@@ -144,12 +146,10 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             cost = order.cost(self.zone)
             if cost is None:
                 continue
-            b = LabelNinepatch('border-9p.png', Label('%dAP: %s' % (cost,
-                order.label), x = 730, y=y, color=(0, 0, 0, 255),
-                anchor_x='left', anchor_y='bottom'))
-            y -= 40
+            b = TextButton('%dAP: %s' % (cost, order.label), (730, y), order,
+                self.on_player_order)
             b.order = order
-            b.on_click = self.on_player_order
+            y -= 40
             self.buttons.append(b)
             self.add(b)
 
@@ -221,9 +221,7 @@ class Zone(Layer):
 
         for name, pos in [('faction', (270, 460)), ('privileged', (85, 361)),
                 ('servitors', (340, 200))]:
-            but = Sprite('%s button.png' % name, position=pos, anchor=(0, 0))
-            but.info = name
-            but.on_click = self.on_show_info
+            but = Button('%s button.png' % name, pos, name, self.on_show_info)
             self.add(but, z=1)
             self.buttons.append(but)
 
@@ -283,10 +281,10 @@ class Zone(Layer):
         for name, l in [('privileged', zone.privileged.resistance_groups),
                 ('servitor', zone.servitor.resistance_groups)]:
             for n, group in enumerate(l):
-                position = self.resistance_locations[active_zone, name][n]
-                but = Sprite('resistance button.png', position=position, anchor=(0, 0))
+                pos = self.resistance_locations[active_zone, name][n]
+                but = Button('resistance button.png', pos, group,
+                    self.on_resistance)
                 but.resistance_group = group
-                but.on_click = self.on_resistance
                 self.buttons.append(but)
                 self.add(but, 2)
 
