@@ -414,7 +414,7 @@ class Zone(JSONable, economy.Zone_Economy):
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
         o.privileged.set_parent(o)
         o.servitor = Servitor(size=Game.LOW*2, liberty=Game.MED*2,
-                quality_of_life=Game.HIGH*2, cash=Game.MED*2, max_resistance=4)
+                quality_of_life=Game.MED*2, cash=Game.MED*2, max_resistance=4)
         o.servitor.set_parent(o)
         o.faction = Faction('mrfedex', alert=.02,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
@@ -552,14 +552,14 @@ class Cohort(JSONable, Buffable):
         """Servitors: Willingness can be forced through low liberty,
            or the product of high quality of life and cash in combination.
         """
-        return max(1.-self.buffed('liberty'), (self.quality_of_life + self.cash)/2)
+        return max(1.-self.buffed('liberty'), (self.buffed('quality_of_life') + self.cash)/2)
 
     @property
     def efficiency(self):
         """priv: efficiency is mostly QOL and somewhat influenced by
         liberty and cash
         """
-        return (2* self.quality_of_life + self.buffed('liberty') + self.cash)/4.
+        return (2* self.buffed('quality_of_life') + self.buffed('liberty') + self.cash)/4.
 
     @property
     def rebellious(self):

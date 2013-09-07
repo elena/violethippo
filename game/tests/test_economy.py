@@ -81,7 +81,8 @@ def hit_hook(g,l,res,**kw):
     assert( finished==res )
 
 def cam_playing():
-    a=([2],[],RUN_OK)
+    #a=([2],[],RUN_OK)
+    a=([5,],[],RUN_OK)
     hit_hook( *a ,debug=True,debuggraph=False)
 
 def test_economy_hits():

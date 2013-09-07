@@ -39,8 +39,25 @@ class PatrolZone(Plan):
                 roll=self.mechanics( a, r )
                 ui.msg('    brain.attacking: %s %s'%(r.name,roll))
                 if roll>0:
-                    r.buff_stat('visibility',.1,.1,.1,.1)
+                    r.buff_stat('visibility',.1,.05,.025,.025)
                     ui.msg('   brain.      2 %s  %s'%(r.name,r.buffed('visibility')))
                 else:
                     ui.msg('   brain.  missed')
+
+
+class ForceProduction(Plan):
+    """Force production 
+            servitor liberty down
+            privileged qol up.
+    """
+    def __init__(self,name,actor):
+        Plan.__init__(self,name,actor,
+                      Plan.ESPIONAGE,
+                      'boosting production in area %s'%(actor.zone.name),
+                      0,['size','rich'],[],None,[],[],[('privileged',('quality_of_life',(.1,.1,.1,.1))),('servitor',('liberty',(-.1,-.1,-.1,-.1)))])
+
+
+
+
+
 
