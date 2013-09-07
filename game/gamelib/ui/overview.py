@@ -271,7 +271,8 @@ class Zone(Layer):
                     name = but.info.name
                 self.add(but, z=1, name=name)
                 lx = x + indent + but.image.width + 10
-                l = Label(label, position=(lx, y+8), color=(255,255,255,255))
+                l = Label(label, position=(lx, y+8), color=(255,255,255,255),
+                    font_name='Prototype')
                 self.add(l)
                 but.label_ob = l
 
@@ -467,6 +468,7 @@ class ZoneInfo(InfoLayer):
 if __name__ == '__main__':
     pyglet.resource.path.append('../../data')
     pyglet.resource.reindex()
+    pyglet.resource.add_font('Prototype.ttf')
 
     from cocos.director import director
     director.init(width=1024, height=768)
