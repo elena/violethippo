@@ -207,7 +207,6 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             self.buttons.append(b)
             self.add(b)
 
-
     class SIGNAL_GAMEOVER(Exception):
         pass
 
@@ -437,13 +436,7 @@ class InfoLayer(Layer):
 
 
 class Details(InfoLayer):
-    # is_event_handler = True
     active_info = None
-
-    # def on_mouse_press(self, x, y, button, modifiers):
-    #     if self.visible and self.rect.contains(x, y):
-    #         self.visible = False
-    #         return True         # event handled
 
     def hide_info(self):
         self.visible = False
@@ -514,8 +507,6 @@ class Details(InfoLayer):
         for row in info:
             packer(*row)
 
-        # self.popup_9p = LabelNinepatch('border-9p.png', self)
-        # self.add(self.popup_9p)
         self.visible = True
 
 
@@ -541,8 +532,8 @@ class ZoneInfo(InfoLayer):
             'destroyed':  (0, 170, 0, 255),
         }
         desc = zone.faction.state_description
-        status = TextButton('%s: %s  ' % (zone.faction.name, desc.upper()), (500, -15),
-                            None, None, color=status_color[desc])
+        status = TextButton('%s: %s  ' % (zone.faction.name, desc.upper()),
+            (500, -15), None, None, color=status_color[desc])
         self.add(status)
 
         packer = self.packer()
