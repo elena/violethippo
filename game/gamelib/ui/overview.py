@@ -215,8 +215,15 @@ class Zone(Layer):
 
         self.buttons = []
 
+        GAME_WIDTH = 1024
+        GAME_HEIGHT = 768
+
+        ZONE_WIDTH = 560
+        ZONE_HEIGHT = 640
+
         self.active = Sprite(self.zone_images[model.INDUSTRY],
-            position=(75+256, 75+256))
+            anchor=(-(GAME_WIDTH-ZONE_WIDTH), -(GAME_HEIGHT-ZONE_HEIGHT))
+        )
         self.add(self.active)
 
         for name, pos in [('faction', (270, 460)), ('privileged', (85, 361)),
