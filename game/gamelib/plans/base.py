@@ -134,7 +134,7 @@ class Plan:
 
     def check_success(self, ui):
         from gamelib.model import game
-        attacker = self.actor()
+        attacker = self.actor
         if not len(self.attack_stats):
             return 1  # nothing to check, defense doesn't matter?
         if len(self.attack_stats) >= 3:
