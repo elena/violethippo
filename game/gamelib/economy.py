@@ -94,14 +94,12 @@ class Zone_Economy(object):
         # requires impacts this too
         output=self.supply_efficiency*prodcurr/prodbase
         ui.msg('   supply use (max 10): %s'%(self.supply_efficiency))
+        ui.msg('      priv:base: %s  curr:%s'%(self.privileged.production_output_turn0, self.privileged.production_output()))
+        ui.msg('      serv:base: %s  curr:%s'%(self.servitor.production_output_turn0, self.servitor.production_output()))
+        ui.msg('           base: %s  curr:%s =  %s'%(prodbase,prodcurr,int(100*prodcurr/prodbase)))
         ui.msg('   req: %s'%(self.requirements) )
         ui.msg('   provides: %s'%(self.provides))
-        ui.msg('     priv:base: %s'%(self.privileged.production_output_turn0))
-        ui.msg('     serv:base: %s'%(self.servitor.production_output_turn0))
-        ui.msg('     priv:curr: %s'%(self.privileged.production_output()))
-        ui.msg('     serv:curr: %s'%(self.servitor.production_output()))
-        ui.msg('   base: %s  curr: %s'%(prodbase,prodcurr))
-        ui.msg('   prod: %s(percent)'%( output ))
+        ui.msg('   prod: %s'%( output ))
         for prod in self.provides:
             if prod not in self.store:
                 self.store[ prod ]=0

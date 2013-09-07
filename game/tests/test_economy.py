@@ -51,7 +51,7 @@ def crunch_economy(savedir,**kw):
     random.seed(1)
 
     g = model.Game()
-    ui = textui.FakeUI(savedir,g,False)
+    ui = textui.FakeUI(savedir,g,kw.get('debug',False))
     g.init_new_game(ui)
     g.json_path=os.path.join(savedir, 'save.json')
 
@@ -70,19 +70,19 @@ def crunch_economy(savedir,**kw):
 RUN_OK=True
 RUN_FAIL=False
 
-def hit_hook(g,l,res):
+def hit_hook(g,l,res,**kw):
     savedir='goods_%s__liberty_%s__%s'%('_'.join([`n` for n in g]),
                                           '_'.join([`n` for n in l]),
                                           res )
-    ui=crunch_economy(hitgoods=g,hitliberty=l,leave_my_save_data_alone_you_bastard=True,newsavedir=savedir)
+    ui=crunch_economy(hitgoods=g,hitliberty=l,leave_my_save_data_alone_you_bastard=True,newsavedir=savedir,**kw)
     ui.critical('Called: %s',[g,l,res])
     finished= (ui.game.turn==MAXTURNS)
     ui.msgsave('message.log')
     assert( finished==res )
 
 def cam_playing():
-    a=([5],[5,6],RUN_OK)
-    hit_hook( *a )
+    a=([2],[],RUN_OK)
+    hit_hook( *a ,debug=True)
 
 def test_economy_hits():
     for g,l,r in [
