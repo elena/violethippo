@@ -590,6 +590,9 @@ class Cohort(JSONable, Buffable):
             new_group.loyal = max(Resistance.START_LOYAL,
                 random.random() * cohort_effect)
             # TODO should affect all stats somehow
+            # set some initial plans (or not)
+            for i in range(3):
+                new_group.search_for_plan(len(new_group.plans), ui)
             ui.msg('new rebels created: %s'%new_group.name)
         elif len(self.resistance_groups):
             # no new group, so boost an existing group
@@ -774,7 +777,11 @@ class Faction(Group):
                 self.plans.remove(plan)
             else:
                 plan.plan_time -= 1  # we don't expect this for factions
-        # TODO: select a new plan
+        # TODO: select a new plan for reals
+        new_plan = Plan("factionplan", self.zone, self, Plan.NOOP,
+            "a faction plan", 0, [])
+        ui.msg('faction %s made a plan: %s'%(self.name, new_plan.name))
+        # self.plans.append(new_plan)
 
 class Resistance(Group):
     """Resistance Group
@@ -842,13 +849,10 @@ class Resistance(Group):
         find_plan = Game.MED * ((self.MAX_PLANS - num_plans)/self.MAX_PLANS)
         found = roll(find_plan, self.buffed('need_plan'))
         if found > 0:
-            ui.msg('resistance group %s should find a plan'%self.name)
-            # TODO: select new plan based on self.modus_operandi and zone???
-            # this doesn't work because I need zone...
-            # zone = ???
-            # new_plan = Plan("newplan", zone, self, self.modus_operandi,
-            #     "a new plan", 1+random.randint(1,4), [])
-            # ui.msg('%s found a new plan: '%self.name, new_plan.name)
+            # TODO: select new plan based on self.modus_operandi and zone
+            new_plan = Plan("newplan", self.zone, self, self.modus_operandi,
+                "a new plan", 1+random.randint(1,4), [])
+            ui.msg('%s found a new plan: %s'%(self.name, new_plan.name))
             # add new plan to self.plans
             # self.plans.append(new_plan)
 
