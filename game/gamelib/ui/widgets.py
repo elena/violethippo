@@ -16,7 +16,7 @@ class TextButton(LabelNinepatch):
     def __init__(self, text, position, info, action,
             ninepatch='border-9p.png'):
         x, y = position
-        super(TextButton, self).__init__(ninepatch, Label(text, x=730, y=y,
+        super(TextButton, self).__init__(ninepatch, Label(text, x=x, y=y,
             color=(0, 0, 0, 255), anchor_x='left', anchor_y='bottom'))
         self.info = info
         self.on_click = action

@@ -46,8 +46,7 @@ def shuffled(l):
 
 class Overview(Scene):
     def __init__(self):
-        super(Overview, self).__init__(ColorLayer(245, 244, 240, 255),
-            Fixed())
+        super(Overview, self).__init__(Sprite('bg.jpg', position=(512, 384)), Fixed())
 
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
     is_event_handler = True
@@ -80,14 +79,14 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         w, h = director.get_window_size()
 
         # now it's safe to show information about the game
-        self.threat_label = Label('', color=(0, 0, 0, 255), x=0, y=h, anchor_y='top')
+        self.threat_label = Label('', x=450, y=680, anchor_y='top')
         self.add(self.threat_label)
-        self.visible_label = Label('', color=(0, 0, 0, 255), x=0, y=h-20, anchor_y='top')
+        self.visible_label = Label('', x=450, y=660, anchor_y='top')
         self.add(self.visible_label)
 
         self.turn_label = Label('Turn: %d\nActivitiy Points: %d',
-            multiline=True, color=(0, 0, 0, 255), x=w-200, y=h, width=200,
-            anchor_x='right', anchor_y='top')
+            multiline=True, x=20, y=70, width=200,
+            anchor_x='left', anchor_y='bottom')
         self.add(self.turn_label)
 
         self.end_turn = Button('end turn button.png', (w-32, h-32), None,
@@ -99,7 +98,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.info)
 
         self.zone = Zone()
-        self.add(self.zone)
+        self.add(self.zone, z=-1)
 
         self.update_info()
 
@@ -140,16 +139,15 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                 self.buttons.remove(but)
 
         # add appropriate player order buttons
-        w, h = director.get_window_size()
-        y = 560
+        x = y = 20
         for order in player_orders.all:
             cost = order.cost(self.zone)
             if cost is None:
                 continue
-            b = TextButton('%dAP: %s' % (cost, order.label), (730, y), order,
+            b = TextButton('%dAP: %s' % (cost, order.label), (x, y), order,
                 self.on_player_order)
             b.order = order
-            y -= 40
+            x += b.label.element.content_width + 20
             self.buttons.append(b)
             self.add(b)
 
@@ -196,12 +194,6 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 class Zone(Layer):
     is_event_handler = True
 
-    ZONE_BUTTONS = {
-        model.INDUSTRY: {model.LOGISTICS: (30, 95), model.MILITARY: (70, 15)},
-        model.LOGISTICS: {model.INDUSTRY: (45, 530), model.MILITARY: (70, 15)},
-        model.MILITARY: {model.INDUSTRY: (45, 530), model.LOGISTICS: (15, 450)},
-    }
-
     def __init__(self):
         super(Zone, self).__init__()
         w, h = director.get_window_size()
@@ -213,8 +205,6 @@ class Zone(Layer):
             model.MILITARY: pyglet.resource.image('military.png')
         }
 
-        self.buttons = []
-
         GAME_WIDTH = 1024
         GAME_HEIGHT = 768
 
@@ -222,31 +212,19 @@ class Zone(Layer):
         ZONE_HEIGHT = 640
 
         self.active = Sprite(self.zone_images[model.INDUSTRY],
-            anchor=(-(GAME_WIDTH-ZONE_WIDTH), -(GAME_HEIGHT-ZONE_HEIGHT))
+            anchor=((-(GAME_WIDTH-ZONE_WIDTH), -(GAME_HEIGHT-ZONE_HEIGHT)))
         )
-        self.add(self.active)
+        self.add(self.active, z=-1)
 
-        for name, pos in [('faction', (270, 460)), ('privileged', (85, 361)),
-                ('servitors', (340, 200))]:
-            but = Button('%s button.png' % name, pos, name, self.on_show_info)
-            self.add(but, z=1)
-            self.buttons.append(but)
-
-        priv_locs = [(340, 385), (440, 400)]
-        serv_locs = [(120, 280), (220, 220), (300, 285), (420, 275)]
-        self.resistance_locations = {
-            (model.INDUSTRY, 'privileged'): shuffled(priv_locs),
-            (model.LOGISTICS, 'privileged'): shuffled(priv_locs),
-            (model.MILITARY, 'privileged'): shuffled(priv_locs),
-            (model.INDUSTRY, 'servitor'): shuffled(serv_locs),
-            (model.LOGISTICS, 'servitor'): shuffled(serv_locs),
-            (model.MILITARY, 'servitor'): shuffled(serv_locs),
-        }
+        self.buttons = []
 
         self.zone_buts = {
-            model.INDUSTRY: Sprite('industry button.png', anchor=(0, 0)),
-            model.LOGISTICS: Sprite('logistics button.png', anchor=(0, 0)),
-            model.MILITARY: Sprite('military button.png', anchor=(0, 0)),
+            model.INDUSTRY: Sprite('industry button.png', position=(450, 680),
+                anchor=(0, 0)),
+            model.LOGISTICS: Sprite('logistics button.png', position=(640, 680),
+                anchor=(0, 0)),
+            model.MILITARY: Sprite('military button.png', position=(830, 680),
+                anchor=(0, 0)),
         }
 
         self.add(self.zone_buts[model.INDUSTRY])
@@ -268,32 +246,41 @@ class Zone(Layer):
         if self.mode == active_zone:
             return
 
-        # remove old resistance buttons
-        for but in list(self.buttons):
-            if hasattr(but, 'resistance_group'):
-                self.remove(but)
-                self.buttons.remove(but)
-
-        # move buttons around
-        self.zone_buts[active_zone].position = (730, 630)
-        for other, location in self.ZONE_BUTTONS[active_zone].items():
-            self.zone_buts[other].position = location
-
         self.mode = active_zone
         self.active.image = self.zone_images[active_zone]
         self.parent.update_info()
         self.parent.info.hide_info()
 
+        for but in list(self.buttons):
+            self.remove(but)
+
         zone = model.game.moon.zones[active_zone]
-        for name, l in [('privileged', zone.privileged.resistance_groups),
-                ('servitor', zone.servitor.resistance_groups)]:
-            for n, group in enumerate(l):
-                pos = self.resistance_locations[active_zone, name][n]
-                but = Button('resistance button.png', pos, group,
-                    self.on_resistance)
-                but.resistance_group = group
+        self.buttons = []
+        def add_button():
+            y = 758
+            x = 10
+            while 1:
+                indent, but = yield
+                y -= but.image.height
+                but.position = (x + indent, y)
                 self.buttons.append(but)
-                self.add(but, 2)
+                self.add(but, z=1)
+
+        adder = add_button()
+        adder.next()
+
+        adder.send((0, Button('faction button.png', (0, 0), 'faction',
+            self.on_show_info)))
+        adder.send((20, Button('privileged button.png', (0, 0), 'privileged',
+            self.on_show_info)))
+        for group in zone.privileged.resistance_groups:
+            adder.send((40, Button('resistance button.png', (0, 0), group,
+                self.on_show_info)))
+        adder.send((20, Button('servitors button.png', (0, 0), 'privileged',
+            self.on_show_info)))
+        for group in zone.servitor.resistance_groups:
+            adder.send((40, Button('resistance button.png', (0, 0), group,
+                self.on_show_info)))
 
     def on_mouse_press(self, x, y, button, modifiers):
         for zone, but in self.zone_buts.items():
@@ -317,9 +304,8 @@ class Zone(Layer):
             self.parent.info.show_cohort(zone.privileged)
         elif but.info == 'servitors':
             self.parent.info.show_cohort(zone.servitor)
-
-    def on_resistance(self, but):
-        self.parent.info.show_resistance(but.resistance_group)
+        else:
+            self.parent.info.show_resistance(but.info)
 
 
 class Info(Layer):
@@ -327,15 +313,15 @@ class Info(Layer):
     def __init__(self):
         super(Info, self).__init__()
 
-        self.anchor = (0, 0)
-        self.x = 660
-        self.y = 10
+        # self.anchor = (0, 0)
+        # self.x = 660
+        # self.y = 10
 
-        self.zone_label = Label('', multiline=True, color=(0, 0, 0, 255),
-            width=350, anchor_x='left', anchor_y='bottom', x=10, y=10)
+        self.zone_label = Label('', multiline=True, align='right',
+            width=300, anchor_x='right', anchor_y='top', x=430, y=740)
         self.add(self.zone_label)
 
-        self.info_label = Label('', multiline=True, color=(0, 0, 0, 255),
+        self.info_label = Label('', multiline=True,
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=250)
         self.info_label.visible = False
 
