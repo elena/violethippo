@@ -290,7 +290,8 @@ class Player(JSONable):
         for zone in game.moon.zones:
             self.visibility += 1 - game.moon.zones[zone].player_found
         self.activity_points = self.max_activity_points
-        self.free_order = True
+        # removed for other than first turn, for demo playability
+        # self.free_order = True
 
 
 class Moon(JSONable):

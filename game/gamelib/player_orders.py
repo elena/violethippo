@@ -141,7 +141,7 @@ class ReplaceWithPlanHurtLiberty(Order):
         ui.msg('          buffs %s'%(co.buffs))
         ui.update_info()
 
-all.append(ReplaceWithPlanHurtLiberty())
+# all.append(ReplaceWithPlanHurtLiberty())
 
 
 

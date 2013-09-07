@@ -518,7 +518,7 @@ class ZoneInfo(InfoLayer):
             'destroyed':  (0, 170, 0, 255),
         }
         desc = zone.faction.state_description
-        status = TextButton('  %s  ' % desc.upper(), (550, -15),
+        status = TextButton('%s: %s  ' % (zone.faction.name, desc.upper()), (500, -15),
                             None, None, color=status_color[desc])
         self.add(status)
 
