@@ -8,6 +8,7 @@ from cocos.scene import Scene
 from cocos.layer import Layer, ColorLayer, PythonInterpreterLayer
 from cocos.text import Label
 from cocos.sprite import Sprite
+from cocos.rect import Rect
 
 from ninepatch import LabelNinepatch
 
@@ -16,7 +17,6 @@ from gamelib import model, player_orders
 from dialog import ChoiceLayer, OkLayer
 from debug import DebugLayer
 from widgets import Button, TextButton, Bargraph, MultipleBargraph
-
 
 START_TEXT = """When you were young they came from the stars,
 adding a new moon to the sky - a moon of steel.
@@ -125,7 +125,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.zone = Zone()
         self.add(self.zone, z=-1)
 
-        order_label = Label('Choose your plans for this turn: ',
+        order_label = Label('Choose your actions for this turn: ',
                             position=(self.order_x, self.order_y+40),
                             color=(255,255,255,255), font_name='Prototype')
         self.add(order_label)
@@ -181,7 +181,6 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                             'hideout', None)
             self.buttons.append(home_logo)
             self.add(home_logo)
-
 
         # remove old player order buttons
         for but in list(self.buttons):
@@ -344,6 +343,7 @@ class Zone(Layer):
                 lx = x + indent + but.image.width + 10
                 l = Label(label, position=(lx, y+8), color=(255,255,255,255),
                     font_name='Prototype')
+                l.rect = Rect(l.x, l.y, l.element.content_width, l.element.content_height)
                 self.add(l)
                 but.label_ob = l
 
@@ -370,6 +370,9 @@ class Zone(Layer):
             if but.info == self.mode:
                 continue
             if but.get_rect().contains(x, y):
+                but.on_click(but)
+                return True         # event handled
+            if hasattr(but, 'label_ob') and but.label_ob.rect.contains(x, y):
                 but.on_click(but)
                 return True         # event handled
 
