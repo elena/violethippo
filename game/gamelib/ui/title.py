@@ -34,8 +34,9 @@ class TitleControlLayer(Layer):
         # self.add(logo)
 
         self.add(Label("Click to Continue",
-            font_size=16, x=w//2, y=h//2 - 240, anchor_x='center',
-            anchor_y='top', color=(200, 200, 200, 255)))
+            font_size=16, x=w//2, y=10, anchor_x='center',
+            anchor_y='bottom', color=(200, 200, 200, 255),
+            font_name='Prototype'))
 
     def on_key_press(self, *args):
         director.replace(transitions.FadeTransition(menu()))

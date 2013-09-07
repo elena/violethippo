@@ -29,11 +29,11 @@ class SplashControlLayer(Layer):
 
         self.add(Label("Presented by the Violet Hippo",
             font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
-            anchor_y='bottom'))
+            anchor_y='bottom', font_name='Prototype'))
 
         self.add(Label("Click to Continue",
             font_size=16, x=w//2, y=h//2 - lh//2 - 20, anchor_x='center',
-            anchor_y='top'))
+            anchor_y='top', font_name='Prototype'))
 
     def on_key_press(self, *args):
         director.replace(transitions.FadeTransition(title()))

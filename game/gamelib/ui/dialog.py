@@ -41,7 +41,8 @@ class OkLayer(Layer):
         if explanation:
             but = Label(explanation, multiline=True, color=(0, 0, 0, 255),
                 x=w//2, width=width, anchor_x='center', anchor_y='top', y=y,
-                font_size=14, align='center')
+                font_size=14, align='center',
+            font_name='Prototype')
             self.add(but)
             x = but.element.x - width // 2
             x1 = min(x, x1)
@@ -51,7 +52,8 @@ class OkLayer(Layer):
             y -= but.element.content_height + 10
 
         but = Label('(click or press a key to dismiss)', color=(0, 0, 0, 255),
-            x=w//2, anchor_x='center', anchor_y='bottom', y=y-32, font_size=12)
+            x=w//2, anchor_x='center', anchor_y='bottom', y=y-32, font_size=12,
+            font_name='Prototype')
         self.add(but)
         x = but.element.x - but.element.content_width // 2
         x1 = min(x, x1)
@@ -115,7 +117,8 @@ class ChoiceLayer(Layer):
         if explanation:
             but = Label(explanation, multiline=True, color=(0, 0, 0, 255),
                 x=w//2, width=width, anchor_x='center', anchor_y='top', y=y,
-                font_size=14, align='center')
+                font_size=14, align='center',
+            font_name='Prototype')
             self.add(but)
             x = but.element.x - width // 2
             x1 = min(x, x1)
@@ -129,7 +132,8 @@ class ChoiceLayer(Layer):
         self.choice_buts = []
         for choice in choices:
             but = Label(choice, color=(0, 0, 0, 255), x=w//2,
-                anchor_x='center',  anchor_y='bottom', y=y, font_size=20)
+                anchor_x='center',  anchor_y='bottom', y=y, font_size=20,
+            font_name='Prototype')
             y -= 32
             self.add(but, z=1)
             self.choice_buts.append(but)

@@ -43,7 +43,10 @@ class MainMenu(Menu):
         self.menu_valign = CENTER
         self.menu_halign = CENTER
 
+        self.font_title['font_name'] = 'Prototype'
         self.font_title['font_size'] = 42
+        self.font_item['font_name'] = 'Prototype'
+        self.font_item_selected['font_name'] = 'Prototype'
         self.font_item['font_size'] = 20
         self.font_item_selected['font_size'] = 20
         self.title_label = "Menu"

@@ -79,14 +79,17 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         w, h = director.get_window_size()
 
         # now it's safe to show information about the game
-        self.threat_label = Label('', x=450, y=680, anchor_y='top')
+        self.threat_label = Label('', x=450, y=680, anchor_y='top',
+            font_name='Prototype')
         self.add(self.threat_label)
-        self.visible_label = Label('', x=450, y=660, anchor_y='top')
+        self.visible_label = Label('', x=450, y=660, anchor_y='top',
+            font_name='Prototype')
         self.add(self.visible_label)
 
         self.turn_label = Label('Turn: %d\nActivitiy Points: %d',
             multiline=True, x=20, y=70, width=200,
-            anchor_x='left', anchor_y='bottom')
+            anchor_x='left', anchor_y='bottom',
+            font_name='Prototype')
         self.add(self.turn_label)
 
         self.end_turn = Button('end turn button.png', (w-32, h-32), None,
@@ -318,11 +321,13 @@ class Info(Layer):
         # self.y = 10
 
         self.zone_label = Label('', multiline=True, align='right',
-            width=300, anchor_x='right', anchor_y='top', x=430, y=740)
+            width=300, anchor_x='right', anchor_y='top', x=430, y=740,
+            font_name='Prototype')
         self.add(self.zone_label)
 
         self.info_label = Label('', multiline=True,
-            width=350, anchor_x='left', anchor_y='bottom', x=10, y=250)
+            width=350, anchor_x='left', anchor_y='bottom', x=10, y=250,
+            font_name='Prototype')
         self.info_label.visible = False
 
         self.popup_9p = LabelNinepatch('border-9p.png', self.info_label)
