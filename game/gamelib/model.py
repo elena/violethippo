@@ -206,7 +206,7 @@ class Game(JSONable):
         #
         # Check for game over condition..
         #
-        ui.msg('threat is %s' % self.threat)
+        ui.msg('%s threat is %s'%(self, self.threat))
         if self.threat <= 0:
             self.game_over = True
             raise ui.SIGNAL_GAMEOVER  # player won
@@ -229,7 +229,7 @@ class Game(JSONable):
         #
         # save to be paranoid
         #
-        ui.msg('game: saving')
+        ui.msg('%s game: saving'%(self))
         self.json_savefile_turn()
         ui.msg('-'*70)
         ui.msg('game: update DONE. now turn %s'%self.turn)
@@ -321,16 +321,16 @@ class Moon(JSONable):
         for zone in self.zones:
             self.zones[zone].update(game,ui)
         goods=self.zones[INDUSTRY].store.get(GOODS,0)
-        ui.msg('ECONOMY.consume: %sgoods'%(goods))
+#        ui.msg('ECONOMY.consume: %sgoods'%(goods))
         for zone in self.zones:
             z=self.zones[zone]
             z.economy_use_goods(game,ui,goods)
             z.economy_consume_rest(game,ui)
         self.zones[INDUSTRY].economy_consume_goods(game,ui,goods)
-        ui.msg('ECONOMY.transport')
+#        ui.msg('ECONOMY.transport')
         for zone in self.zones:
             self.zones[zone].economy_transport(game,ui)
-        ui.msg('ECONOMY.produce')
+#        ui.msg('ECONOMY.produce')
         for zone in self.zones:
             self.zones[zone].economy_produce(game,ui)
 
@@ -450,7 +450,7 @@ class Zone(JSONable, economy.Zone_Economy):
                 self.player_found += self.faction.alert * .1
                 # perhaps not able to be found unless hideout in zone?
             self.player_found = min(self.player_found, 1)
-            ui.msg('player found in %s: %f'%(self.name, self.player_found))
+            ui.msg('    player found in %s: %f'%(self.name, self.player_found))
         #
         # Economy is now updated *after* update via moon.update.
         # Economy code is now in economy.py
@@ -461,8 +461,6 @@ class Zone(JSONable, economy.Zone_Economy):
         for c in [ self.privileged, self.servitor]:
             for n in ['size','liberty','quality_of_life','cash','willing','efficiency']:
                 ui.graph(self.name+'.pop',c.NAME+'/'+n,game.turn,getattr(c,n))
-            ui.msg('BUFFCHECK: %s %s %s/%s -- %s'%(self.name, c.NAME,
-                c.liberty, c.buffed('liberty'), c.buffs))
 
 
 class Cohort(JSONable, Buffable):
@@ -572,10 +570,10 @@ class Cohort(JSONable, Buffable):
 
     def spawn_rebels(self, game, ui):
         rebelchance = ease(self.rebellious)
-        ui.msg('rebel chance: %.1f' % (rebelchance * 100., ))
+        ui.msg('%s rebel chance: %.1f' % (self,rebelchance * 100., ))
         if not random.random() <= rebelchance:
             return
-        ui.msg('rebels spawned in %s' % self)
+        ui.msg('%s rebels spawned' % self)
         new_group = None
         if not (len(self.resistance_groups)) or (random.random() <= self.size):
             new_group = self.new_resistance('res%d ' % random.randint(1, 1000),
@@ -594,7 +592,7 @@ class Cohort(JSONable, Buffable):
             # set some initial plans (or not)
             for i in range(3):
                 new_group.search_for_plan(len(new_group.plans), ui)
-            ui.msg('new rebels created: %s'%new_group.name)
+            ui.msg('%s new rebels created: %s'%(self,new_group.name))
         elif len(self.resistance_groups):
             # no new group, so boost an existing group
             cohort_effect /= 5.
@@ -606,13 +604,13 @@ class Cohort(JSONable, Buffable):
                 group.loyal - (cohort_effect * 0.5))
             group.rich = min(1, group.rich + (cohort_effect * self.cash))
             group.visibility = min(1, group.visibility + ((1-cohort_effect)*(.1*random.random())))
-            ui.msg('boosted existing rebels %s' % group.name)
+            ui.msg('%s boosted existing rebels %s'%(self,group.name))
 
 
 class Privileged(Cohort):
     NAME='coh_priv'
     def __repr__(self):
-        return '{{{Cohort.priv}}}'
+        return '{{{priv@%s}}}'%(self.zone.name)
 
     def production_output(self):
         return self.buffed('efficiency')
@@ -625,7 +623,7 @@ class Privileged(Cohort):
 class Servitor(Cohort):
     NAME='coh_serv'
     def __repr__(self):
-        return '{{{Cohort.serv}}}'
+        return '{{{serv@%s}}}'%(self.zone.name)
 
     def production_output(self):
         return self.buffed('willing')

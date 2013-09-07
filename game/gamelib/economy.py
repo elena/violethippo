@@ -33,15 +33,16 @@ class Zone_Economy(object):
     def economy_use_goods(self,game,ui,goods):
         #
         # goods are used by 'people' and impact happiness etc
-        ui.msg('  USE goods:  %s %s'%(self.name,goods))
+#        ui.msg('  USE goods:  %s %s'%(self.name,goods))
         for co in [ self.privileged, self.servitor]:
             co.quality_of_life= co.quality_of_life_base * min(10.,goods+1.)/10.
-            ui.msg('    setting qol %s * %s = %s'%(co.quality_of_life_base,goods/10.,co.quality_of_life))
+            if co.quality_of_life != co.quality_of_life_base:
+                ui.msg('eco.goods: %s.%s qol %s * %s = %s'%(self.name,co.NAME,co.quality_of_life_base,goods/10.,co.quality_of_life))
 
     def economy_consume_goods(self,game,ui,goods):
-        ui.msg('   EAT goods:  %s %s'%(self.name,self.store))
+#        ui.msg('   EAT goods:  %s %s'%(self.name,self.store))
         self.store[model.GOODS]=min(0, self.store[model.GOODS]-goods)
-        ui.msg('            :  %s %s'%(self.name,self.store))
+#        ui.msg('            :  %s %s'%(self.name,self.store))
 
     def economy_consume_rest(self,game,ui):
         #
@@ -51,19 +52,20 @@ class Zone_Economy(object):
             self.supply_efficiency=min( self.supply_efficiency,
                                         self.store.get(n,0)
                                       )
-        ui.msg('    %s         %s %s'%(self.name,self.supply_efficiency,self.requirements))
-        ui.msg('    %s %s'%(self.name,self.store) )
+#        ui.msg('    %s         %s %s'%(self.name,self.supply_efficiency,self.requirements))
+#        ui.msg('    %s %s'%(self.name,self.store) )
         for n in self.requirements:
             if n not in self.store:
                 self.store[n]=0
             self.store[n]-= self.supply_efficiency
+            ui.msg('eco.consume: %s %s %s'%(self.name,self.supply_efficiency,n))
         self.supply_efficiency=min( self.supply_efficiency+.3333,10.)
-        ui.msg('    %s %s final eff %s'%(self.name,self.store,self.supply_efficiency) )
+#        ui.msg('    %s %s final eff %s'%(self.name,self.store,self.supply_efficiency) )
 
     def economy_transport(self,game,ui):
         #
         # Transport:
-        ui.msg('ZONE.economy: production.transport %s'%(self.name))
+#        ui.msg('ZONE.economy: production.transport %s'%(self.name))
         for n in self.provides:
             trans=self.store.get(n,0)
             self.store[n]-=trans
@@ -71,8 +73,8 @@ class Zone_Economy(object):
                 if n in z.requirements:
                     if z!=self:
                         z.store[n]+=trans
-                        ui.msg('     mv %s->-%s: %s %s'%(self.name,z.name,n,trans))
-        ui.msg('  +++      store: %s'%(self.store) )
+                        ui.msg('eco.transport: %s %s %s -> %s'%(self.name,trans,n,z.name))
+#        ui.msg('eco.transport: %s store: %s'%(self.name,self.store) )
 
 
 
@@ -85,27 +87,28 @@ class Zone_Economy(object):
         #     those first two steps have been done already
         #
         # Produce:
-        ui.msg('ZONE.economy: produce %s'%(self.name))
-        ui.msg('  +++final pre store: %s'%(self.store) )
+#        ui.msg('ZONE.economy: produce %s'%(self.name))
+#        ui.msg('  +++final pre store: %s'%(self.store) )
         prodbase=self.produce( self.privileged.production_output_turn0,
                                self.servitor.production_output_turn0 )
         prodcurr=self.produce( self.privileged.production_output(),
                                self.servitor.production_output() )
         # requires impacts this too
         output=self.supply_efficiency*prodcurr/prodbase
-        ui.msg('   supply use (max 10): %s'%(self.supply_efficiency))
-        ui.msg('      priv:base: %s  curr:%s'%(self.privileged.production_output_turn0, self.privileged.production_output()))
-        ui.msg('      serv:base: %s  curr:%s'%(self.servitor.production_output_turn0, self.servitor.production_output()))
-        ui.msg('           base: %s  curr:%s =  %s'%(prodbase,prodcurr,int(100*prodcurr/prodbase)))
-        ui.msg('   req: %s'%(self.requirements) )
-        ui.msg('   provides: %s'%(self.provides))
-        ui.msg('   prod: %s'%( output ))
+#        ui.msg('   supply use (max 10): %s'%(self.supply_efficiency))
+#        ui.msg('      priv:base: %s  curr:%s'%(self.privileged.production_output_turn0, self.privileged.production_output()))
+#        ui.msg('      serv:base: %s  curr:%s'%(self.servitor.production_output_turn0, self.servitor.production_output()))
+#        ui.msg('           base: %s  curr:%s =  %s'%(prodbase,prodcurr,int(100*prodcurr/prodbase)))
+#        ui.msg('   req: %s'%(self.requirements) )
+#        ui.msg('   provides: %s'%(self.provides))
+#        ui.msg('   prod: %s'%( output ))
         for prod in self.provides:
             if prod not in self.store:
                 self.store[ prod ]=0
             self.store[ prod ] = min( self.store[ prod ]+output, 11. )
-            ui.msg('   ......prod: %s %s -> %s '%( prod, output,self.store[prod] ))
-        ui.msg('  +++final prod store: %s'%(self.store) )
+#            ui.msg('   ......prod: %s %s -> %s '%( prod, output,self.store[prod] ))
+            ui.msg('eco.production: %s produced: %s %s'%(self.name,output,prod))
+        ui.msg('eco.production: %s store: %s'%(self.name,self.store) )
 
 
 
