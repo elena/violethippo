@@ -233,14 +233,13 @@ class Zone(Layer):
         self.add(self.active, z=-1)
 
         self.buts = {
-            model.INDUSTRY: Button('industry button.png', (450, 680),
+            model.INDUSTRY: Button('but-ind_off.png', (450, 680),
                 'industry', self.switch_zone_to),
-            model.LOGISTICS: Button('logistics button.png', (640, 680),
+            model.LOGISTICS: Button('but-log_off.png', (640, 680),
                 'logistics', self.switch_zone_to),
-            model.MILITARY: Button('military button.png', (830, 680),
+            model.MILITARY: Button('but-mil_off.png', (830, 680),
                 'military', self.switch_zone_to),
         }
-
         self.add(self.buts[model.INDUSTRY])
         self.add(self.buts[model.LOGISTICS])
         self.add(self.buts[model.MILITARY])
@@ -261,7 +260,13 @@ class Zone(Layer):
             return
 
         active_zone = but.info
-
+        for name in 'industry logistics military'.split():
+            but = self.buts[name]
+            nam = name[:3]
+            if name == active_zone:
+                but.image = pyglet.resource.image('but-%s_on.png' % nam)
+            else:
+                but.image = pyglet.resource.image('but-%s_off.png' % nam)
         self.mode = active_zone
         # self.buts[self.mode] = pyglet.resource.image('%s button off.png'% self.mode)
         # self.buts[active_zone] = pyglet.resource.image('%s button on.png'% active_zone)
