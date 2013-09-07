@@ -58,9 +58,6 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
     order_x = 200 #20
     order_y = 485
 
-    w, h = director.get_window_size()
-    #self.info.position = (335, h-25)
-
     def __init__(self):
         super(Fixed, self).__init__()
 
@@ -479,6 +476,7 @@ class Details(InfoLayer):
             ('Visibility:', None, group.buffed('visibility')),
             ('Buffs:', ', '.join(group.buffs), None),
             ('Plans:', str(len(group.plans)), None),
+            ('Modus Operandi:', group.modus_operandi, None),
         ])
 
     def show_cohort(self, cohort):
