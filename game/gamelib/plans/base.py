@@ -1,6 +1,6 @@
 
 import weakref
-
+import types
 from gamelib.chance import roll, ease
 
 
@@ -109,10 +109,9 @@ class Plan:
                 continue
             attribute, value = buff
             # TODO make buffs a defaultdict(list)
-            if attribute in who.buffs:
-                who.buffs[attribute].append(value)
-            else:
-                who.buffs[attribute] = [value]
+            if type(value) not in ( types.TupleType,types.ListType ):
+                value=[value]
+            who.buff_stat(attribute,*value)
 
     def pay_costs(self, ui):
         '''Things to do (usually just buffs to apply) regardless of success
