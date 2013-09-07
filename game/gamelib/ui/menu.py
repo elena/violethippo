@@ -65,7 +65,7 @@ class MainMenu(Menu):
         if num_saves:
             items.append(MenuItem('Continue Game - %s' % saves[-1][1],
                 self.on_continue_game))
-            items.append(MenuItem('Load Game', self.on_load_game))
+            # items.append(MenuItem('Load Game', self.on_load_game))
         items.append(MenuItem('Options', self.on_options))
         items.append(MenuItem('Quit', self.on_quit))
 

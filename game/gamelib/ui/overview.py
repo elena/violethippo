@@ -18,6 +18,19 @@ from debug import DebugLayer
 from widgets import Button, TextButton, Bargraph, MultipleBargraph
 
 
+START_TEXT = """When you were young they came from the stars,
+adding a new moon to the sky - a moon of steel.
+
+Although there were only handful of them,
+the guns on their fortress brought them victory.
+
+Now the time has come for you to strike back.
+
+Travel to their lair and coordinate the resistance
+there, deafeating the invaders, and making this
+a moon of blood.
+"""
+
 GENERAL_HELP_TEXT = """Defeat the ruling factions of each zone
 before getting caught.
 
@@ -130,6 +143,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         # now we're done
         self.initialised = True
 
+        self.ask_choice('', ['OK'], self.ready_to_play, explanation=START_TEXT, width=500)
+
+    def ready_to_play(self, ui, choice):
+        pass
+
     def update_info(self):
         free = ''
         if model.game.player.free_order:
@@ -218,12 +236,12 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             self.console.toggle_visible()
             return True
 
-    def ask_choice(self, title, choices, callback):
+    def ask_choice(self, title, choices, callback, explanation=None, width=400):
         '''A player order wants us to ask the user to make a choice.
 
         We callback the callback with (self, choice from the list). Or not.
         '''
-        self.add(ChoiceLayer(title, choices, callback), z=1)
+        self.add(ChoiceLayer(title, choices, callback, explanation, width), z=1)
 
     def msg(self, message, *args):
         self.console.write(message % args)
