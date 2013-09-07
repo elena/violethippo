@@ -337,12 +337,6 @@ class Zone(Layer):
         for group in zone.privileged.resistance_groups:
             adder.send((20, Button('icon-pres_off.png', (0, 0), group,
                 self.on_show_info, img_prefix='icon-pres'), group.name))
-        for group in zone.privileged.resistance_groups:
-            adder.send((20, Button('icon-pres_off.png', (0, 0), group,
-                self.on_show_info, img_prefix='icon-pres'), group.name))
-        for group in zone.privileged.resistance_groups:
-            adder.send((20, Button('icon-pres_off.png', (0, 0), group,
-                self.on_show_info, img_prefix='icon-pres'), group.name))
         adder.send((10, Button('icon-serv_off.png', (0, 0), 'servitors',
             self.on_show_info, img_prefix='icon-serv'), 'Servitor Cohort'))
         for group in zone.servitor.resistance_groups:
