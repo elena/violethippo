@@ -6,8 +6,9 @@ from gamelib.chance import roll, ease
 
 def _get_who(zone, actor, name):
     # late import to avoid circle
-    from gamelib.model import game
-    if name == 'zone':
+    if name is None:
+        return None
+    elif name == 'zone':
         return zone
     elif name == 'actor':
         return actor
@@ -130,8 +131,11 @@ class Plan:
         self._apply_buffs(ui, self.effects)
 
     def check_success(self, ui):
-        from gamelib.model import game
         attacker = self.actor
+        target = _get_who(self.zone, attacker, self.target)
+        return self.mechanics(attacker,target)
+
+    def mechanics(self, attacker,target):
         if not len(self.attack_stats):
             return 1  # nothing to check, defense doesn't matter?
         if len(self.attack_stats) >= 3:
@@ -144,14 +148,13 @@ class Plan:
             result = roll(attacker.buffed(self.attack_stats[0]),
                 attacker.buffed(self.attack_stats[1]))
         result = ease(result)  # assumes < 2
-        if self.target is not None:
-            target = _get_who(self.zone, attacker, self.target)
+        if target is not None:
             defense = 0.0
             if len(self.defend_stats) == 1:
                 defense = roll(target.buffed(self.defend_stats[0]))
             if len(self.defend_stats) == 2:
                 defense = roll(target.buffed(self.defend_stats[0]),
-                    target.buffed(self.defend_stats[1]))
+                               target.buffed(self.defend_stats[1]))
             defense = ease(defense)  # assumes < 2
             # lower the attack with the defense
             if abs(result - defense) < SUCCESS_THRESHOLD:
