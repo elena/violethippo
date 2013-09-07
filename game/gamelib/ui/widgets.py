@@ -9,19 +9,23 @@ from cocos.batch import BatchNode
 from pyglet import gl
 
 class Button(Sprite):
-    def __init__(self, image, position, info, action):
+    def __init__(self, image, position, info, action, **kw):
         super(Button, self).__init__(image, position=position, anchor=(0, 0))
+        for k, v in kw.items():
+            setattr(self, k, v)
         self.info = info
         self.on_click = action
 
 
 class TextButton(LabelNinepatch):
-    def __init__(self, text, position, info, action,
-            ninepatch='border-9p.png'):
+    def __init__(self, text, position, info, action, **kw):
         x, y = position
+        ninepatch = kw.pop('ninepatch', 'border-9p.png')
         super(TextButton, self).__init__(ninepatch, Label(text, x=x, y=y,
             color=(0, 0, 0, 255), anchor_x='left', anchor_y='bottom',
             font_name='Prototype'))
+        for k, v in kw.items():
+            setattr(self, k, v)
         self.info = info
         self.on_click = action
 
