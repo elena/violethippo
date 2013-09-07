@@ -15,7 +15,7 @@ def test_model_construction(savedir,*args,**kw):
     random.seed(1)
 
     g = model.Game()
-    ui = textui.FakeUI(savedir,g,True)
+    ui = textui.FakeUI(savedir,g)
 
     g.init_new_game(ui)
 
@@ -29,28 +29,6 @@ def test_model_construction(savedir,*args,**kw):
         assert f1.read() == f2.read()
 
 
-    for n in range(100):
-        if n in [ 5,6,7,8,9 ]:
-        #if n in [ 5,6,7,8 ]:
-        #if n in [ 5,6,7 ]:
-        #if n in [ 5,6 ]:
-        #if n in [ 5, ]:
-        #if n in [ 5,7,8,9,11 ]:
-        #if n in [ 5,7,8,9 ]:
-        #if n in [ 5,7,8 ]:
-        #if n in [ 5,7 ]:
-            ui.msg('about to order')
-            if n==5:
-                ui.entered='OK'
-                ui.zone.setzone(model.INDUSTRY)
-                player_orders.Hideout().execute(ui)
-            #ui.entered='OK'
-            #player_orders.BlowupGoods().execute(ui)
-            ui.entered=player_orders.ReplaceWithPlanHurtLiberty.PRIV
-            player_orders.ReplaceWithPlanHurtLiberty().execute(ui)
-            ui.msg('done order')
-            ui.update()
-        ui.on_new_turn()
 
 
 def test_zone_state():

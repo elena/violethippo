@@ -22,7 +22,7 @@ class   Brain(object):
 
     def make_plans(self,game,ui):
         flav=FLAVORS[ self.zone.name ]
-        ui.msg( 'brain for %s %s = %s'%(self,self.zone,flav))
+        ui.msg( '%s brain for %s = %s'%(self,self.zone,flav))
         plans=[]
         if not IS_DEAD in flav:
             plans.append(
@@ -34,7 +34,7 @@ class   Brain(object):
                             self, base.Plan.NOOP, "passing time",0, [])
                         )
         for p in plans:
-            ui.msg('       brain + %s'%(p))
+            ui.msg('   brain.plan %s'%(p))
         return plans
 
 

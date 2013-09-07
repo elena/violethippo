@@ -40,14 +40,13 @@ class FakeUI:
         return float(n)/t
 
 
-    def __init__(self, savedir,game,printnow):
+    def __init__(self, savedir,game,**kw):
         self.savedir = savedir
         self.game=game
         model.game=game
-        if printnow:
-            self.messages = None # if None: prints  if [] stores
-        else:
-            self.messages = []   # if None: prints  if [] stores
+        self.do_debug=kw.get('debug',False)
+        self.do_debuggraph=kw.get('debuggraph',True)
+        self.messages = []
         self.zone=FakeUIZone(self)
         self.enter=None
         #
@@ -99,7 +98,7 @@ class FakeUI:
 
     def msg(self, msg, *args):
         m=self.msgfix(msg,args)
-        if self.messages is None:
+        if self.do_debug:
             print m
         else:
             self.messages.append(m)
@@ -107,7 +106,8 @@ class FakeUI:
         sys.stderr.write( self.msgfix(msg,args)+'\n' )
         self.msg(msg,*args)
     def graph(self,graph,line,turn,value):
-        self.msg("GRAPH: %s %s %s %s"%(graph,line,turn,value))
+        if self.do_debuggraph:
+            self.msg("GRAPH: %s %s %s %s"%(graph,line,turn,value))
 
     def update(self):
         pass

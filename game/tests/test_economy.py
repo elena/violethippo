@@ -51,7 +51,7 @@ def crunch_economy(savedir,**kw):
     random.seed(1)
 
     g = model.Game()
-    ui = textui.FakeUI(savedir,g,kw.get('debug',False))
+    ui = textui.FakeUI(savedir,g,**kw)
     g.init_new_game(ui)
     g.json_path=os.path.join(savedir, 'save.json')
 
@@ -82,7 +82,7 @@ def hit_hook(g,l,res,**kw):
 
 def cam_playing():
     a=([2],[],RUN_OK)
-    hit_hook( *a ,debug=True)
+    hit_hook( *a ,debug=True,debuggraph=False)
 
 def test_economy_hits():
     for g,l,r in [
