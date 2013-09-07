@@ -404,6 +404,7 @@ class Details(InfoLayer):
             ('Loyal:', None, group.buffed('loyal')),
             ('Visibility:', None, group.buffed('visibility')),
             ('Buffs:', ', '.join(group.buffs), None),
+            ('Plans:', str(len(group.plans)), None),
         ])
 
     def show_cohort(self, cohort):

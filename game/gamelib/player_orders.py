@@ -317,3 +317,55 @@ class AttackFaction(Order):
             ui.update_info()
 
 all.append(AttackFaction())
+
+class ChangePlan(Order):
+    """Change a plan
+    """
+    label = 'Change a plan'
+
+    def __init__(self):
+        super(ChangePlan, self).__init__()
+        self.full_cost = 1
+
+    def cost(self, zone):
+        if model.game.player.free_order:
+            return None
+        return super(ChangePlan, self).cost(zone)
+
+    def execute(self, ui):
+        self.zone = model.game.moon.zones[ui.zone.mode]
+        namelist = [g.name for g in self.zone.privileged.resistance_groups] + [g.name for g in self.zone.servitor.resistance_groups]
+        ui.ask_choice('Change a plan from which group?',
+            namelist, self.chosen_group)
+
+    def chosen_group(self, ui, choice):
+        for co in [self.zone.privileged, self.zone.servitor]:
+            for g in co.resistance_groups:
+                if choice == g.name:
+                    self.group = g
+                    break
+                    break
+        if not self.group:
+            return
+        # list all plans
+        planlist = [p.name for p in self.group.plans]
+        ui.ask_choice('Change which plan that %s is working on?'%self.group.name, planlist, self.chosen_plan)
+
+    def chosen_plan(self, ui, choice):
+        for p in self.group.plans:
+            if p.name == choice:
+                self.plan = p
+                break
+        if not self.plan:
+            return
+        opslist = ['speed up']
+        ui.ask_choice('What to do to the %s plan that %s is working on?'%(self.plan.name, self.group.name), opslist+['Cancel'], self.chosen_op)
+
+    def chosen_op(self,ui, choice):
+        if choice == 'speed up':
+            self.plan.plan_time = max(1, self.plan.plan_time - 1)
+            ui.msg('sped up %s plan %s, to %d'%(self.group.name, self.plan.name, self.plan.plan_time))
+        # more ops, more changes
+        model.game.player.pay_order_cost(self.cost(ui.zone))
+
+all.append(ChangePlan())

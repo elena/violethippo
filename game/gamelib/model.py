@@ -23,7 +23,7 @@ from chance import roll, ease
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '08'
+DATA_VERSION = '09'
 # 02 - added max_resistance to cohorts
 # 03 - removed faction threat from saved data
 #      added _base values
@@ -33,6 +33,7 @@ DATA_VERSION = '08'
 # 06 - added plans to groups
 # 07 - added need_plan to resistance groups
 # 08 - added resistance_number to moon to make unique resistance names
+# 09 - added plan_number to groups for naming plans uniquely
 
 
 class Buffable(object):
@@ -597,7 +598,7 @@ class Cohort(JSONable, Buffable):
             new_group = self.new_resistance(new_name,
                 Resistance.START_SIZE, Resistance.START_INFORMED,
                 Resistance.START_SMART, Resistance.START_LOYAL,
-                Resistance.START_RICH, {}, 0, Plan.NOOP, 0)
+                Resistance.START_RICH, {}, 0, Plan.NOOP, Game.MED)
         cohort_effect = ease(self.size)
         if new_group:
             # change defaults to fit this cohort
@@ -672,9 +673,10 @@ class Group(JSONable, Buffable):
         self.rich = rich
         self.buffs = buffs
         self.plans = []
+        self.plan_number = 0
 
     def json_dump(self):
-        names = ['buffs', 'name']
+        names = ['buffs', 'name', 'plan_number']
         for name in ['size', 'informed', 'smart', 'loyal', 'rich']:
             names.append(name + '_value')
             names.append(name + '_base')
@@ -704,6 +706,11 @@ class Group(JSONable, Buffable):
     @property
     def is_dead(self):
         return (self.state <= 0)
+
+    @property
+    def next_plan_name(self):
+        self.plan_number += 1
+        return 'plan_%d'%self.plan_number
 
     @property
     def state(self):
@@ -812,7 +819,7 @@ class Resistance(Group):
     START_LOYAL=.1
     START_RICH=.1
     MAX_PLANS=3
-    BASE_NEED_PLAN=Game.LOW
+    BASE_NEED_PLAN=.2
     NEED_PLAN_TURN_FACTOR=1.2
     INACTION_LOSS=.05
     visibility = RecordedAttribute('visibility')
@@ -876,7 +883,7 @@ class Resistance(Group):
         found = roll(find_plan, self.buffed('need_plan'))
         if found > 0:
             # TODO: select new plan based on self.modus_operandi and zone
-            new_plan = Plan("newplan", self, self.modus_operandi,
+            new_plan = Plan(self.next_plan_name, self, self.modus_operandi,
                 "a new plan", 1+random.randint(1,4), [])
             ui.msg('%s found a new plan: %s'%(self.name, new_plan.name))
             # add new plan to self.plans
