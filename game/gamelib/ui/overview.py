@@ -35,7 +35,7 @@ from gamelib import model, player_orders
 
 from dialog import ChoiceLayer
 from debug import DebugLayer
-from widgets import Button, TextButton
+from widgets import Button, TextButton, Bargraph
 
 
 def shuffled(l):
@@ -100,6 +100,10 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.info = Info()
         self.add(self.info)
 
+        self.zinfo = ZoneInfo()
+        self.zinfo.position = (400, h)
+        self.add(self.zinfo)
+
         self.zone = Zone()
         self.add(self.zone, z=-1)
 
@@ -125,7 +129,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.visible_label.element.text = 'Hidden: %d | %d | %d' % (
             (1-zone1.player_found)*100, (1-zone2.player_found)*100,
             (1-zone3.player_found)*100)
-        self.info.display_zone(self.zone.mode)
+        self.zinfo.display_zone(self.zone.mode)
 
         if not model.game.player.hideout:
             # show Establish/Move hideout button only
@@ -320,11 +324,6 @@ class Info(Layer):
         # self.x = 660
         # self.y = 10
 
-        self.zone_label = Label('', multiline=True, align='right',
-            width=300, anchor_x='right', anchor_y='top', x=430, y=740,
-            font_name='Prototype')
-        self.add(self.zone_label)
-
         self.info_label = Label('', multiline=True,
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=250,
             font_name='Prototype')
@@ -444,39 +443,61 @@ class Info(Layer):
         self.info_label.visible = True
         self.popup_9p.visible = True
 
+
+class ZoneInfo(Layer):
+    descr = dict(
+        industry='produces goods and food',
+        logistics='transports to and from planet',
+        military='provides force and stability',
+    )
+
     def display_zone(self, active_zone):
-        """It would be good not to have to summon a
-        pane for this, but instead to have room on the screen all the time
-        (even if it can get buried by other panes).
+        for z, child in list(self.children):
+            self.remove(child)
 
-        Contents: Brief description of zone. State of production (what it last
-        produced, state of inputs this turn, notes of supply shortfalls,
-        alerts of low willingness and high rebelliousness, really summarised
-        status for the faction along the lines of “strong”, “damaged”,
-        “shaky”, “vulnerable”, “destroyed”, and the level of alert to player
-        and resistance activity)."""
+        def add_info():
+            self.height = 0
+            while 1:
+                text, info, value = yield
+                y = -self.height
+                label = Label(text, align='right', anchor_x='right',
+                    anchor_y='top', x=0, y=y, font_name='Prototype')
+                self.height += label.element.content_height
+                self.add(label)
+                if info:
+                    self.add(Label(info, align='left', anchor_x='left',
+                        anchor_y='top', x=2, y=y, font_name='Prototype'))
+                else:
+                    self.bg = Bargraph((80, 10), value, position=(2, y-16))
+                    if value < .3:
+                        self.bg.color = (200, 100, 100)
+                    elif value < .7:
+                        self.bg.color = (200, 200, 100)
+                    else:
+                        self.bg.color = (100, 200, 100)
+                    self.add(self.bg)
+
+        adder = add_info()
+        adder.next()
+        add_info = lambda *a: adder.send(a)
+
         zone = model.game.moon.zones[active_zone]
-        # if self.active_info == zone:
-        #     self.hide_info()
-        #     return
-        # self.active_info = zone
-        text = []
-        descr = dict(
-            industry='produces goods and food',
-            logistics='transports to and from planet',
-            military='provides force and stability',
-        )
-        text.append('Zone ' + descr[active_zone])
-        text.append('Provides: %s' % (', '.join(zone.provides), ))
-        text.append('Requires: %s' % (', '.join(zone.requirements), ))
-        text.append('Store:\n    %s' % ('\n    '.join('%s: %d%%' % (n, v*10) for (n,v) in zone.store.items()), ))
-        text.append('Efficiency: %.1f' % (zone.privileged.efficiency * 10))
-        text.append('Willingness: %.1f' % (zone.servitor.willing * 10))
-        text.append('Rebellious: %.1f & %.1f' % (zone.privileged.rebellious * 10,
-            zone.servitor.rebellious * 10))
-        text.append('Faction Status: %s' % zone.faction.state_description)
-        self.zone_label.element.text = '\n'.join(text)
 
+        add_info('Zone', self.descr[active_zone], None)
+        add_info('Provides:', ', '.join(zone.provides), None)
+        add_info('Requires:', ', '.join(zone.requirements), None)
+        for n in zone.store:
+            add_info('%s store:' % n, '', zone.store[n] / 10.)
+        add_info('Efficiency', '', zone.privileged.efficiency)
+        add_info('Willingness', '', zone.servitor.willing)
+        add_info('Privileged Rebellious:', '', zone.privileged.rebellious)
+        add_info('Servitor Rebellious:', '', zone.servitor.rebellious)
+        add_info('Privileged Willing:', '', zone.privileged.willing)
+        add_info('Servitor Willing:', '', zone.servitor.willing)
+        add_info('Faction Status:', zone.faction.state_description, '')
+
+        self.anchor_y = -self.height
+        print (self.x, self.y), (self.anchor_x, self.anchor_y)
 
 if __name__ == '__main__':
     pyglet.resource.path.append('../../data')

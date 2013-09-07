@@ -35,7 +35,7 @@ def bargraph_pattern(width):
 
 class Bargraph(Sprite):
     def __init__(self, size, value, **kw):
-        image = bargraph_pattern(16)
+        image = bargraph_pattern(8)
         self._size = size
         self._value = value
         super(Bargraph, self).__init__(image, **kw)
@@ -92,8 +92,7 @@ if __name__ == '__main__':
         is_event_handler = True
         def __init__(self):
             super(Layer, self).__init__()
-            self.bg = Bargraph((100, 10), .3)
-            self.bg.position = (100, 100)
+            self.bg = Bargraph((100, 10), .3, position = (100, 100))
             self.add(self.bg)
         def on_text(self, text):
             if text == 'r':
