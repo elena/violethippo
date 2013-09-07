@@ -39,11 +39,11 @@ class TitleControlLayer(Layer):
             font_name='Prototype'))
 
     def on_key_press(self, *args):
-        director.replace(transitions.FadeTransition(menu()))
+        director.replace(transitions.FadeTransition(menu(), duration=.25))
         return True
 
     def on_mouse_press(self, *args):
-        director.replace(transitions.FadeTransition(menu()))
+        director.replace(transitions.FadeTransition(menu(), duration=.25))
         return True
 
 

@@ -10,7 +10,7 @@ from gamelib.ui.title import title
 
 
 def splash():
-    return Scene(ColorLayer(128, 128, 128, 255), SplashControlLayer())
+    return Scene(ColorLayer(0, 0, 0, 255), SplashControlLayer())
 
 
 class SplashControlLayer(Layer):
@@ -31,16 +31,15 @@ class SplashControlLayer(Layer):
             font_size=22, x=w//2, y=h//2 + lh//2, anchor_x='center',
             anchor_y='bottom', font_name='Prototype'))
 
-        self.add(Label("Click to Continue",
-            font_size=16, x=w//2, y=h//2 - lh//2 - 20, anchor_x='center',
-            anchor_y='top', font_name='Prototype'))
+        self.add(Label("Click to Continue", font_size=16, x=w//2, y=10,
+            anchor_x='center', anchor_y='bottom', font_name='Prototype'))
 
     def on_key_press(self, *args):
-        director.replace(transitions.FadeTransition(title()))
+        director.replace(transitions.FadeTransition(title(), duration=.5))
         return True
 
     def on_mouse_press(self, *args):
-        director.replace(transitions.FadeTransition(title()))
+        director.replace(transitions.FadeTransition(title(), duration=.5))
         return True
 
 
