@@ -47,8 +47,8 @@ class Plan:
             costs=[], risks=[], effects=[]):
         self.name = name
         # use weakref to avoid reference circles (probably unnecessary with GC)
-        self.zone = weakref.ref(zone)
-        self.actor = weakref.ref(actor)
+        self._zone = weakref.ref(zone)
+        self._actor = weakref.ref(actor)
         self.style = style  # style is from TYPES, above
         self.description = description
         self.plan_time = plan_time  # turns until enacting
@@ -58,6 +58,9 @@ class Plan:
         self.costs = costs  # list of (who, buff) where buff is (stat, val) and who indicates object to buf
         self.risks = risks  # as costs, only take effect if defender wins
         self.effects = effects  # as costs, only take effect if successful
+
+    zone = property(lambda s: s._zone())
+    actor = property(lambda s: s._actor())
 
     def to_json(self):
         return dict(name=self.name, zone=self.zone.name,
@@ -102,7 +105,7 @@ class Plan:
     def _apply_buffs(self, ui, buffs):
         from gamelib.model import game
         for who, buff in buffs:
-            who = _get_who(self.zone(), self.actor(), who)
+            who = _get_who(self.zone, self.actor, who)
             if who is None:
                 ui.msg("cost can't find who %r for buff %r" % (who, buff))
                 continue
@@ -145,7 +148,7 @@ class Plan:
                 attacker.buffed(self.attack_stats[1]))
         result = ease(result)  # assumes < 2
         if self.target is not None:
-            target = _get_who(self.zone(), attacker, self.target)
+            target = _get_who(self.zone, attacker, self.target)
             defense = 0.0
             if len(self.defend_stats) == 1:
                 defense = roll(target.buffed(self.defend_stats[0]))
