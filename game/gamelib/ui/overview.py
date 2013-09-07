@@ -53,9 +53,8 @@ class Overview(Scene):
 
 
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
-
     is_event_handler = True
-    order_x = 200 #20
+    order_x = 200
     order_y = 485
 
     def __init__(self):
@@ -142,8 +141,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         # now we're done
         self.initialised = True
 
-        self.ask_ok('Fight Back', lambda *a: None, explanation=START_TEXT,
-            width=500)
+        if model.game.turn == 1:
+            self.ask_ok('Fight Back', lambda *a: None, explanation=START_TEXT,
+                width=500)
 
     def update_info(self):
         free = ''
