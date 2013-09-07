@@ -16,6 +16,31 @@ Search for player
 from gamelib.plans.base import Plan
 
 
-class Patrol(Plan):
-    """Increases difficulty of resistance groups operations
+class PatrolZone(Plan):
+    """Increases visibility of resistance groups for all resistance in
+       zone for a while (if sucessful).
     """
+    def __init__(self,name,actor):
+        Plan.__init__(self,name,actor,
+                      Plan.ESPIONAGE,
+                      'looking for rebel groups in area %s'%(actor.zone.name),
+                      0,['informed','smart'],['smart','loyal'])
+
+    def check_success(self, ui):
+        return 1
+
+
+    def apply_effects(self,ui):
+        a=self.actor
+        z=self.actor.zone
+        ui.msg('    brain.>>>: %s / %s'%(self.attack_stats,self.defend_stats))
+        for c in [self.actor.zone.privileged,self.actor.zone.servitor]:
+            for r in c.resistance_groups:
+                roll=self.mechanics( a, r )
+                ui.msg('    brain.attacking: %s %s'%(r.name,roll))
+                if roll>0:
+                    r.buff_stat('visibility',.1,.1,.1,.1)
+                    ui.msg('   brain.      2 %s  %s'%(r.name,r.buffed('visibility')))
+                else:
+                    ui.msg('   brain.  missed')
+
