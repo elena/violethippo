@@ -18,6 +18,8 @@ class Order(object):
 
     # @staticmethod
     def cost(self, zone):
+        if model.game.moon.zones[zone.mode].is_safe:
+            return None
         # player can't do anything except find a hideout if there's no hideout
         if not model.game.player.hideout:
             return None
@@ -47,6 +49,8 @@ class Hideout(Order):
         self.full_cost = 2
 
     def cost(self, zone):
+        if model.game.moon.zones[zone.mode].is_safe:
+            return None
         if model.game.moon.zones[zone.mode].player_found >= 1:
             return None
         if model.game.player.hideout == zone.mode:
@@ -223,6 +227,61 @@ class AttackFactionLeader(Order):
     minimal resources, taking no Faction actions. But also increases awareness
     for all other Factions significantly
     """
+    label='Remove faction'
+
+    def __init__(self):
+        super(AttackFactionLeader, self).__init__()
+        self.full_cost = 3
+
+    def cost(self, zone):
+        if model.game.moon.zones[zone.mode].is_safe:
+            return None
+        faction = model.game.moon.zones[zone.mode].faction
+        cost = model.game.player.max_activity_points
+        if faction.state > .3:
+            return None
+        if zone.mode != model.game.player.hideout and not (not model.game.player.hideout and model.game.turn == 1):
+            cost += self.OUT_ZONE_PENALTY
+        if model.game.player.activity_points < cost:
+            return None
+        return cost
+
+    def execute(self, ui):
+        faction = model.game.moon.zones[ui.zone.mode].faction
+        ui.ask_choice('Assassiniate the leader and destroy the %s faction?'%faction.name,
+            YESNO, self.chosen_yn)
+
+    def chosen_yn(self, ui, choice):
+        if choice == YES:
+            model.game.player.pay_order_cost(self.cost(ui.zone))
+            faction = model.game.moon.zones[ui.zone.mode].faction
+            faction.size = 0
+            faction.informed = 0
+            faction.smart = 0
+            faction.loyal = 0
+            faction.rich = 0
+            faction.buffs = {}
+            faction.name = "Destroyed"
+            ui.msg('%s faction destroyed'%(faction.name))
+            for zonetype in model.game.moon.zones:
+                if zonetype == ui.zone.mode:
+                    continue
+                zone = model.game.moon.zones[zonetype]
+                # increase alert and player_found
+                zone.player_found += (1-zone.player_found)/4
+                zone.faction.alert = min(1, zone.faction.alert + .2)
+                zone.faction.buff_stat('alert', .5,.45,.4,.3,.2,.05)
+                # return both cohorts to starting (or better)
+                for co in [zone.privileged, zone.servitor]:
+                    co.buffs = {}
+                    # co.resistance_groups = []  # removes all resistance
+                    for st in ['size', 'liberty', 'quality_of_life', 'cash']:
+                        newval = max(getattr(co, st), getattr(co, st + '_base'))
+                        setattr(co, st, newval)
+            ui.update_info()
+
+all.append(AttackFactionLeader())
+
 
 class AttackFaction(Order):
     """Attack a faction and damage its size

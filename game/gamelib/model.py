@@ -23,7 +23,7 @@ from chance import roll, ease
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '07'
+DATA_VERSION = '08'
 # 02 - added max_resistance to cohorts
 # 03 - removed faction threat from saved data
 #      added _base values
@@ -32,6 +32,7 @@ DATA_VERSION = '07'
 # 05 - added free_order to player
 # 06 - added plans to groups
 # 07 - added need_plan to resistance groups
+# 08 - added resistance_number to moon to make unique resistance names
 
 
 class Buffable(object):
@@ -306,14 +307,15 @@ class Moon(JSONable):
                        MILITARY:Zone.create_military(self),
                        LOGISTICS:Zone.create_logistics(self)
                      }
+        self.resistance_number = 1
 
     def json_dump(self):
-        v = self.json_dump_simple()
+        v = self.json_dump_simple('resistance_number')
         v['zones'] = dict((z, self.zones[z].json_dump()) for z in self.zones)
         return v
 
     def json_load(self, jdata):
-        self.zones = dict((z, Zone.json_create(jdata['zones'][z]))
+        self.zones = dict((z, Zone.json_create(jdata['zones'][z], self))
             for z in jdata['zones'])
 
     def update(self, game, ui):
@@ -360,6 +362,10 @@ class Zone(JSONable, economy.Zone_Economy):
 
     def set_parent(self, moon):
         self._moon = weakref.ref(moon)
+
+    @property
+    def is_safe(self):
+        return self.faction.is_dead
 
     @classmethod
     def create_industry(cls, moon):
@@ -576,7 +582,9 @@ class Cohort(JSONable, Buffable):
         ui.msg('%s rebels spawned' % self)
         new_group = None
         if not (len(self.resistance_groups)) or (random.random() <= self.size):
-            new_group = self.new_resistance('res%d ' % random.randint(1, 1000),
+            new_name = 'res%d ' % self.moon.resistance_number
+            self.moon.resistance_number += 1
+            new_group = self.new_resistance(new_name,
                 Resistance.START_SIZE, Resistance.START_INFORMED,
                 Resistance.START_SMART, Resistance.START_LOYAL,
                 Resistance.START_RICH, {}, 0, Plan.NOOP, 0)
@@ -599,7 +607,7 @@ class Cohort(JSONable, Buffable):
             group = self.resistance_groups[random.randint(0,
                 len(self.resistance_groups)-1)]
             group.size = min(1,
-                group.size + (cohort_effect * self.rebellious))
+                group.size + (cohort_effect * self.rebellious * Resistance.START_SIZE))
             group.loyal = max(Resistance.START_LOYAL,
                 group.loyal - (cohort_effect * 0.5))
             group.rich = min(1, group.rich + (cohort_effect * self.cash))
@@ -684,6 +692,10 @@ class Group(JSONable, Buffable):
         pass
 
     @property
+    def is_dead(self):
+        return (self.state <= 0)
+
+    @property
     def state(self):
         # TODO
         # State is primarily based on our damage below starting stats
@@ -696,7 +708,7 @@ class Group(JSONable, Buffable):
         rest = []
         for stat in ['size', 'informed', 'smart', 'loyal', 'rich']:
             base = getattr(self, stat + '_base')
-            diff = (getattr(self, stat + '_base') - getattr(self, stat))/getattr(self, stat + '_base')
+            diff = (base - self.buffed(stat))/base
             if base >= Game.HIGH:
                 main.append(diff)
             else:
