@@ -366,13 +366,13 @@ class InfoLayer(Layer):
 
 
 class Details(InfoLayer):
-    is_event_handler = True
+    # is_event_handler = True
     active_info = None
 
-    def on_mouse_press(self, x, y, button, modifiers):
-        if self.visible and self.rect.contains(x, y):
-            self.visible = False
-            return True         # event handled
+    # def on_mouse_press(self, x, y, button, modifiers):
+    #     if self.visible and self.rect.contains(x, y):
+    #         self.visible = False
+    #         return True         # event handled
 
     def hide_info(self):
         self.visible = False
