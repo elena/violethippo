@@ -5,9 +5,20 @@ import time
 import random
 import weakref
 
+ENFORCEMENT='enforcement'
+RAW_MATERIAL='material'
+GOODS='goods'
+MANPOWER='lifeforms'
+
+INDUSTRY='industry'
+MILITARY='military'
+LOGISTICS='logistics'
+
+
 from gamelib.plans.base import Plan
 
 import economy
+import aifaction
 from chance import roll, ease
 
 # please update this when saves will not be valid
@@ -21,16 +32,6 @@ DATA_VERSION = '07'
 # 05 - added free_order to player
 # 06 - added plans to groups
 # 07 - added need_plan to resistance groups
-
-ENFORCEMENT='enforcement'
-RAW_MATERIAL='material'
-GOODS='goods'
-MANPOWER='lifeforms'
-
-INDUSTRY='industry'
-MILITARY='military'
-LOGISTICS='logistics'
-
 
 
 class Buffable(object):
@@ -725,7 +726,7 @@ class Group(JSONable, Buffable):
         return 'destroyed'
 
 
-class Faction(Group):
+class Faction(Group,aifaction.Brain):
     """Invader Factions
     Led by a boss
     Staffed by zone Privileged Cohort
@@ -778,10 +779,8 @@ class Faction(Group):
             else:
                 plan.plan_time -= 1  # we don't expect this for factions
         # TODO: select a new plan for reals
-        new_plan = Plan("factionplan", self, Plan.NOOP,
-            "a faction plan", 0, [])
-        ui.msg('faction %s made a plan: %s'%(self.name, new_plan.name))
-        self.plans.append(new_plan)
+        for new_plan in aifaction.Brain.make_plans(self,game,ui):
+            self.plans.append(new_plan)
 
 class Resistance(Group):
     """Resistance Group

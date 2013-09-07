@@ -42,6 +42,8 @@ class Plan:
     VIOLENCE = 'Violence'
     SABOTAGE = 'Sabotage'
 
+    def __repr__(self):
+        return '{{{PLAN:%s}}}'%(self.name)
     def __init__(self, name, actor, style=NOOP, description='',
             plan_time=0, attack_stats=[], defend_stats=[], target=None,
             costs=[], risks=[], effects=[]):
