@@ -676,7 +676,7 @@ class Group(JSONable, Buffable):
             setattr(self, name + '_value', jdata['.%s_value' % name])
             setattr(self, name + '_base', jdata['.%s_base' % name])
             setattr(self, name + '_history', jdata['.%s_history' % name])
-        self.plans = [Plan.from_json(d) for d in jdata['plans']]
+        self.plans = [Plan.from_json(d, self) for d in jdata['plans']]
 
     def update(self, game, ui):
         # Groups plan - plan the action they will take next turn
@@ -778,10 +778,10 @@ class Faction(Group):
             else:
                 plan.plan_time -= 1  # we don't expect this for factions
         # TODO: select a new plan for reals
-        new_plan = Plan("factionplan", self.zone, self, Plan.NOOP,
+        new_plan = Plan("factionplan", self, Plan.NOOP,
             "a faction plan", 0, [])
         ui.msg('faction %s made a plan: %s'%(self.name, new_plan.name))
-        # self.plans.append(new_plan)
+        self.plans.append(new_plan)
 
 class Resistance(Group):
     """Resistance Group
@@ -850,11 +850,11 @@ class Resistance(Group):
         found = roll(find_plan, self.buffed('need_plan'))
         if found > 0:
             # TODO: select new plan based on self.modus_operandi and zone
-            new_plan = Plan("newplan", self.zone, self, self.modus_operandi,
+            new_plan = Plan("newplan", self, self.modus_operandi,
                 "a new plan", 1+random.randint(1,4), [])
             ui.msg('%s found a new plan: %s'%(self.name, new_plan.name))
             # add new plan to self.plans
-            # self.plans.append(new_plan)
+            self.plans.append(new_plan)
 
     def update(self, game, ui):
         '''

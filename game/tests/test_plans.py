@@ -30,7 +30,7 @@ def test_basic_plan(monkeypatch):
         # NO servitor resistance groups!?
         FAIL
 
-    p = Plan('test', zone, actor, Plan.VIOLENCE,
+    p = Plan('test', actor, Plan.VIOLENCE,
         plan_time=0, attack_stats=['size', 'informed'],
         defend_stats=['size', 'loyalty'], target='privileged',
         costs=[('actor', ('rich', -.1))], risks=[('actor', ('size', -.1))],

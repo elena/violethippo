@@ -42,12 +42,11 @@ class Plan:
     VIOLENCE = 'Violence'
     SABOTAGE = 'Sabotage'
 
-    def __init__(self, name, zone, actor, style=NOOP, description='',
+    def __init__(self, name, actor, style=NOOP, description='',
             plan_time=0, attack_stats=[], defend_stats=[], target=None,
             costs=[], risks=[], effects=[]):
         self.name = name
         # use weakref to avoid reference circles (probably unnecessary with GC)
-        self._zone = weakref.ref(zone)
         self._actor = weakref.ref(actor)
         self.style = style  # style is from TYPES, above
         self.description = description
@@ -59,8 +58,8 @@ class Plan:
         self.risks = risks  # as costs, only take effect if defender wins
         self.effects = effects  # as costs, only take effect if successful
 
-    zone = property(lambda s: s._zone())
     actor = property(lambda s: s._actor())
+    zone = property(lambda s: s._actor().zone)
 
     def to_json(self):
         return dict(name=self.name, zone=self.zone.name,
@@ -71,12 +70,8 @@ class Plan:
             effects=self.effects)
 
     @classmethod
-    def from_json(cls, jdata):
-        # late import to avoid circle
-        from gamelib.model import game
-        zone = game.moon.zones[jdata['zone']]
-        actor = _get_who(zone, None, jdata['actor'])  # will be a faction or resistance name
-        return cls(jdata['name'], zone, actor, jdata['style'],
+    def from_json(cls, jdata, actor):
+        return cls(jdata['name'], actor, jdata['style'],
             jdata['description'], jdata['plan_time'], jdata['attack_stats'],
             jdata['defend_stats'], jdata['target'], jdata['costs'],
             jdata['risks'], jdata['effects'])
