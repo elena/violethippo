@@ -1,24 +1,4 @@
 # -*- coding: utf-8 -*-
-'''
-TODO:
-- The player mouses over or selects the points which represent the resistance
-  groups and is shown their name, their modus operandi, maybe some other
-  stats? Along with the list of plans they are working on.
-- Each plan has a name, a brief description, and a bar showing how close to
-  completion/activation it is.
-- Clicking on a plan pops it up in a larger box, showing the longer
-  description, the intended effects and the risks/costs, along with the
-  options for player to use points (this screen not shown). A close button
-  takes you back to this.
-- Similarly, clicking on the Group info area pops up a box with info about the
-  group, its current status, and the buffs it has waiting.
-- To the right is the current pool of activity points, and the list of player
-  orders, with a name and cost for each. Clicking on any of them brings up a
-  box with a detailed description of what it does and an “Do this” button (as
-  well as a close). Note that costs will change after the first (free) action
-  - ie the costs are 0 for the first action, and then change.
-'''
-
 import os
 import pyglet
 import random
@@ -101,7 +81,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(end_turn, name='end_turn')
 
         self.info = Details()
-        self.info.position = (0, 300)
+        self.info.position = (131, 340)
         self.add(self.info)
 
         self.zinfo = ZoneInfo()
@@ -170,7 +150,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         except self.SIGNAL_GAMEOVER:
             pass
         if model.game.player.hideout:
-            self.zone.switch_zone_to(self.zone.buts[model.game.player.hideout])
+            self.zone.switch_zone_to(self.zone.get(model.game.player.hideout))
         self.update_info()
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -231,17 +211,12 @@ class Zone(Layer):
         )
         self.add(self.active, z=-1)
 
-        self.buts = {
-            model.INDUSTRY: Button('but-ind_off.png', (450, 680),
-                'industry', self.switch_zone_to),
-            model.LOGISTICS: Button('but-log_off.png', (640, 680),
-                'logistics', self.switch_zone_to),
-            model.MILITARY: Button('but-mil_off.png', (830, 680),
-                'military', self.switch_zone_to),
-        }
-        self.add(self.buts[model.INDUSTRY])
-        self.add(self.buts[model.LOGISTICS])
-        self.add(self.buts[model.MILITARY])
+        self.add(Button('but-ind_off.png', (450, 680), 'industry',
+            self.switch_zone_to), name=model.INDUSTRY)
+        self.add(Button('but-log_off.png', (640, 680), 'logistics',
+            self.switch_zone_to), name=model.LOGISTICS)
+        self.add(Button('but-mil_off.png', (830, 680), 'military',
+            self.switch_zone_to), name=model.MILITARY)
 
     def on_enter(self):
         super(Zone, self).on_enter()
@@ -249,10 +224,10 @@ class Zone(Layer):
         if model.game.player.hideout:
             self.parent.msg('setting zone to %s'%model.game.player.hideout)
             self.mode = None
-            self.switch_zone_to(self.buts[model.game.player.hideout])
+            self.switch_zone_to(self.get(model.game.player.hideout))
         else:
             self.mode = None
-            self.switch_zone_to(self.buts[model.LOGISTICS])
+            self.switch_zone_to(self.get(model.LOGISTICS))
 
     def switch_zone_to(self, but):
         if self.mode == but.info:
@@ -260,25 +235,25 @@ class Zone(Layer):
 
         active_zone = but.info
         for name in 'industry logistics military'.split():
-            but = self.buts[name]
+            but = self.get(name)
             nam = name[:3]
             if name == active_zone:
                 but.image = pyglet.resource.image('but-%s_on.png' % nam)
             else:
                 but.image = pyglet.resource.image('but-%s_off.png' % nam)
         self.mode = active_zone
-        # self.buts[self.mode] = pyglet.resource.image('%s button off.png'% self.mode)
-        # self.buts[active_zone] = pyglet.resource.image('%s button on.png'% active_zone)
+
         self.active.image = self.zone_images[active_zone]
         self.parent.update_info()
         self.parent.info.hide_info()
 
         # clear out unnecessary butts
-        for but in list(self.buts):
-            if but in (model.INDUSTRY, model.LOGISTICS, model.MILITARY):
+        for name in list(self.children_names):
+            if name in (model.INDUSTRY, model.LOGISTICS, model.MILITARY):
                 continue
-            self.remove(self.buts[but])
-            del self.buts[but]
+            but = self.get(name)
+            if hasattr(but, 'on_click'):
+                self.remove(name)
 
         zone = model.game.moon.zones[active_zone]
         self.buttons = []
@@ -289,29 +264,33 @@ class Zone(Layer):
                 indent, but = yield
                 y -= but.image.height
                 but.position = (x + indent, y)
-                self.buts[but.info] = but
-                self.add(but, z=1)
+                if isinstance(but.info, str):
+                    name = but.info
+                else:
+                    name = but.info.name
+                self.add(but, z=1, name=name)
 
         adder = add_button()
         adder.next()
 
         adder.send((0, Button('faction button.png', (0, 0), 'faction',
             self.on_show_info)))
-        self.priv_but = Button('icon-priv_off.png', (0, 0), 'privileged',
-            self.on_show_info)
-        adder.send((20, self.priv_but))
+        adder.send((10, Button('icon-priv_off.png', (0, 0), 'privileged',
+            self.on_show_info, img_prefix='icon-priv')))
         for group in zone.privileged.resistance_groups:
-            adder.send((40, Button('icon-pres_off.png', (0, 0), group,
-                self.on_show_info)))
-        adder.send((20, Button('icon-serv_off.png', (0, 0), 'servitors',
-            self.on_show_info)))
+            adder.send((20, Button('icon-pres_off.png', (0, 0), group,
+                self.on_show_info, img_prefix='icon-pres')))
+        adder.send((10, Button('icon-serv_off.png', (0, 0), 'servitors',
+            self.on_show_info, img_prefix='icon-serv')))
         for group in zone.servitor.resistance_groups:
-            adder.send((40, Button('icon-sres_off.png', (0, 0), group,
-                self.on_show_info)))
+            adder.send((20, Button('icon-sres_off.png', (0, 0), group,
+                self.on_show_info, img_prefix='icon-sres')))
 
     def on_mouse_press(self, x, y, button, modifiers):
-        for key, but in self.buts.items():
-            if key == self.mode:
+        for z, but in self.children:
+            if not hasattr(but, 'on_click'):
+                continue
+            if but.info == self.mode:
                 continue
             if but.get_rect().contains(x, y):
                 but.on_click(but)
@@ -319,14 +298,21 @@ class Zone(Layer):
 
     def on_show_info(self, but):
         zone = model.game.moon.zones[self.mode]
+        for name, ob in self.children_names.items():
+            if hasattr(ob, 'img_prefix'):
+                ob.image = pyglet.resource.image('%s_off.png' % ob.img_prefix)
         if but.info == 'faction':
             self.parent.info.show_faction(self.mode)
+            # self.get('faction').image = pyglet.resource.image('icon-fact_on.png')
         elif but.info == 'privileged':
             self.parent.info.show_cohort(zone.privileged)
+            self.get('privileged').image = pyglet.resource.image('icon-priv_on.png')
         elif but.info == 'servitors':
             self.parent.info.show_cohort(zone.servitor)
+            self.get('servitors').image = pyglet.resource.image('icon-serv_on.png')
         else:
             self.parent.info.show_resistance(but.info)
+            self.get(but.info.name).image = pyglet.resource.image('%s_on.png' % but.img_prefix)
 
 
 class InfoLayer(Layer):
@@ -388,14 +374,14 @@ class Details(InfoLayer):
         self.show_info([
             ('Faction:', active_zone, None),
             ('Leader:', faction.name, None),
-            ('Size:', None, faction.size),
-            ('Informed:', None, faction.informed),
-            ('Smart:', None, faction.smart),
-            ('Loyal:', None, faction.loyal),
-            ('Rich:', None, faction.rich),
+            ('Size:', None, faction.buffed('size')),
+            ('Informed:', None, faction.buffed('informed')),
+            ('Smart:', None, faction.buffed('smart')),
+            ('Loyal:', None, faction.buffed('loyal')),
+            ('Rich:', None, faction.buffed('rich')),
             ('Buffs:', ', '.join(faction.buffs), None),
-            ('Threat:', None, faction.threat),
-            ('Alert:', None, faction.alert),
+            ('Threat:', None, faction.buffed('threat')),
+            ('Alert:', None, faction.buffed('alert')),
         ])
 
     def show_resistance(self, group):
@@ -405,12 +391,12 @@ class Details(InfoLayer):
         self.active_info = group
         self.show_info([
             ('Name:', group.name, None),
-            ('Size:', None, group.size),
-            ('Informed:', None, group.informed),
-            ('Smart:', None, group.smart),
-            ('Rich:', None, group.rich),
-            ('Loyal:', None, group.loyal),
-            ('Visibility:', None, group.visibility),
+            ('Size:', None, group.buffed('size')),
+            ('Informed:', None, group.buffed('informed')),
+            ('Smart:', None, group.buffed('smart')),
+            ('Rich:', None, group.buffed('rich')),
+            ('Loyal:', None, group.buffed('loyal')),
+            ('Visibility:', None, group.buffed('visibility')),
             ('Buffs:', ', '.join(group.buffs), None),
         ])
 
@@ -425,10 +411,10 @@ class Details(InfoLayer):
             output = ('Efficiency:', None, cohort.efficiency)
         self.show_info([
             ('Cohort:', cohort.__class__.__name__, None),
-            ('Size:', None, cohort.size),
-            ('Liberty:', None, cohort.liberty),
-            ('Quality of Life:', None, cohort.quality_of_life),
-            ('Cash:', None, cohort.cash),
+            ('Size:', None, cohort.buffed('size')),
+            ('Liberty:', None, cohort.buffed('liberty')),
+            ('Quality of Life:', None, cohort.buffed('quality_of_life')),
+            ('Cash:', None, cohort.buffed('cash')),
             output,
             ('Rebelliousness:', None, cohort.rebellious),
         ])
@@ -440,9 +426,6 @@ class Details(InfoLayer):
         packer = self.packer()
         for row in info:
             packer(*row)
-
-        self.x = -self.min_x + 10
-#        self.y = self.height
 
         # self.popup_9p = LabelNinepatch('border-9p.png', self)
         # self.add(self.popup_9p)
