@@ -615,7 +615,7 @@ class Privileged(Cohort):
         return '{{{Cohort.priv}}}'
 
     def production_output(self):
-        return self.efficiency
+        return self.buffed('efficiency')
 
     @property
     def is_servitor(self):
@@ -628,7 +628,7 @@ class Servitor(Cohort):
         return '{{{Cohort.serv}}}'
 
     def production_output(self):
-        return self.willing
+        return self.buffed('willing')
 
     @property
     def is_servitor(self):
