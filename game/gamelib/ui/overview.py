@@ -283,7 +283,7 @@ class Zone(Layer):
         for group in zone.privileged.resistance_groups:
             adder.send((40, Button('resistance button.png', (0, 0), group,
                 self.on_show_info)))
-        adder.send((20, Button('servitors button.png', (0, 0), 'privileged',
+        adder.send((20, Button('servitors button.png', (0, 0), 'servitors',
             self.on_show_info)))
         for group in zone.servitor.resistance_groups:
             adder.send((40, Button('resistance button.png', (0, 0), group,
@@ -320,10 +320,6 @@ class Info(Layer):
     def __init__(self):
         super(Info, self).__init__()
 
-        # self.anchor = (0, 0)
-        # self.x = 660
-        # self.y = 10
-
         self.info_label = Label('', multiline=True,
             width=350, anchor_x='left', anchor_y='bottom', x=10, y=250,
             font_name='Prototype')
@@ -348,17 +344,6 @@ class Info(Layer):
         self.active_info = None
 
     def show_faction(self, active_zone):
-        """When we click on the faction button we want to see what we know
-        about the faction here, which is limited unless we’ve gathered intel
-        through a recent Order or Resistance Plan
-
-        Contents: Name of faction, Name of leader, brief description; current
-        status (need a process here, but if you have no special intel, we
-        should know only what the most damaged stat is, eg. “Smarts impaired”;
-        balance may indicate we need rough info like this on all, but ideally
-        not; When we have intel we should see a clear indication of the stats,
-        perhaps as value *10 with one decimal place?)
-        """
         zone = model.game.moon.zones[active_zone]
         faction = zone.faction
         if self.active_info == faction:
@@ -381,19 +366,6 @@ class Info(Layer):
         self.popup_9p.visible = True
 
     def show_resistance(self, group):
-        """This pane shows some basic Resistance Group info, and then lists
-        the Plans they are currently working on, briefly. clicking on the
-        Group or the Plans lets you investigate further.
-
-        Contents: Resistance Group name, modus operandi, perhaps their Trust
-        of the player if that is used/useful; list of Plans, showing at least
-        a name and progress bar towards carrying them out (full means they are
-        going ahead this turn).
-
-        Out: click outside the pane?
-        Resistance Info: summon Resistance Info Pane (over this one)
-        Resistance Plan: summon Resistance Plan Pane (over this one)
-        """
         if self.active_info == group:
             self.hide_info()
             return
@@ -411,18 +383,6 @@ class Info(Layer):
         self.popup_9p.visible = True
 
     def show_cohort(self, cohort):
-        """The information about cohorts is more readily available (walk the
-        streets, listen to the chatter) so we should get pretty solid
-        indicators of how the people are feeling.
-
-        Contents: current stats (Size, Liberty, Quality of Life, Cash)
-        probably in x10 on decimal place; size should perhaps be a word
-        instead - we don’t expect it to change, I think - it is more a
-        reflection of inertia. I don’t think we want to see the Willingness,
-        Rebelliousness, and Efficiency directly, but perhaps a word would be
-        ok. We want the player to know what is going on, but not have too
-        close a view of the numbers.
-        """
         if self.active_info == cohort:
             self.hide_info()
             return
@@ -497,7 +457,6 @@ class ZoneInfo(Layer):
         add_info('Faction Status:', zone.faction.state_description, '')
 
         self.anchor_y = -self.height
-        print (self.x, self.y), (self.anchor_x, self.anchor_y)
 
 if __name__ == '__main__':
     pyglet.resource.path.append('../../data')
