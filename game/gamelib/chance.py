@@ -19,22 +19,22 @@ def roll(d1, d2=0.0):
     ran = random()
     return max(0, total-ran)
 
-def ease(total, ease=EASE_CUBIC):
+def ease(total, easetype=EASE_CUBIC):
     if total > 2:
         raise Exception('EasingValueTooLarge')
     if total > 1:
-        return ease(total-1, ease) + 1
-    if ease == EASE_LINEAR:
+        return ease(total-1, easetype) + 1
+    if easetype == EASE_LINEAR:
         return total
-    elif ease == EASE_HERMITE:
+    elif easetype == EASE_HERMITE:
         return (3 * total**2) - (2 * total**3)
-    elif ease == EASE_QUAD:
+    elif easetype == EASE_QUAD:
         total *= 2
         if total < 1:
             return .5 * total**2
         total -= 1
         return -.5 * (total*(total-2) - 1)
-    elif ease == EASE_CUBIC:
+    elif easetype == EASE_CUBIC:
         total *= 2
         if total < 1:
            return .5 * total**3
