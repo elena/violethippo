@@ -442,21 +442,25 @@ class Zone(JSONable, economy.Zone_Economy):
         self.faction = Faction.json_create(jdata['faction'], self)
 
     def update(self, game, ui):
-        ui.msg('%s updating zone'%(self))
         # do plans and orders
+        ui.msg('%s updating zone'%(self))
         self.privileged.update(game, ui)
         self.servitor.update(game, ui)
-        self.faction.update(game, ui)
-        #
-        # continue to search for the player
-        if self.player_found < 1:
-            if game.player.hideout == self.name:
-                self.player_found += self.faction.alert
-            else:
-                self.player_found += self.faction.alert * .1
-                # perhaps not able to be found unless hideout in zone?
-            self.player_found = min(self.player_found, 1)
-            ui.msg('    player found in %s: %f'%(self.name, self.player_found))
+        if not self.is_safe:
+            self.faction.update(game, ui)
+            #
+            # continue to search for the player
+            if self.player_found < 1:
+                if game.player.hideout == self.name:
+                    self.player_found += self.faction.alert
+                else:
+                    self.player_found += self.faction.alert * .1
+                    # perhaps not able to be found unless hideout in zone?
+                self.player_found = min(self.player_found, 1)
+                ui.msg('    player found in %s: %f'%(self.name, self.player_found))
+        else:
+            ui.msg('%s zone is safe - no update'%(self))
+
         #
         # Economy is now updated *after* update via moon.update.
         # Economy code is now in economy.py
@@ -567,6 +571,12 @@ class Cohort(JSONable, Buffable):
         return 1. - sum(vals + [min(vals)]) / 4.
 
     def update(self, game, ui):
+        # remove dead groups
+        for group in self.resistance_groups[:]:
+            if group.is_dead:
+                self.resistance_groups.remove(group)
+        if self.zone.is_safe:
+            return
         # check for new rebellion
         self.spawn_rebels(game, ui)
         for group in self.resistance_groups:
@@ -782,8 +792,9 @@ class Faction(Group,aifaction.Brain):
         ui.msg('Faction %s: update'%self.name)
         super(Faction, self).update(game, ui)
         # carry out plan
-        for plan in self.plans:
+        for plan in self.plans[:]:
             if plan.plan_time == 0:
+                ui.msg('faction %s plan %s is done'%(self.name, plan.name))
                 plan.enact(ui)
                 self.plans.remove(plan)
             else:
@@ -846,6 +857,12 @@ class Resistance(Group):
         self.modus_operandi = jdata['.modus_operandi']
         self.need_plan = jdata['.need_plan']
 
+    @property
+    def state(self):
+        return min(self.buffed('size'),
+            (self.buffed('size')+self.buffed('informed')+self.buffed('smart')+
+            self.buffed('loyal')+self.buffed('rich'))/5)
+
     def search_for_plan(self, num_plans, ui):
         '''
         Resistance groups search for more plans:
@@ -890,7 +907,7 @@ class Resistance(Group):
             self.need_plan = 0  # not urgent any more
             # do we have a plan ready to go?
             ready_plans = []
-            for plan in self.plans:
+            for plan in self.plans[:]:
                 if plan.plan_time == 0:
                     ready_plans.append(plan)
                     # remove from self.plans
@@ -898,6 +915,7 @@ class Resistance(Group):
             if len(ready_plans):
                 # enact plans
                 for plan in ready_plans:
+                    ui.msg('rebel %s plan %s is done'%(self.name, plan.name))
                     plan.enact(ui)
             else:
                 # get smaller, based on loyalty

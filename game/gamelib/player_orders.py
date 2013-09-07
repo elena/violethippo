@@ -263,6 +263,18 @@ class AttackFactionLeader(Order):
             faction.buffs = {}
             faction.name = "Destroyed"
             ui.msg('%s faction destroyed'%(faction.name))
+            zone = faction.zone
+            for co in [zone.privileged, zone.servitor]:
+                # return both cohorts to starting (or better)
+                co.buffs = {}
+                co.resistance_groups = []
+                # for gr in co.resistance_groups:
+                #     gr.size = 0
+                #     gr.buffs = {}
+                for st in ['size', 'liberty', 'quality_of_life', 'cash']:
+                    newval = max(getattr(co, st), getattr(co, st + '_base'))
+                    setattr(co, st, newval)
+            # warn the other zones
             for zonetype in model.game.moon.zones:
                 if zonetype == ui.zone.mode:
                     continue
@@ -271,13 +283,6 @@ class AttackFactionLeader(Order):
                 zone.player_found += (1-zone.player_found)/4
                 zone.faction.alert = min(1, zone.faction.alert + .2)
                 zone.faction.buff_stat('alert', .5,.45,.4,.3,.2,.05)
-                # return both cohorts to starting (or better)
-                for co in [zone.privileged, zone.servitor]:
-                    co.buffs = {}
-                    # co.resistance_groups = []  # removes all resistance
-                    for st in ['size', 'liberty', 'quality_of_life', 'cash']:
-                        newval = max(getattr(co, st), getattr(co, st + '_base'))
-                        setattr(co, st, newval)
             ui.update_info()
 
 all.append(AttackFactionLeader())
