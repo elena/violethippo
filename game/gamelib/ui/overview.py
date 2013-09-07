@@ -137,7 +137,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             b = TextButton('%dAP: %s' % (cost, order.label), (x, y), order,
                 self.on_player_order)
             b.order = order
-            x += b.label.element.content_width + 20
+            x += int(b.label.element.content_width + 20)
             self.buttons.append(b)
             self.add(b)
 
@@ -253,6 +253,7 @@ class Zone(Layer):
                 continue
             but = self.get(name)
             if hasattr(but, 'on_click'):
+                self.remove(but.label_ob)
                 self.remove(name)
 
         zone = model.game.moon.zones[active_zone]
@@ -261,7 +262,7 @@ class Zone(Layer):
             y = 758
             x = 10
             while 1:
-                indent, but = yield
+                indent, but, label = yield
                 y -= but.image.height
                 but.position = (x + indent, y)
                 if isinstance(but.info, str):
@@ -269,22 +270,26 @@ class Zone(Layer):
                 else:
                     name = but.info.name
                 self.add(but, z=1, name=name)
+                lx = x + indent + but.image.width + 10
+                l = Label(label, position=(lx, y+8), color=(255,255,255,255))
+                self.add(l)
+                but.label_ob = l
 
         adder = add_button()
         adder.next()
 
         adder.send((0, Button('faction button.png', (0, 0), 'faction',
-            self.on_show_info)))
+            self.on_show_info), 'Faction'))
         adder.send((10, Button('icon-priv_off.png', (0, 0), 'privileged',
-            self.on_show_info, img_prefix='icon-priv')))
+            self.on_show_info, img_prefix='icon-priv'), 'Privileged Cohort'))
         for group in zone.privileged.resistance_groups:
             adder.send((20, Button('icon-pres_off.png', (0, 0), group,
-                self.on_show_info, img_prefix='icon-pres')))
+                self.on_show_info, img_prefix='icon-pres'), group.name))
         adder.send((10, Button('icon-serv_off.png', (0, 0), 'servitors',
-            self.on_show_info, img_prefix='icon-serv')))
+            self.on_show_info, img_prefix='icon-serv'), 'Servitor Cohort'))
         for group in zone.servitor.resistance_groups:
             adder.send((20, Button('icon-sres_off.png', (0, 0), group,
-                self.on_show_info, img_prefix='icon-sres')))
+                self.on_show_info, img_prefix='icon-sres'), group.name))
 
     def on_mouse_press(self, x, y, button, modifiers):
         for z, but in self.children:

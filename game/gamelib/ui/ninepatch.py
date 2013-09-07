@@ -267,6 +267,7 @@ class LabelNinepatch(CocosNode):
     def get_rect(self):
         return self.rect
 
+
 class NinepatchLayer(Layer):
     def __init__(self, image):
         super(NinepatchLayer, self).__init__()
