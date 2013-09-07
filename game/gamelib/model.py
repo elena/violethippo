@@ -3,6 +3,7 @@ import os
 import json
 import time
 import random
+import weakref
 
 from gamelib.plans.base import Plan
 
@@ -76,10 +77,12 @@ class JSONable(object):
 
     # create an object from a json save.
     @classmethod
-    def json_create(cls, jdata):
+    def json_create(cls, jdata, parent=None):
         args = cls.json_create_args(jdata)
 #        print cls, args
         o = cls(*args)
+        if parent is not None:
+            o.set_parent(parent)
         o.json_load_simple(jdata)
         o.json_load(jdata)
         return o
@@ -298,9 +301,9 @@ class Moon(JSONable):
         return '{{{Moon}}}'
 
     def __init__(self):
-        self.zones = { INDUSTRY:Zone.create_industry(),
-                       MILITARY:Zone.create_military(),
-                       LOGISTICS:Zone.create_logistics()
+        self.zones = { INDUSTRY:Zone.create_industry(self),
+                       MILITARY:Zone.create_military(self),
+                       LOGISTICS:Zone.create_logistics(self)
                      }
 
     def json_dump(self):
@@ -352,68 +355,65 @@ class Zone(JSONable, economy.Zone_Economy):
         self.faction = None
         self.player_found = 0  # close to finding player in zone
 
+    moon = property(lambda s: s._moon())
+
+    def set_parent(self, moon):
+        self._moon = weakref.ref(moon)
+
     @classmethod
-    def create_industry(cls):
+    def create_industry(cls, moon):
         o = cls(INDUSTRY)
+        o.set_parent(moon)
         o.requirements=[ ENFORCEMENT, RAW_MATERIAL ]
         o.provides=[ GOODS ]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.MED*2,
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
+        o.privileged.set_parent(o)
         o.servitor = Servitor(size=Game.MAX, liberty=Game.LOW*2,
                 quality_of_life=Game.LOW*2, cash=Game.MED*2, max_resistance=4)
+        o.servitor.set_parent(o)
         o.faction = Faction('ecobaddy', alert=.01,
             size=Game.MED, informed=Game.HIGH, smart=Game.LOW, loyal=Game.MED,
             rich=Game.HIGH, buffs={})
-        # o.privileged.new_resistance('industry-res-1',
-        #     size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
-        #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.VIOLENCE, 0)
-        # o.servitor.new_resistance('industry-res-2',
-        #     size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
-        #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.SABOTAGE, 0)
+        o.faction.set_parent(o)
         o.setup_turn0()
         return o
 
     @classmethod
-    def create_military(cls):
+    def create_military(cls, moon):
         o = cls(MILITARY)
         o.requirements= [MANPOWER]
         o.provides= [ ENFORCEMENT ]
         o.privileged = Privileged(size=Game.LOW*2, liberty=Game.HIGH*2,
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
+        o.privileged.set_parent(o)
         o.servitor = Servitor(size=Game.MED*2, liberty=Game.HIGH*2,
                 quality_of_life=Game.MED*2, cash=Game.MED*2, max_resistance=4)
+        o.servitor.set_parent(o)
         o.faction = Faction('mrstompy', alert=.01,
             size=Game.HIGH, informed=Game.LOW, smart=Game.MED, loyal=Game.HIGH,
             rich=Game.LOW, buffs={})
-        # o.servitor.new_resistance('military-res-1',
-        #     size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
-        #     rich=Game.MED, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.VIOLENCE, 0)
+        o.faction.set_parent(o)
+        o.set_parent(moon)
         o.setup_turn0()
         return o
 
     @classmethod
-    def create_logistics(cls):
+    def create_logistics(cls, moon):
         o = cls(LOGISTICS)
         o.requirements= [ENFORCEMENT]
         o.provides= [RAW_MATERIAL,MANPOWER]
         o.privileged = Privileged(size=Game.MED*2, liberty=Game.HIGH*2,
                 quality_of_life=Game.HIGH*2, cash=Game.HIGH*2, max_resistance=2)
+        o.privileged.set_parent(o)
         o.servitor = Servitor(size=Game.LOW*2, liberty=Game.MED*2,
                 quality_of_life=Game.HIGH*2, cash=Game.MED*2, max_resistance=4)
+        o.servitor.set_parent(o)
         o.faction = Faction('mrfedex', alert=.02,
             size=Game.LOW, informed=Game.MED, smart=Game.HIGH, loyal=Game.HIGH,
             rich=Game.MED, buffs={})
-        # o.privileged.new_resistance('logistics-res-1',
-        #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
-        #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.SABOTAGE, 0)
-        # o.servitor.new_resistance('logistics-res-2',
-        #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
-        #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.ESPIONAGE, 0)
+        o.faction.set_parent(o)
+        o.set_parent(moon)
         o.setup_turn0()
         return o
 
@@ -430,9 +430,9 @@ class Zone(JSONable, economy.Zone_Economy):
         return [jdata['.name']]
 
     def json_load(self, jdata):
-        self.privileged = Privileged.json_create(jdata['priv'])
-        self.servitor = Servitor.json_create(jdata['serv'])
-        self.faction = Faction.json_create(jdata['faction'])
+        self.privileged = Privileged.json_create(jdata['priv'], self)
+        self.servitor = Servitor.json_create(jdata['serv'], self)
+        self.faction = Faction.json_create(jdata['faction'], self)
 
     def update(self, game, ui):
         ui.msg('%s updating zone'%(self))
@@ -493,6 +493,12 @@ class Cohort(JSONable, Buffable):
         self.production_output_turn0=self.production_output()
         self.max_resistance = max_resistance
 
+    zone = property(lambda s: s._zone())
+    moon = property(lambda s: s._zone()._moon())
+
+    def set_parent(self, zone):
+        self._zone = weakref.ref(zone)
+
     def json_dump(self):
         names = []
         for name in ['size', 'liberty', 'quality_of_life', 'cash']:
@@ -519,15 +525,16 @@ class Cohort(JSONable, Buffable):
             setattr(self, name + '_history', jdata['.%s_history' % name])
         self.production_output_turn0=jdata['.production_output_turn0']
         self.max_resistance = jdata['.max_resistance']
-        self.resistance_groups = [Resistance.json_create(g)
+        self.resistance_groups = [Resistance.json_create(g, self)
             for g in jdata['resistance_groups']]
 
     def new_resistance(self, name, size, informed, smart, loyal, rich, buffs,
         visibility, modus_operandi, need_plan):
         if len(self.resistance_groups) < self.max_resistance:
-            self.resistance_groups.append(Resistance(name, size, informed,
-                smart, loyal, rich, buffs, visibility, modus_operandi,
-                need_plan))
+            r = Resistance(name, size, informed, smart, loyal, rich, buffs,
+                visibility, modus_operandi, need_plan)
+            self.resistance_groups.append(r)
+            r.set_parent(self)
             return self.resistance_groups[-1]
         return None
 
@@ -729,6 +736,11 @@ class Faction(Group):
             buffs)
         self.alert = alert       # awareness of rebellion and player
 
+    zone = property(lambda s: s._zone())
+    moon = property(lambda s: s._zone()._moon())
+
+    def set_parent(self, zone):
+        self._zone = weakref.ref(zone)
 
     def json_dump(self):
         v = super(Faction, self).json_dump()
@@ -739,9 +751,6 @@ class Faction(Group):
     def json_create_args(cls, jdata):
         # just dummy values that'll be filled in by load below
         return super(Faction, cls).json_create_args(jdata) + [0]
-
-    def json_load(self, jdata):
-        super(Faction, self).json_load(jdata)
 
     @property
     def threat(self):
@@ -793,6 +802,13 @@ class Resistance(Group):
         # style of actions to select from with chance of each
         self.modus_operandi = modus_operandi
         self.need_plan = need_plan  # bonus to chance to find a new plan
+
+    cohort = property(lambda s: s._cohort())
+    zone = property(lambda s: s._cohort()._zone())
+    moon = property(lambda s: s._cohort()._zone()._moon())
+
+    def set_parent(self, cohort):
+        self._cohort = weakref.ref(cohort)
 
     def json_dump(self):
         v = super(Resistance, self).json_dump()
