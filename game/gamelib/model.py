@@ -49,6 +49,8 @@ class Buffable(object):
         buffs = self.buffs.get(name, [])
         if buffs:
             v += buffs[0]
+            # ASSUMPTION - all stats are 0 to 1
+            v = min(1, max(0, v))
         return v
 
     def buffs_end_turn(self):
