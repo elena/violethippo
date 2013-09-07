@@ -5,3 +5,6 @@ game/save.test/
 game/save/
 game/crap/
 .*.pxm
+syntax: glob
+game/cocos/
+game/pyglet/

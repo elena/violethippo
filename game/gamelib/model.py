@@ -11,7 +11,7 @@ from chance import roll, ease
 
 # please update this when saves will not be valid
 # do not use '.' or '_'
-DATA_VERSION = '06'
+DATA_VERSION = '07'
 # 02 - added max_resistance to cohorts
 # 03 - removed faction threat from saved data
 #      added _base values
@@ -19,6 +19,7 @@ DATA_VERSION = '06'
 # 04 - made buffs a dictionary
 # 05 - added free_order to player
 # 06 - added plans to groups
+# 07 - added need_plan to resistance groups
 
 ENFORCEMENT='enforcement'
 RAW_MATERIAL='material'
@@ -364,11 +365,11 @@ class Zone(JSONable, economy.Zone_Economy):
         # o.privileged.new_resistance('industry-res-1',
         #     size=Game.HIGH, informed=Game.LOW, smart=Game.LOW, loyal=Game.LOW,
         #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.VIOLENCE)
+        #     modus_operandi=Plan.VIOLENCE, 0)
         # o.servitor.new_resistance('industry-res-2',
         #     size=Game.LOW, informed=Game.MED, smart=Game.LOW, loyal=Game.LOW,
         #     rich=Game.LOW, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.SABOTAGE)
+        #     modus_operandi=Plan.SABOTAGE, 0)
         o.setup_turn0()
         return o
 
@@ -387,7 +388,7 @@ class Zone(JSONable, economy.Zone_Economy):
         # o.servitor.new_resistance('military-res-1',
         #     size=Game.LOW, informed=Game.MED, smart=Game.MED, loyal=Game.HIGH,
         #     rich=Game.MED, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.VIOLENCE)
+        #     modus_operandi=Plan.VIOLENCE, 0)
         o.setup_turn0()
         return o
 
@@ -406,11 +407,11 @@ class Zone(JSONable, economy.Zone_Economy):
         # o.privileged.new_resistance('logistics-res-1',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
         #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.SABOTAGE)
+        #     modus_operandi=Plan.SABOTAGE, 0)
         # o.servitor.new_resistance('logistics-res-2',
         #     size=Game.MED, informed=Game.HIGH, smart=Game.HIGH, loyal=Game.MED,
         #     rich=Game.HIGH, buffs={}, visibility=Game.LOW,
-        #     modus_operandi=Plan.ESPIONAGE)
+        #     modus_operandi=Plan.ESPIONAGE, 0)
         o.setup_turn0()
         return o
 
@@ -520,10 +521,11 @@ class Cohort(JSONable, Buffable):
             for g in jdata['resistance_groups']]
 
     def new_resistance(self, name, size, informed, smart, loyal, rich, buffs,
-        visibility, modus_operandi):
+        visibility, modus_operandi, need_plan):
         if len(self.resistance_groups) < self.max_resistance:
             self.resistance_groups.append(Resistance(name, size, informed,
-                smart, loyal, rich, buffs, visibility, modus_operandi))
+                smart, loyal, rich, buffs, visibility, modus_operandi,
+                need_plan))
             return self.resistance_groups[-1]
         return None
 
@@ -551,10 +553,10 @@ class Cohort(JSONable, Buffable):
         return 1. - sum(vals + [min(vals)]) / 4.
 
     def update(self, game, ui):
-        for group in self.resistance_groups:
-            group.update(game, ui)
         # check for new rebellion
         self.spawn_rebels(game, ui)
+        for group in self.resistance_groups:
+            group.update(game, ui)
         self.buffs_end_turn()
         ui.msg('cohort %s update done' % self)
 
@@ -569,7 +571,7 @@ class Cohort(JSONable, Buffable):
             new_group = self.new_resistance('res%d ' % random.randint(1, 1000),
                 Resistance.START_SIZE, Resistance.START_INFORMED,
                 Resistance.START_SMART, Resistance.START_LOYAL,
-                Resistance.START_RICH, {}, 0, Plan.NOOP)
+                Resistance.START_RICH, {}, 0, Plan.NOOP, 0)
         cohort_effect = ease(self.size)
         if new_group:
             # change defaults to fit this cohort
@@ -667,7 +669,8 @@ class Group(JSONable, Buffable):
     def update(self, game, ui):
         # Groups plan - plan the action they will take next turn
         # (not visible to player)
-        ui.msg('%s update not implemented' % self)
+        # ui.msg('%s update not implemented' % self)
+        pass
 
     @property
     def state(self):
@@ -756,31 +759,33 @@ class Resistance(Group):
     START_SMART=.1
     START_LOYAL=.1
     START_RICH=.1
+    MAX_PLANS=3
     visibility = RecordedAttribute('visibility')
 
     def __repr__(self):
         return '{{{Resistance:%s}}}'%(self.name)
 
     def __init__(self, name, size, informed, smart, loyal, rich, buffs,
-            visibility, modus_operandi):
+            visibility, modus_operandi, need_plan):
         super(Resistance, self).__init__(name, size, informed, smart, loyal,
             rich, buffs)
         # how obvious to the local Faction, how easy to find
         self.visibility = visibility
         # style of actions to select from with chance of each
         self.modus_operandi = modus_operandi
+        self.need_plan = need_plan  # bonus to chance to find a new plan
 
     def json_dump(self):
         v = super(Resistance, self).json_dump()
         v.update(self.json_dump_simple('visibility_value', 'visibility_base',
             'visibility_history'))
-        v.update(self.json_dump_simple('modus_operandi'))
+        v.update(self.json_dump_simple('modus_operandi', 'need_plan'))
         return v
 
     @classmethod
     def json_create_args(cls, jdata):
         # just dummy values that'll be filled in by load below
-        return super(Resistance, cls).json_create_args(jdata) + [0, 0]
+        return super(Resistance, cls).json_create_args(jdata) + [0, 0, 0]
 
     def json_load(self, jdata):
         super(Resistance, self).json_load(jdata)
@@ -788,8 +793,12 @@ class Resistance(Group):
         self.visibility_base = jdata['.visibility_base']
         self.visibility_history = jdata['.visibility_history']
         self.modus_operandi = jdata['.modus_operandi']
+        self.need_plan = jdata['.need_plan']
+
+    def search_for_plan(self, game, ui):
+        pass
 
     def update(self, game, ui):
         super(Resistance, self).update(game, ui)
-        # alter threat level against planet
-        ui.msg('%s update not implemented' % self)
+        if len(self.plans) < self.MAX_PLANS:
+            self.search_for_plan(game, ui)

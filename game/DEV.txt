@@ -1,12 +1,18 @@
 To set up an environment to work on you will need to:
 
-Check out pyglet with Mercurial (also known as "hg"):
+Somewhere, check out pyglet with Mercurial (also known as "hg"):
 
   hg clone https://pyglet.googlecode.com/hg/ pyglet
 
-Check out cocos2d with Subversion (also known as "svn"):
+Then copy the pyglet/pyglet directory in to this game directory.
+
+Somewhere, check out cocos2d with Subversion (also known as "svn"):
 
   svn checkout http://los-cocos.googlecode.com/svn/trunk/ cocos2d
+
+Then copy the cocos2d/cocos directory into this game directory.
+
+
 
 We will be using py.test to implement the unit testing of our game model:
 
