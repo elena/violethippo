@@ -180,10 +180,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                 'logistics': self.zone.zone2_x+offset,
                 'military': self.zone.zone3_x+offset,
             }
-            home_logo = Button('icon-home.png',
-                            (zone_x[model.game.player.hideout], self.zone.y-20),
-                            'hideout', None)
-            self.buttons.append(home_logo)
+            home_logo = Sprite('icon-home.png', position=
+                (zone_x[model.game.player.hideout], self.zone.y))
             self.add(home_logo)
 
         # remove old player order buttons
