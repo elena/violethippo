@@ -114,6 +114,10 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.buttons.append(end_turn)
         self.add(end_turn, name='end_turn')
 
+        help = Button('help.png', (16, 16), None, self.on_help)
+        self.buttons.append(help)
+        self.add(help, name='help')
+
         self.info = Details()
         self.info.position = (335, h-25)
         self.add(self.info)
@@ -130,11 +134,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                             color=(255,255,255,255), font_name='Prototype')
         self.add(order_label)
 
-        order_help = Label(GENERAL_HELP_TEXT, position=(30, 320),
-                           multiline=True, color=(150, 150, 150, 255),
-                           font_size =10,
-                           font_name='Prototype', width=400)
-        self.add(order_help)
+        # order_help = Label(GENERAL_HELP_TEXT, position=(30, 320),
+        #                    multiline=True, color=(150, 150, 150, 255),
+        #                    font_size =10,
+        #                    font_name='Prototype', width=400)
+        # self.add(order_help)
 
         self.update_info()
 
@@ -217,6 +221,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         if model.game.player.hideout:
             self.zone.switch_zone_to(self.zone.get(model.game.player.hideout))
         self.update_info()
+
+    def on_help(self, button):
+        self.ask_ok('Help', lambda *a: None, GENERAL_HELP_TEXT)
 
     def on_mouse_press(self, x, y, button, modifiers):
         for button in self.buttons:
