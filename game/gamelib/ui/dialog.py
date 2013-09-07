@@ -32,7 +32,6 @@ class OkLayer(Layer):
         but = Label(title, color=(0, 0, 0, 255), x=w//2,
             anchor_x='center', y=y, font_size=24)
         x1 = but.element.x - but.element.content_width // 2
-        y1 = but.element.y
         x2 = but.element.x + but.element.content_width // 2
         y2 = but.element.y + but.element.content_height
         self.add(but)
@@ -46,9 +45,7 @@ class OkLayer(Layer):
             self.add(but)
             x = but.element.x - width // 2
             x1 = min(x, x1)
-            y1 = min(but.element.y, y1)
             x2 = max(but.element.x + width // 2, x2)
-            y2 = max(but.element.y + but.element.content_height, y2)
             y -= but.element.content_height + 10
 
         but = Label('(click or press a key to dismiss)', color=(0, 0, 0, 255),
@@ -57,11 +54,10 @@ class OkLayer(Layer):
         self.add(but)
         x = but.element.x - but.element.content_width // 2
         x1 = min(x, x1)
-        y1 = min(but.element.y, y1)
         x2 = max(but.element.x + but.element.content_width // 2, x2)
-        y2 = max(but.element.y + but.element.content_height, y2)
         but.rect = Rect(x, but.element.y, but.element.content_width,
             but.element.content_height)
+        y1 = y - 32
 
         self.patch_dimensions = (x1, y1, x2-x1, y2-y1)
 
@@ -108,7 +104,6 @@ class ChoiceLayer(Layer):
         but = Label(title, color=(0, 0, 0, 255), x=w//2,
             anchor_x='center', y=y, font_size=24)
         x1 = but.element.x - but.element.content_width // 2
-        y1 = but.element.y
         x2 = but.element.x + but.element.content_width // 2
         y2 = but.element.y + but.element.content_height
         self.add(but)
@@ -122,9 +117,7 @@ class ChoiceLayer(Layer):
             self.add(but)
             x = but.element.x - width // 2
             x1 = min(x, x1)
-            y1 = min(but.element.y, y1)
             x2 = max(but.element.x + width // 2, x2)
-            y2 = max(but.element.y + but.element.content_height, y2)
             y -= but.element.content_height + 10
 
         y -= 32
@@ -139,9 +132,8 @@ class ChoiceLayer(Layer):
             self.choice_buts.append(but)
             x = but.element.x - but.element.content_width // 2
             x1 = min(x, x1)
-            y1 = min(but.element.y, y1)
+            y1 = but.element.y
             x2 = max(but.element.x + but.element.content_width // 2, x2)
-            y2 = max(but.element.y + but.element.content_height, y2)
             but.rect = Rect(x, but.element.y, but.element.content_width,
                 but.element.content_height)
 
@@ -178,12 +170,25 @@ if __name__ == '__main__':
 
     def cb(*args):
         print 'callback', args
+        sys.exit()
 
     if 'explain' in sys.argv:
         explanation = 'a somewhat long descrition and longish '\
             'explanation of stuffs'
     else:
         explanation = None
+    explanation = START_TEXT = """When you were young they came from the stars,
+adding a new moon to the sky - a moon of steel.
+
+Although there were only handful of them,
+the guns on their fortress brought them victory.
+
+Now the time has come for you to strike back.
+
+Travel to their lair and coordinate the resistance
+there, deafeating the invaders, and making this
+a moon of blood.
+"""
 
     if 'ok' in sys.argv:
         director.run(Scene(OkLayer('Information', cb, explanation)))

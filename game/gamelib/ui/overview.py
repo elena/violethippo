@@ -13,7 +13,7 @@ from ninepatch import LabelNinepatch
 
 from gamelib import model, player_orders
 
-from dialog import ChoiceLayer
+from dialog import ChoiceLayer, OkLayer
 from debug import DebugLayer
 from widgets import Button, TextButton, Bargraph, MultipleBargraph
 
@@ -47,7 +47,8 @@ def shuffled(l):
 
 class Overview(Scene):
     def __init__(self):
-        super(Overview, self).__init__(Sprite('bg.jpg', position=(512, 384)), Fixed())
+        super(Overview, self).__init__(Sprite('bg.jpg', position=(512, 384)),
+            Fixed())
 
 
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
@@ -143,10 +144,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         # now we're done
         self.initialised = True
 
-        self.ask_choice('', ['OK'], self.ready_to_play, explanation=START_TEXT, width=500)
-
-    def ready_to_play(self, ui, choice):
-        pass
+        self.ask_ok('Fight Back', lambda *a: None, explanation=START_TEXT,
+            width=500)
 
     def update_info(self):
         free = ''
@@ -242,6 +241,9 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         We callback the callback with (self, choice from the list). Or not.
         '''
         self.add(ChoiceLayer(title, choices, callback, explanation, width), z=1)
+
+    def ask_ok(self, title, callback, explanation=None, width=400):
+        self.add(OkLayer(title, callback, explanation, width), z=1)
 
     def msg(self, message, *args):
         self.console.write(message % args)
@@ -353,13 +355,15 @@ class Zone(Layer):
         adder.send((10, Button('icon-priv_off.png', (0, 0), 'privileged',
             self.on_show_info, img_prefix='icon-priv'), 'Privileged Cohort'))
         for group in zone.privileged.resistance_groups:
+            label = group.name # '%s %r' % (group.name, group.plans)
             adder.send((20, Button('icon-pres_off.png', (0, 0), group,
-                self.on_show_info, img_prefix='icon-pres'), group.name))
+                self.on_show_info, img_prefix='icon-pres'), label))
         adder.send((10, Button('icon-serv_off.png', (0, 0), 'servitors',
             self.on_show_info, img_prefix='icon-serv'), 'Servitor Cohort'))
         for group in zone.servitor.resistance_groups:
+            label = group.name # '%s %r' % (group.name, group.plans)
             adder.send((20, Button('icon-sres_off.png', (0, 0), group,
-                self.on_show_info, img_prefix='icon-sres'), group.name))
+                self.on_show_info, img_prefix='icon-sres'), label))
 
     def on_mouse_press(self, x, y, button, modifiers):
         for z, but in self.children:
