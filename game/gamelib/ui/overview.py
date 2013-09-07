@@ -75,7 +75,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             anchor_x='left', anchor_y='bottom', font_name='Prototype'),
             name='turn_label')
 
-        end_turn = Button('end turn button.png', (w-32, h-32), None,
+        end_turn = Button('end turn button.png', (w-64, h-64), None,
             self.on_new_turn)
         self.buttons.append(end_turn)
         self.add(end_turn, name='end_turn')
