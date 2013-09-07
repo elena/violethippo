@@ -410,6 +410,7 @@ class Details(InfoLayer):
             ('Smart:', None, group.smart),
             ('Rich:', None, group.rich),
             ('Loyal:', None, group.loyal),
+            ('Visibility:', None, group.visibility),
             ('Buffs:', ', '.join(group.buffs), None),
         ])
 
