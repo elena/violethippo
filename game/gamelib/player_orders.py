@@ -250,7 +250,6 @@ class AttackFaction(Order):
             # fact.size = max(0, fact.size - 0.15)
             zone.player_found = min(1, zone.player_found + 0.15)
             ui.msg('Player slaughtered faction in %s'%ui.zone.mode)
-            ui.info.display_zone(ui.zone.mode)
             ui.update_info()
 
 all.append(AttackFaction())

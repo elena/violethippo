@@ -35,7 +35,7 @@ from gamelib import model, player_orders
 
 from dialog import ChoiceLayer
 from debug import DebugLayer
-from widgets import Button, TextButton, Bargraph
+from widgets import Button, TextButton, Bargraph, MultipleBargraph
 
 
 def shuffled(l):
@@ -47,6 +47,7 @@ def shuffled(l):
 class Overview(Scene):
     def __init__(self):
         super(Overview, self).__init__(Sprite('bg.jpg', position=(512, 384)), Fixed())
+
 
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
     is_event_handler = True
@@ -79,17 +80,23 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         w, h = director.get_window_size()
 
         # now it's safe to show information about the game
-        self.threat_label = Label('', x=450, y=680, anchor_y='top',
+        self.threat_label = Label('Threat:', x=450, y=680, anchor_y='top',
             font_name='Prototype')
         self.add(self.threat_label)
-        self.visible_label = Label('', x=450, y=660, anchor_y='top',
+        self.threat_graph = MultipleBargraph((200, 8), (.1, .1, .1),
+            position=(260, 332), style='solid',
+            colors=[(200, 100, 100), (200, 200, 100), (100, 200, 100)])
+        self.add(self.threat_graph)
+        self.visible_label = Label('Visible:', x=450, y=660, anchor_y='top',
             font_name='Prototype')
-        self.add(self.visible_label)
+        self.add(self.visible_label, z=1)
+        self.visible_graph = MultipleBargraph((200, 8), (1, 1, 1),
+            position=(260, 322), style='solid',
+            colors=[(200, 100, 100), (200, 200, 100), (100, 200, 100)])
+        self.add(self.visible_graph, z=1)
 
-        self.turn_label = Label('Turn: %d\nActivitiy Points: %d',
-            multiline=True, x=20, y=70, width=200,
-            anchor_x='left', anchor_y='bottom',
-            font_name='Prototype')
+        self.turn_label = Label('', multiline=True, x=20, y=70, width=200,
+            anchor_x='left', anchor_y='bottom', font_name='Prototype')
         self.add(self.turn_label)
 
         self.end_turn = Button('end turn button.png', (w-32, h-32), None,
@@ -101,7 +108,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.info)
 
         self.zinfo = ZoneInfo()
-        self.zinfo.position = (400, h)
+        self.zinfo.position = (300, h-300)
         self.add(self.zinfo)
 
         self.zone = Zone()
@@ -119,16 +126,13 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.turn_label.element.text = 'Turn: %d\nActivity_points: %d%s\nHideout: %s' % (
             model.game.turn, model.game.player.activity_points, free,
             model.game.player.hideout or 'Not Chosen')
-        assert(len(model.game.moon.zones) == 3)
         zone1 = model.game.moon.zones[model.INDUSTRY]
         zone2 = model.game.moon.zones[model.LOGISTICS]
         zone3 = model.game.moon.zones[model.MILITARY]
-        self.threat_label.element.text = 'Threat: %d | %d | %d' % (
-            zone1.faction.threat * 100, zone2.faction.threat * 100,
-            zone3.faction.threat * 100)
-        self.visible_label.element.text = 'Hidden: %d | %d | %d' % (
-            (1-zone1.player_found)*100, (1-zone2.player_found)*100,
-            (1-zone3.player_found)*100)
+        self.threat_graph.values = (zone1.faction.threat, zone2.faction.threat,
+            zone3.faction.threat)
+        self.visible_graph.values = (zone1.player_found,
+            zone2.player_found, zone3.player_found)
         self.zinfo.display_zone(self.zone.mode)
 
         if not model.game.player.hideout:
@@ -167,7 +171,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         except self.SIGNAL_GAMEOVER:
             pass
         if model.game.player.hideout:
-            self.zone.switch_zone_to(model.game.player.hideout)
+            self.zone.switch_zone_to(self.zone.buts[model.game.player.hideout])
         self.update_info()
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -212,6 +216,11 @@ class Zone(Layer):
             model.MILITARY: pyglet.resource.image('military.png')
         }
 
+        self.icons = {
+            ('privileged', False): pyglet.resource.image('icon-priv_off.png'),
+            ('privileged', True): pyglet.resource.image('icon-priv_on.png'),
+        }
+
         GAME_WIDTH = 1024
         GAME_HEIGHT = 768
 
@@ -223,20 +232,18 @@ class Zone(Layer):
         )
         self.add(self.active, z=-1)
 
-        self.buttons = []
-
-        self.zone_buts = {
-            model.INDUSTRY: Sprite('industry button.png', position=(450, 680),
-                anchor=(0, 0)),
-            model.LOGISTICS: Sprite('logistics button.png', position=(640, 680),
-                anchor=(0, 0)),
-            model.MILITARY: Sprite('military button.png', position=(830, 680),
-                anchor=(0, 0)),
+        self.buts = {
+            model.INDUSTRY: Button('industry button.png', (450, 680),
+                'industry', self.switch_zone_to),
+            model.LOGISTICS: Button('logistics button.png', (640, 680),
+                'logistics', self.switch_zone_to),
+            model.MILITARY: Button('military button.png', (830, 680),
+                'military', self.switch_zone_to),
         }
 
-        self.add(self.zone_buts[model.INDUSTRY])
-        self.add(self.zone_buts[model.LOGISTICS])
-        self.add(self.zone_buts[model.MILITARY])
+        self.add(self.buts[model.INDUSTRY])
+        self.add(self.buts[model.LOGISTICS])
+        self.add(self.buts[model.MILITARY])
 
     def on_enter(self):
         super(Zone, self).on_enter()
@@ -244,22 +251,30 @@ class Zone(Layer):
         if model.game.player.hideout:
             self.parent.msg('setting zone to %s'%model.game.player.hideout)
             self.mode = None
-            self.switch_zone_to(model.game.player.hideout)
+            self.switch_zone_to(self.buts[model.game.player.hideout])
         else:
             self.mode = None
-            self.switch_zone_to(model.LOGISTICS)
+            self.switch_zone_to(self.buts[model.LOGISTICS])
 
-    def switch_zone_to(self, active_zone):
-        if self.mode == active_zone:
+    def switch_zone_to(self, but):
+        if self.mode == but.info:
             return
 
+        active_zone = but.info
+
         self.mode = active_zone
+        # self.buts[self.mode] = pyglet.resource.image('%s button off.png'% self.mode)
+        # self.buts[active_zone] = pyglet.resource.image('%s button on.png'% active_zone)
         self.active.image = self.zone_images[active_zone]
         self.parent.update_info()
         self.parent.info.hide_info()
 
-        for but in list(self.buttons):
-            self.remove(but)
+        # clear out unnecessary butts
+        for but in list(self.buts):
+            if but in (model.INDUSTRY, model.LOGISTICS, model.MILITARY):
+                continue
+            self.remove(self.buts[but])
+            del self.buts[but]
 
         zone = model.game.moon.zones[active_zone]
         self.buttons = []
@@ -270,7 +285,7 @@ class Zone(Layer):
                 indent, but = yield
                 y -= but.image.height
                 but.position = (x + indent, y)
-                self.buttons.append(but)
+                self.buts[but.info] = but
                 self.add(but, z=1)
 
         adder = add_button()
@@ -278,27 +293,22 @@ class Zone(Layer):
 
         adder.send((0, Button('faction button.png', (0, 0), 'faction',
             self.on_show_info)))
-        adder.send((20, Button('privileged button.png', (0, 0), 'privileged',
-            self.on_show_info)))
+        self.priv_but = Button('icon-priv_off.png', (0, 0), 'privileged',
+            self.on_show_info)
+        adder.send((20, self.priv_but))
         for group in zone.privileged.resistance_groups:
-            adder.send((40, Button('resistance button.png', (0, 0), group,
+            adder.send((40, Button('icon-pres_off.png', (0, 0), group,
                 self.on_show_info)))
-        adder.send((20, Button('servitors button.png', (0, 0), 'servitors',
+        adder.send((20, Button('icon-serv_off.png', (0, 0), 'servitors',
             self.on_show_info)))
         for group in zone.servitor.resistance_groups:
-            adder.send((40, Button('resistance button.png', (0, 0), group,
+            adder.send((40, Button('icon-sres_off.png', (0, 0), group,
                 self.on_show_info)))
 
     def on_mouse_press(self, x, y, button, modifiers):
-        for zone, but in self.zone_buts.items():
-            if zone == self.mode:
+        for key, but in self.buts.items():
+            if key == self.mode:
                 continue
-            if but.get_rect().contains(x, y):
-                self.switch_zone_to(zone)
-                return True         # event handled
-
-        # check other info display buttons
-        for but in self.buttons:
             if but.get_rect().contains(x, y):
                 but.on_click(but)
                 return True         # event handled
@@ -447,13 +457,11 @@ class ZoneInfo(Layer):
         add_info('Provides:', ', '.join(zone.provides), None)
         add_info('Requires:', ', '.join(zone.requirements), None)
         for n in zone.store:
-            add_info('%s store:' % n, '', zone.store[n] / 10.)
-        add_info('Efficiency', '', zone.privileged.efficiency)
-        add_info('Willingness', '', zone.servitor.willing)
-        add_info('Privileged Rebellious:', '', zone.privileged.rebellious)
-        add_info('Servitor Rebellious:', '', zone.servitor.rebellious)
-        add_info('Privileged Willing:', '', zone.privileged.willing)
-        add_info('Servitor Willing:', '', zone.servitor.willing)
+            add_info('%s:' % n.title(), '', zone.store[n] / 10.)
+        # add_info('Privileged Rebellious:', '', zone.privileged.rebellious)
+        # add_info('Servitor Rebellious:', '', zone.servitor.rebellious)
+        # add_info('Privileged Willing:', '', zone.privileged.willing)
+        # add_info('Servitor Willing:', '', zone.servitor.willing)
         add_info('Faction Status:', zone.faction.state_description, '')
 
         self.anchor_y = -self.height
