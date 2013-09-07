@@ -88,11 +88,14 @@ class Plan:
         self.pay_costs(ui)
         result = self.check_success(ui)
         if result == 0:
+            ui.msg('plan %s FAILED'%self.name)
             return False
         if result < 0:
+            ui.msg('plan %s was a DISASTER'%self.name)
             self.apply_risks(ui)
             return False
         if result > 0:
+            ui.msg('plan %s SUCCEDED'%self.name)
             self.apply_effects(ui)
             return True
 

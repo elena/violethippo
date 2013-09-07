@@ -746,10 +746,24 @@ class Faction(Group):
         return self.state
 
     def update(self, game, ui):
+        '''
+        Factions carry out the plan they were working on
+        Perhaps Factions recover a small amount based on Privileged cohort
+        Perhaps Factions may find a resistance group (small chance)
+        Factions decide on a new plan for next turn
+        '''
+        if self.size <= 0:  # not buffed, perhaps this should be self.state
+            return  # we are dead? do nothing
+        ui.msg('Faction %s: update'%self.name)
         super(Faction, self).update(game, ui)
-        # alter threat level against planet
-        ui.msg('%s update not implemented' % self)
-
+        # carry out plan
+        for plan in self.plans:
+            if plan.plan_time == 0:
+                plan.enact(ui)
+                self.plans.remove(plan)
+            else:
+                plan.plan_time -= 1  # we don't expect this for factions
+        # TODO: select a new plan
 
 class Resistance(Group):
     """Resistance Group
@@ -760,6 +774,9 @@ class Resistance(Group):
     START_LOYAL=.1
     START_RICH=.1
     MAX_PLANS=3
+    BASE_NEED_PLAN=Game.LOW
+    NEED_PLAN_TURN_FACTOR=1.2
+    INACTION_LOSS=.05
     visibility = RecordedAttribute('visibility')
 
     def __repr__(self):
@@ -795,10 +812,77 @@ class Resistance(Group):
         self.modus_operandi = jdata['.modus_operandi']
         self.need_plan = jdata['.need_plan']
 
-    def search_for_plan(self, game, ui):
-        pass
+    def search_for_plan(self, num_plans, ui):
+        '''
+        Resistance groups search for more plans:
+            low chance of success if they have other plans already
+              (lower the more plans they have, reducing to 0 when they have
+              two or three on the boil)
+            higher if they have no plans yet
+              (and rising over successive turns with no plan?)
+        '''
+        find_plan = Game.MED * ((self.MAX_PLANS - num_plans)/self.MAX_PLANS)
+        found = roll(find_plan, self.buffed('need_plan'))
+        if found > 0:
+            ui.msg('resistance group %s should find a plan'%self.name)
+            # TODO: select new plan based on self.modus_operandi and zone???
+            # this doesn't work because I need zone...
+            # zone = ???
+            # new_plan = Plan("newplan", zone, self, self.modus_operandi,
+            #     "a new plan", 1+random.randint(1,4), [])
+            # ui.msg('%s found a new plan: '%self.name, new_plan.name)
+            # add new plan to self.plans
+            # self.plans.append(new_plan)
 
     def update(self, game, ui):
+        '''
+        Resistance groups with no plan suffer a loss of loyalty
+        Resistance groups with plans ready to go, enact them
+        Resistance groups suffer an erosion of size when they do not enact
+            any action, amount depending on loyalty
+        Resistance groups with plans to work on, advance them by a turn
+        Resistance groups search for plans if they do not have enough
+        '''
+        if self.size <= 0:
+            return  # we are dead and should do nothing
+        ui.msg('Resistance group %s: update'%self.name)
         super(Resistance, self).update(game, ui)
-        if len(self.plans) < self.MAX_PLANS:
-            self.search_for_plan(game, ui)
+        num_plans = len(self.plans)
+        if num_plans == 0:
+            # loss of loyalty, note need_plan could be a factor
+            if not self.need_plan:
+                self.need_plan = self.BASE_NEED_PLAN
+            else:
+                self.need_plan = min(1.,
+                    self.need_plan * self.NEED_PLAN_TURN_FACTOR)
+        else:
+            self.need_plan = 0  # not urgent any more
+            # do we have a plan ready to go?
+            ready_plans = []
+            for plan in self.plans:
+                if plan.plan_time == 0:
+                    ready_plans.append(plan)
+                    # remove from self.plans
+                    self.plans.remove(plan)
+            if len(ready_plans):
+                # enact plans
+                for plan in ready_plans:
+                    plan.enact(ui)
+            else:
+                # get smaller, based on loyalty
+                self.size = max(0,
+                    self.size - (self.INACTION_LOSS * (1-self.buffed('loyalty'))))
+            for plan in self.plans:
+                # advance plan by a turn (more with smarts roll?)
+                plan.plan_time -= 1
+        # increase visibility by local faction's alert
+        # TODO: how do we know the local faction?
+        # check for group dead
+        if self.size <= 0:  # not buffed, only permanent counts for death
+            self.size = 0
+            # TODO: how do we remove this group?
+            # TODO: tell player about group removal
+            ui.msg('resistance group %s is dead'%self.name)
+            pass
+        if num_plans < self.MAX_PLANS:
+            self.search_for_plan(num_plans, ui)
