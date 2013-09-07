@@ -18,6 +18,14 @@ from debug import DebugLayer
 from widgets import Button, TextButton, Bargraph, MultipleBargraph
 
 
+GENERAL_HELP_TEXT = """Defeat the ruling factions of each zone
+before getting caught.
+
+Each turn get rebel cohorts to
+enact plans (using activity points)
+to weaken the factions.
+"""
+
 def shuffled(l):
     l = list(l)
     random.shuffle(l)
@@ -30,7 +38,13 @@ class Overview(Scene):
 
 
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
+
     is_event_handler = True
+    order_x = 200 #20
+    order_y = 485
+
+    w, h = director.get_window_size()
+    #self.info.position = (335, h-25)
 
     def __init__(self):
         super(Fixed, self).__init__()
@@ -60,18 +74,27 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         w, h = director.get_window_size()
 
         # now it's safe to show information about the game
-        self.add(Label('Threat:', x=450, y=680, anchor_y='top',
-            font_name='Prototype'), 'threat')
-        self.add(MultipleBargraph((200, 8), (.1, .1, .1), position=(260, 332),
-            style='solid', colors=[(200, 100, 100), (200, 200, 100),
-            (100, 200, 100)]), name='threat_graph')
-        self.add(Label('Visible:', x=450, y=660, anchor_y='top',
-            font_name='Prototype'))
-        self.add(MultipleBargraph((200, 8), (1, 1, 1), position=(260, 322),
-            style='solid', colors=[(200, 100, 100), (200, 200, 100),
-            (100, 200, 100)]), name='visible_graph')
+        bar_label_x = 240*2
+        bar_graph_x = 305
+        bar_label_y = 372*2
+        bar_graph_y = 365
+        self.add(Label('Faction Strength: ', x=bar_label_x, y=bar_label_y,
+                       anchor_y='top', font_name='Prototype'), 'threat')
+        self.add(MultipleBargraph((200, 8), (.2, .2, .2),
+            position=(bar_graph_x, bar_graph_y),
+            style='solid', colors=[(100, 100, 100), (200, 200, 100),
+            (200, 100, 100)]), name='threat_graph')
 
-        self.add(Label('', multiline=True, x=20, y=70, width=200,
+        self.add(Label('Risk of Capture: ', x=bar_label_x, y=bar_label_y-20,
+                       anchor_y='top', font_name='Prototype'))
+        self.add(MultipleBargraph((200, 8), (1, 1, 1),
+            position=(bar_graph_x, bar_graph_y-10),
+            style='solid', colors=[(100, 100, 100), (200, 200, 100),
+            (200, 100, 100)]), name='visible_graph')
+
+        turn_x = 840
+        turn_y = 698
+        self.add(Label('', multiline=True, x=turn_x, y=turn_y, width=200,
             anchor_x='left', anchor_y='bottom', font_name='Prototype'),
             name='turn_label')
 
@@ -81,15 +104,26 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(end_turn, name='end_turn')
 
         self.info = Details()
-        self.info.position = (131, 340)
+        self.info.position = (335, h-25)
         self.add(self.info)
 
         self.zinfo = ZoneInfo()
-        self.zinfo.position = (400, h-130)
+        self.zinfo.position = (150, 185)
         self.add(self.zinfo)
 
         self.zone = Zone()
         self.add(self.zone, z=-1)
+
+        order_label = Label('Choose your plans for this turn: ',
+                            position=(self.order_x, self.order_y+40),
+                            color=(255,255,255,255), font_name='Prototype')
+        self.add(order_label)
+
+        order_help = Label(GENERAL_HELP_TEXT, position=(30, 320),
+                           multiline=True, color=(150, 150, 150, 255),
+                           font_size =10,
+                           font_name='Prototype', width=400)
+        self.add(order_help)
 
         self.update_info()
 
@@ -100,10 +134,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         free = ''
         if model.game.player.free_order:
             free = ' + free'
-        self.get('turn_label').element.text = 'Turn: %d\nActivity Points: '\
-            '%d%s\nHideout: %s' % (model.game.turn,
-                model.game.player.activity_points, free,
-                model.game.player.hideout or 'Not Chosen')
+        self.get('turn_label').element.text = 'Turn: %d\nHideout: %s'\
+            '\nActivity Points:  %d%s' % (model.game.turn,
+                model.game.player.hideout or 'Not Chosen',
+                model.game.player.activity_points, free
+            )
 
         zone1 = model.game.moon.zones[model.INDUSTRY]
         zone2 = model.game.moon.zones[model.LOGISTICS]
@@ -120,6 +155,18 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         else:
             # enable turn button and all the player actions
             self.get('end_turn').visible = True
+            offset = 75
+            zone_x = {
+                'industry': self.zone.zone1_x+offset,
+                'logistics': self.zone.zone2_x+offset,
+                'military': self.zone.zone3_x+offset,
+            }
+            home_logo = Button('icon-home.png',
+                            (zone_x[model.game.player.hideout], self.zone.y-20),
+                            'hideout', None)
+            self.buttons.append(home_logo)
+            self.add(home_logo)
+
 
         # remove old player order buttons
         for but in list(self.buttons):
@@ -129,17 +176,21 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                 self.buttons.remove(but)
 
         # add appropriate player order buttons
-        x = y = 20
+        x = self.order_x+10
+        y = self.order_y
+
         for order in player_orders.all:
             cost = order.cost(self.zone)
             if cost is None:
                 continue
-            b = TextButton('%dAP: %s' % (cost, order.label), (x, y), order,
-                self.on_player_order)
+            b = TextButton(' %s (%dAP) ' % (order.label, cost), (x, y), order,
+                self.on_player_order, color=(240, 240, 240, 255))
             b.order = order
-            x += int(b.label.element.content_width + 20)
+            #x += int(b.label.element.content_height + 20)
+            y += int(b.label.element.content_height-60)
             self.buttons.append(b)
             self.add(b)
+
 
     class SIGNAL_GAMEOVER(Exception):
         pass
@@ -184,6 +235,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
 class Zone(Layer):
     is_event_handler = True
 
+    x = 485
+    y = 640
+    s = 150
+    zone1_x, zone2_x, zone3_x = x, x+s, x+s*2
+
     def __init__(self):
         super(Zone, self).__init__()
         w, h = director.get_window_size()
@@ -200,22 +256,19 @@ class Zone(Layer):
             ('privileged', True): pyglet.resource.image('icon-priv_on.png'),
         }
 
-        GAME_WIDTH = 1024
-        GAME_HEIGHT = 768
-
-        ZONE_WIDTH = 560
-        ZONE_HEIGHT = 640
+        w, h = director.get_window_size()
 
         self.active = Sprite(self.zone_images[model.INDUSTRY],
-            anchor=((-(GAME_WIDTH-ZONE_WIDTH), -(GAME_HEIGHT-ZONE_HEIGHT)))
+            anchor=((-(w-550),
+                     -(h-605)))
         )
         self.add(self.active, z=-1)
 
-        self.add(Button('but-ind_off.png', (450, 680), 'industry',
+        self.add(Button('but-ind_off.png', (self.zone1_x, self.y), 'industry',
             self.switch_zone_to), name=model.INDUSTRY)
-        self.add(Button('but-log_off.png', (640, 680), 'logistics',
+        self.add(Button('but-log_off.png', (self.zone2_x, self.y), 'logistics',
             self.switch_zone_to), name=model.LOGISTICS)
-        self.add(Button('but-mil_off.png', (830, 680), 'military',
+        self.add(Button('but-mil_off.png', (self.zone3_x, self.y), 'military',
             self.switch_zone_to), name=model.MILITARY)
 
     def on_enter(self):
@@ -279,10 +332,14 @@ class Zone(Layer):
         adder = add_button()
         adder.next()
 
-        adder.send((0, Button('faction button.png', (0, 0), 'faction',
-            self.on_show_info), 'Faction'))
         adder.send((10, Button('icon-priv_off.png', (0, 0), 'privileged',
             self.on_show_info, img_prefix='icon-priv'), 'Privileged Cohort'))
+        for group in zone.privileged.resistance_groups:
+            adder.send((20, Button('icon-pres_off.png', (0, 0), group,
+                self.on_show_info, img_prefix='icon-pres'), group.name))
+        for group in zone.privileged.resistance_groups:
+            adder.send((20, Button('icon-pres_off.png', (0, 0), group,
+                self.on_show_info, img_prefix='icon-pres'), group.name))
         for group in zone.privileged.resistance_groups:
             adder.send((20, Button('icon-pres_off.png', (0, 0), group,
                 self.on_show_info, img_prefix='icon-pres'), group.name))
@@ -452,8 +509,21 @@ class ZoneInfo(InfoLayer):
 
         zone = model.game.moon.zones[active_zone]
 
+        status_color = {
+            'strong':     (170, 0, 0, 255),
+            'battered':   (170, 50, 0, 255),
+            'shaky':      (170, 100, 0, 255),
+            'vulnerable': (200, 170, 0, 255),
+            'turmoil':    (180, 255, 0, 255),
+            'destroyed':  (0, 170, 0, 255),
+        }
+        desc = zone.faction.state_description
+        status = TextButton('  %s  ' % desc.upper(), (550, -15),
+                            None, None, color=status_color[desc])
+        self.add(status)
+
         packer = self.packer()
-        packer('Zone', self.descr[active_zone], None)
+        # packer('Faction Status:', zone.faction.state_description, None)
         packer('Provides:', ', '.join(zone.provides), None)
         packer('Requires:', ', '.join(zone.requirements), None)
         for n in zone.store:
@@ -462,8 +532,7 @@ class ZoneInfo(InfoLayer):
         # packer('Servitor Rebellious:', None, zone.servitor.rebellious)
         # packer('Privileged Willing:', None, zone.privileged.willing)
         # packer('Servitor Willing:', None, zone.servitor.willing)
-        packer('Faction Status:', zone.faction.state_description, None)
-
+        packer('Zone', self.descr[active_zone], None)
         self.width = self.max_x - self.min_x
 
 if __name__ == '__main__':

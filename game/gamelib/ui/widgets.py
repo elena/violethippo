@@ -18,11 +18,12 @@ class Button(Sprite):
 
 
 class TextButton(LabelNinepatch):
-    def __init__(self, text, position, info, action, **kw):
+    def __init__(self, text, position, info, action,
+                 color=(255, 255, 255, 255), **kw):
         x, y = position
         ninepatch = kw.pop('ninepatch', 'border-9p.png')
         super(TextButton, self).__init__(ninepatch, Label(text, x=x, y=y,
-            color=(0, 0, 0, 255), anchor_x='left', anchor_y='bottom',
+            color=color, anchor_x='left', anchor_y='bottom',
             font_name='Prototype'))
         for k, v in kw.items():
             setattr(self, k, v)
