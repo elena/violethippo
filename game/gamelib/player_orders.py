@@ -1,4 +1,5 @@
 from gamelib import model
+from random import random
 
 all = []
 YES = 'OK'
@@ -292,14 +293,14 @@ class AttackFaction(Order):
     """Attack a faction and damage its size
     Just a debug attack useful against military
     """
-    label = 'Kill Faction Hoods'
+    label = 'Attack Faction'
 
     def __init__(self):
         super(AttackFaction, self).__init__()
         self.full_cost = 2
 
     def execute(self, ui):
-        ui.ask_choice('All out war against the faction in the %s zone?'%ui.zone.mode,
+        ui.ask_choice('War against %s faction in this zone? (hurt size and random stat)'%model.game.moon.zones[ui.zone.mode].name,
             YESNO, self.chosen_yn)
 
     def chosen_yn(self, ui, choice):
@@ -307,13 +308,18 @@ class AttackFaction(Order):
             model.game.player.pay_order_cost(self.cost(ui.zone))
             zone=model.game.moon.zones[ui.zone.mode]
             fact=zone.faction
-            fact.size = max(0, fact.size - 0.15)
-            fact.loyal = max(0, fact.loyal - 0.15)
-            # fact.size = max(0, fact.size - 0.15)
-            # fact.size = max(0, fact.size - 0.15)
-            # fact.size = max(0, fact.size - 0.15)
+            fact.size = max(0, fact.size - 0.05)
+            secondary = random()
+            if secondary > .75:
+                fact.loyal = max(0, fact.loyal - 0.05)
+            if secondary > .5:
+                fact.informed = max(0, fact.informed - 0.05)
+            if secondary > .25:
+                fact.smart = max(0, fact.smart - 0.05)
+            else:
+                fact.rich = max(0, fact.rich - 0.05)
             zone.player_found = min(1, zone.player_found + 0.15)
-            ui.msg('Player slaughtered faction in %s'%ui.zone.mode)
+            ui.msg('Player attacked faction in %s'%ui.zone.mode)
             ui.update_info()
 
 all.append(AttackFaction())
