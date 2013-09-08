@@ -207,6 +207,10 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
     def hideout_moved(self):
         if not model.game.player.hideout:
             return
+        if 'hideout' not in self.children_names:
+            # still mid-messy-on_enter
+            # TODO make this not messy
+            return
         x = {
             'industry': self.zone.zone1_x + 75,
             'logistics': self.zone.zone2_x + 75,
