@@ -436,7 +436,7 @@ class Zone(JSONable, economy.Zone_Economy):
 
     @classmethod
     def json_create_args(cls,jdata):
-        return [jdata['.name']]
+        return [str(jdata['.name'])]
 
     def json_load(self, jdata):
         self.privileged = Privileged.json_create(jdata['priv'], self)
@@ -692,7 +692,7 @@ class Group(JSONable, Buffable):
     @classmethod
     def json_create_args(cls, jdata):
         # just dummy values that'll be filled in by load below
-        return [jdata['.name'], 0, 0, 0, 0, 0, jdata['.buffs']]
+        return [str(jdata['.name']), 0, 0, 0, 0, 0, jdata['.buffs']]
 
     def json_load(self, jdata):
         for name in ['size', 'informed', 'smart', 'loyal', 'rich']:

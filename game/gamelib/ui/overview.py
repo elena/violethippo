@@ -331,7 +331,7 @@ class Zone(Layer):
             but = self.get(name)
             if hasattr(but, 'on_click'):
                 self.remove(but.label_ob)
-                self.remove(name)
+                self.remove(str(name))
 
         zone = model.game.moon.zones[active_zone]
         self.buttons = []
