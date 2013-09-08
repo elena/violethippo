@@ -93,17 +93,33 @@ class Plan:
     def enact(self, ui):
         self.pay_costs(ui)
         result = self.check_success(ui)
+        ret = False
+        result_text = ''  # want to list effects
+        success = ''
         if result == 0:
+            success = 'FAILED'
             ui.msg('plan %s FAILED'%self.name)
-            return False
+            ret = False
         if result < 0:
+            success = 'was a DISASTER'
             ui.msg('plan %s was a DISASTER'%self.name)
             self.apply_risks(ui)
-            return False
+            ret = False
         if result > 0:
+            success = 'SUCCEDED'
             ui.msg('plan %s SUCCEDED'%self.name)
             self.apply_effects(ui)
-            return True
+            ret = True
+        if self.actor.__class__.__name__ == 'Faction':
+            title = '%s ZoneNews'%self.actor.zone.name
+            result_text = '%s faction takes action, and %s'%(self.actor.name, success)
+        elif self.actor.__class__.__name__ == 'Resistance':
+            title = '%s\'s plan %s %s'%(self.actor.name, self.name, success)
+        ui.ask_ok(title, self.ask_callback, result_text)
+        return ret
+
+    def ask_callback(self, ui):
+        pass
 
     def _apply_buffs(self, ui, buffs):
         from gamelib.model import game

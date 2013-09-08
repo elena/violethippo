@@ -25,7 +25,7 @@ class OkLayer(Layer):
     def __init__(self, title, callback, explanation=None, width=400):
         super(OkLayer, self).__init__()
         self.callback = callback
-        self.add(ColorLayer(255, 255, 255, 200), z=-2)
+        self.add(ColorLayer(20, 20, 20, 150), z=-2)
         w, h = director.get_window_size()
 
         y = h - 256
@@ -96,7 +96,7 @@ class ChoiceLayer(Layer):
     def __init__(self, title, choices, callback, explanation=None, width=400):
         super(ChoiceLayer, self).__init__()
         self.callback = callback
-        self.add(ColorLayer(255, 255, 255, 100), z=-2)
+        self.add(ColorLayer(20, 20, 20, 150), z=-2)
         w, h = director.get_window_size()
 
         y = h - 256
