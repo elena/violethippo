@@ -368,13 +368,15 @@ class Zone(Layer):
         adder.send((10, Button('icon-priv_off.png', (0, 0), 'privileged',
             self.on_show_info, img_prefix='icon-priv'), 'Privileged Cohort'))
         for group in zone.privileged.resistance_groups:
-            label = group.name # '%s %r' % (group.name, group.plans)
+            plans = ', '.join(p.description for p in group.plans)
+            label = '%s (%s)' % (group.name, plans)
             adder.send((20, Button('icon-pres_off.png', (0, 0), group,
                 self.on_show_info, img_prefix='icon-pres'), label))
         adder.send((10, Button('icon-serv_off.png', (0, 0), 'servitors',
             self.on_show_info, img_prefix='icon-serv'), 'Servitor Cohort'))
         for group in zone.servitor.resistance_groups:
-            label = group.name # '%s %r' % (group.name, group.plans)
+            plans = ', '.join(p.description for p in group.plans)
+            label = '%s (%s)' % (group.name, plans)
             adder.send((20, Button('icon-sres_off.png', (0, 0), group,
                 self.on_show_info, img_prefix='icon-sres'), label))
 

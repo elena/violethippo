@@ -326,9 +326,9 @@ class AttackFaction(Order):
 all.append(AttackFaction())
 
 class ChangePlan(Order):
-    """Change a plan
+    """Modify a plan
     """
-    label = 'Change a plan'
+    label = 'Modify a plan'
 
     def __init__(self):
         super(ChangePlan, self).__init__()
@@ -344,7 +344,7 @@ class ChangePlan(Order):
         namelist = [g.name for g in self.zone.privileged.resistance_groups
             if g.plans] + [g.name for g in self.zone.servitor.resistance_groups
             if g.plans]
-        ui.ask_choice('Change a plan from which group?',
+        ui.ask_choice('Modify a plan from which group?',
             namelist, self.chosen_group)
 
     def chosen_group(self, ui, choice):
@@ -358,7 +358,8 @@ class ChangePlan(Order):
             return
         # list all plans
         planlist = [p.name for p in self.group.plans]
-        ui.ask_choice('Change which plan that %s is working on?'%self.group.name, planlist, self.chosen_plan)
+        ui.ask_choice('Modify which plan that %s is working on?' %
+            self.group.name, planlist, self.chosen_plan)
 
     def chosen_plan(self, ui, choice):
         for p in self.group.plans:
@@ -368,12 +369,15 @@ class ChangePlan(Order):
         if not self.plan:
             return
         opslist = ['speed up']
-        ui.ask_choice('What to do to the %s plan that %s is working on?'%(self.plan.name, self.group.name), opslist+['Cancel'], self.chosen_op)
+        ui.ask_choice('Do what to the %s plan that %s is working on?' %
+            (self.plan.name, self.group.name), opslist + ['Cancel'],
+            self.chosen_op)
 
     def chosen_op(self,ui, choice):
         if choice == 'speed up':
             self.plan.plan_time = max(1, self.plan.plan_time - 1)
-            ui.msg('sped up %s plan %s, to %d'%(self.group.name, self.plan.name, self.plan.plan_time))
+            ui.msg('sped up %s plan %s, to %d'%(self.group.name,
+                self.plan.name, self.plan.plan_time))
         # more ops, more changes
         model.game.player.pay_order_cost(self.cost(ui.zone))
 
