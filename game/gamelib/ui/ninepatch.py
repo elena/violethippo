@@ -283,10 +283,8 @@ if __name__ == '__main__':
     ninepatch = NinePatch(image)
 
     window = pyglet.window.Window(resizable=True)
-    label = pyglet.text.Label('Hello, NinePatch',
-                              font_size=16,
-                              anchor_y='bottom',
-                              color=(0,0,0,255))
+    label = pyglet.text.Label('Hello, NinePatch', font_size=16,
+        anchor_y='bottom', color=(0, 0, 0, 255))
 
     @window.event
     def on_draw():

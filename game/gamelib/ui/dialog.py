@@ -29,32 +29,31 @@ class OkLayer(Layer):
         w, h = director.get_window_size()
 
         y = h - 256
-        but = Label(title, color=(0, 0, 0, 255), x=w//2,
-            anchor_x='center', y=y, font_size=24)
-        x1 = but.element.x - but.element.content_width // 2
-        x2 = but.element.x + but.element.content_width // 2
-        y2 = but.element.y + but.element.content_height
+        but = Label(title, color=(0, 0, 0, 255), position=(w//2, y),
+            anchor_x='center', anchor_y='top', font_size=24)
+        x1 = w//2 - but.element.content_width // 2
+        x2 = w//2 + but.element.content_width // 2
+        y2 = y
         self.add(but)
         y -= but.element.content_height + 10
 
         if explanation:
             but = Label(explanation, multiline=True, color=(0, 0, 0, 255),
-                x=w//2, width=width, anchor_x='center', anchor_y='top', y=y,
-                font_size=14, align='center',
-            font_name='Prototype')
+                position=(w//2, y), width=width, anchor_x='center',
+                anchor_y='top', font_size=14, align='center',
+                font_name='Prototype')
             self.add(but)
-            x = but.element.x - width // 2
-            x1 = min(x, x1)
-            x2 = max(but.element.x + width // 2, x2)
+            x1 = min(w//2 - width // 2, x1)
+            x2 = max(w//2 + width // 2, x2)
             y -= but.element.content_height + 10
 
         but = Label('(click or press a key to dismiss)', color=(0, 0, 0, 255),
-            x=w//2, anchor_x='center', anchor_y='bottom', y=y-32, font_size=12,
-            font_name='Prototype')
+            position=(w//2, y-32), anchor_x='center', anchor_y='bottom',
+            font_size=12, font_name='Prototype')
         self.add(but)
-        x = but.element.x - but.element.content_width // 2
+        x = w//2 - but.element.content_width // 2
         x1 = min(x, x1)
-        x2 = max(but.element.x + but.element.content_width // 2, x2)
+        x2 = max(w//2 + but.element.content_width // 2, x2)
         but.rect = Rect(x, but.element.y, but.element.content_width,
             but.element.content_height)
         y1 = y - 32
@@ -101,41 +100,40 @@ class ChoiceLayer(Layer):
         w, h = director.get_window_size()
 
         y = h - 256
-        but = Label(title, color=(0, 0, 0, 255), x=w//2,
-            anchor_x='center', y=y, font_size=24)
-        x1 = but.element.x - but.element.content_width // 2
-        x2 = but.element.x + but.element.content_width // 2
-        y2 = but.element.y + but.element.content_height
+        but = Label(title, color=(0, 0, 0, 255), position=(w//2, y),
+            anchor_x='center', anchor_y='top', font_size=24)
+        x1 = w//2 - but.element.content_width // 2
+        x2 = w//2 + but.element.content_width // 2
+        y2 = y
         self.add(but)
         y -= but.element.content_height + 10
 
         if explanation:
             but = Label(explanation, multiline=True, color=(0, 0, 0, 255),
-                x=w//2, width=width, anchor_x='center', anchor_y='top', y=y,
-                font_size=14, align='center',
-            font_name='Prototype')
+                position=(w//2, y), width=width, anchor_x='center',
+                anchor_y='top', font_size=14, align='center',
+                font_name='Prototype')
             self.add(but)
-            x = but.element.x - width // 2
-            x1 = min(x, x1)
-            x2 = max(but.element.x + width // 2, x2)
+            x1 = min(w//2 - width // 2, x1)
+            x2 = max(w//2 + width // 2, x2)
             y -= but.element.content_height + 10
 
         y -= 32
 
         self.choice_buts = []
         for choice in choices:
-            but = Label(choice, color=(0, 0, 0, 255), x=w//2,
-                anchor_x='center',  anchor_y='bottom', y=y, font_size=20,
-            font_name='Prototype')
-            y -= 32
+            but = Label(choice, color=(0, 0, 0, 255), position=(w//2, y),
+                anchor_x='center',  anchor_y='bottom', font_size=20,
+                font_name='Prototype')
             self.add(but, z=1)
             self.choice_buts.append(but)
-            x = but.element.x - but.element.content_width // 2
+            x = w//2 - but.element.content_width // 2
             x1 = min(x, x1)
-            y1 = but.element.y
-            x2 = max(but.element.x + but.element.content_width // 2, x2)
-            but.rect = Rect(x, but.element.y, but.element.content_width,
+            x2 = max(w//2 + but.element.content_width // 2, x2)
+            but.rect = Rect(x, y, but.element.content_width,
                 but.element.content_height)
+            y1 = y
+            y -= but.element.content_height
 
         self.patch_dimensions = (x1, y1, x2-x1, y2-y1)
 
@@ -148,9 +146,9 @@ class ChoiceLayer(Layer):
         for but in self.choice_buts:
             if but.rect.contains(x, y):
                 self.callback(self.parent, but.element.text)
-        self.callback = None
-        self.kill()
-        return True
+                self.callback = None
+                self.kill()
+                return True
 
     def on_key_press(self, *args):
         self.callback = None
@@ -173,22 +171,17 @@ if __name__ == '__main__':
         sys.exit()
 
     if 'explain' in sys.argv:
-        explanation = 'a somewhat long descrition and longish '\
-            'explanation of stuffs'
-    else:
-        explanation = None
-    explanation = START_TEXT = """When you were young they came from the stars,
-adding a new moon to the sky - a moon of steel.
+        explanation = """When you were young they came from the stars, adding a new moon to the sky - a moon of steel.
 
-Although there were only handful of them,
-the guns on their fortress brought them victory.
+Although there were only handful of them, the guns on their fortress brought them victory.
 
 Now the time has come for you to strike back.
 
-Travel to their lair and coordinate the resistance
-there, deafeating the invaders, and making this
-a moon of blood.
+Travel to their lair and coordinate the resistance there, deafeating the invaders, and making this a moon of blood.
 """
+    else:
+        explanation = None
+
 
     if 'ok' in sys.argv:
         director.run(Scene(OkLayer('Information', cb, explanation)))
