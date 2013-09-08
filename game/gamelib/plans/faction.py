@@ -39,7 +39,7 @@ class PatrolZone(Plan):
                 roll=self.mechanics( a, r )
                 ui.msg('    brain.attacking: %s %s'%(r.name,roll))
                 if roll>0:
-                    r.buff_stat('visibility',.1,.05,.025,.025)
+                    r.buff_stat('visibility',.1,.07,.03,.01)
                     ui.msg('   brain.      2 %s  %s'%(r.name,r.buffed('visibility')))
                 else:
                     ui.msg('   brain.  missed')

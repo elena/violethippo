@@ -26,9 +26,9 @@ class   Brain(object):
         plans=[]
         if not IS_DEAD in flav:
             pass
-#            plans.append(
-#                faction.PatrolZone('patrol:%s:%s'%(self.name,game.turn), self )
-#                )
+            plans.append(
+                faction.PatrolZone('patrol:%s:%s'%(self.name,game.turn), self )
+                )
 #            plans.append(
 #                faction.ForceProduction('ForceProduction:%s:%s'%(self.name,game.turn), self )
 #                )
