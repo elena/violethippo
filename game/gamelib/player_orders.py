@@ -339,7 +339,7 @@ class ChangePlan(Order):
             return None
         z = model.game.moon.zones[zone.mode]
         if not any(g for g in z.privileged.resistance_groups
-                if g.plans) or any(g for g in z.servitor.resistance_groups
+                if g.plans) and not any(g for g in z.servitor.resistance_groups
                 if g.plans):
             return None
 
