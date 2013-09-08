@@ -111,7 +111,7 @@ def  mkgraph(srcdir,logfile,title):
 
 
 if __name__=="__main__":
-  for f in os.listdir('.'):
+#  for f in os.listdir('.'):
 #     if f.startswith('gnuplot'):
 #        os.remove(f)
   for dpath,subd,subf in os.walk('../../save.test'):
