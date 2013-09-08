@@ -1,9 +1,9 @@
-Lucifer’s Moon
-==============
+A Moon of Blood and Steel
+=========================
 
 Entry in PyWeek #17  <http://www.pyweek.org/17/>
 Team: Violent Hippo
-Members: Richard, Liam, Elena, Cam, Josh
+Members: Richard, Liam, Elena, Cam
 
 
 DEPENDENCIES:
@@ -27,13 +27,22 @@ Othewise open a terminal / console and "cd" to the game directory and run:
 
 HOW TO PLAY THE GAME:
 
-Move the cursor around the screen with the mouse.
+Defeat the ruling factions of each zone of the Moon before getting caught.
 
-Press the left mouse button to fire the ducks.
+Each turn help the rebels to enact their plans to weaken the factions by
+using your activity points .
+
+You are stronger where your hideout is located.
 
 
 
 LICENSE:
 
-This game skellington is placed in the Public Domain.
+This game is Copyright 2013 the Violet Hippo team of:
 
+  Liam Routt
+  Elena Williams
+  Richard Jones
+  Cameron Blackwood
+
+Ask them about the license.

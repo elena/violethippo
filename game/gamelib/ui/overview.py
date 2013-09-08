@@ -18,27 +18,19 @@ from dialog import ChoiceLayer, OkLayer
 from debug import DebugLayer
 from widgets import Button, TextButton, Bargraph, MultipleBargraph
 
-START_TEXT = """When you were young they came from the stars,
-adding a new moon to the sky - a moon of steel.
+START_TEXT = """When you were young they came from the stars, adding a new moon to the sky - a moon of steel.
 
-Although there were only handful of them,
-the guns on their fortress brought them victory.
+Although there were only handful of them, the guns on their fortress brought them victory.
 
 Now the time has come for you to strike back.
 
-Travel to their lair and coordinate the resistance
-there, deafeating the invaders, and making this
-a moon of blood.
-"""
+Travel to their lair and coordinate the resistance there, deafeating the invaders, and making this a moon of blood."""
 
-GENERAL_HELP_TEXT = """Defeat the ruling factions of each zone
-before getting caught.
+GENERAL_HELP_TEXT = """Defeat the ruling factions of each zone of the Moon before getting caught.
 
-Each turn help the rebels to enact plans
-(using activity points) to weaken the factions.
+Each turn help the rebels to enact their plans to weaken the factions by using your activity points .
 
-You are stronger where your hideout is located.
-"""
+You are stronger where your hideout is located."""
 
 def shuffled(l):
     l = list(l)

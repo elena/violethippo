@@ -53,6 +53,8 @@ def add_files(generator):
 
 # add the lib and data directories
 add_files(os.walk('gamelib'))
+add_files(os.walk('pyglet'))
+add_files(os.walk('cocos'))
 add_files(os.walk('data'))
 
 # calculate MD5
