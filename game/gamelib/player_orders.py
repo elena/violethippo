@@ -337,9 +337,9 @@ class ChangePlan(Order):
     def cost(self, zone):
         if model.game.player.free_order:
             return None
-        zone = model.game.moon.zones[zone.mode]
-        if not any(g for g in zone.privileged.resistance_groups
-                if g.plans) or any(g for g in zone.servitor.resistance_groups
+        z = model.game.moon.zones[zone.mode]
+        if not any(g for g in z.privileged.resistance_groups
+                if g.plans) or any(g for g in z.servitor.resistance_groups
                 if g.plans):
             return None
 
