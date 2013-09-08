@@ -44,10 +44,12 @@ class Overview(Scene):
             Fixed())
 
 
-class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
+class Fixed(Layer):
+    # "display" needs to be renamed "the one with buttons and info"
+
     is_event_handler = True
-    order_x = 200
-    order_y = 445
+    order_x = 250
+    order_y = 420
 
     def __init__(self):
         super(Fixed, self).__init__()
@@ -77,8 +79,8 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         w, h = director.get_window_size()
 
         # now it's safe to show information about the game
-        bar_label_x = 240*2
-        bar_graph_x = 305
+        bar_label_x = 248*2
+        bar_graph_x = 315
         bar_label_y = 372*2
         bar_graph_y = 365
         self.add(Label('Faction Strength: ', x=bar_label_x, y=bar_label_y,
@@ -111,7 +113,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(help, name='help')
 
         self.info = Details()
-        self.info.position = (335, h-25)
+        self.info.position = (400, h-25)
         self.add(self.info)
 
         self.zinfo = ZoneInfo()
@@ -355,7 +357,8 @@ class Zone(Layer):
                     y -= 24 * (label.count('\n') - 1)
                 l = Label(label, multiline=True, width=400, position=(lx, ly),
                     color=(255,255,255,255), font_name='Prototype')
-                l.rect = Rect(l.x, l.y, l.element.content_width, l.element.content_height)
+                l.rect = Rect(l.x, l.y, l.element.content_width,
+                              l.element.content_height)
                 self.add(l)
                 but.label_ob = l
 
