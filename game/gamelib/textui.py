@@ -30,6 +30,7 @@ class FakeUI:
             for k,v in o.store.items():
                 rv[ n+'/'+k]=v
         return rv
+    def hideout_moved(self): pass
 
     def helper_ratio_under(self,number,vals):
         n=0
