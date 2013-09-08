@@ -359,6 +359,8 @@ class Zone(Layer):
                 ly = y + 12
                 if '\n' in label:
                     ly += 12
+                if label.count('\n') > 1:
+                    y -= 12 * (label.count('\n') - 1)
                 l = Label(label, multiline=True, width=400, position=(lx, ly),
                     color=(255,255,255,255), font_name='Prototype')
                 l.rect = Rect(l.x, l.y, l.element.content_width, l.element.content_height)
