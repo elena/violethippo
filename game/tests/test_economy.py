@@ -87,6 +87,7 @@ def cam_playing():
 
 def test_economy_hits():
     for g,l,r in [
+                     ([],[],RUN_OK),
                      ([5],[],RUN_OK),
                      ([5,6],[],RUN_OK),
                      ([5,6,7],[],RUN_FAIL),
@@ -103,11 +104,11 @@ def test_economy_hits():
                      ([5,8,11],[],RUN_OK),
                      ([5,8,11,14],[],RUN_FAIL),
                      ([5,8,11,14,17],[],RUN_FAIL),
-#
-#                     ([],[5],RUN_OK),
-#                     ([],[5,6],RUN_OK),
-#                     ([],[5,6,7],RUN_OK),
-#                     ([],[5,6,7,8],RUN_OK),
+
+                     ([],[5],RUN_OK),
+                     ([],[5,6],RUN_OK),
+                     ([],[5,6,7],RUN_OK),
+                     ([],[5,6,7,8],RUN_OK),
                  ]:
         yield hit_hook,g,l,r
 
