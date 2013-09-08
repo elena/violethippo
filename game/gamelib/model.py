@@ -608,6 +608,15 @@ class Cohort(JSONable, Buffable):
             new_group.rich = self.cash * cohort_effect
             new_group.loyal = max(Resistance.START_LOYAL,
                 random.random() * cohort_effect)
+            ran = random.random()
+            if ran > .75:
+                new_group.modus_operandi = Plan.VIOLENCE
+            if ran > .5:
+                new_group.modus_operandi = Plan.ESPIONAGE
+            if ran > .25:
+                new_group.modus_operandi = Plan.SABOTAGE
+            # else:
+                # leave at NOOP
             # TODO should affect all stats somehow
             # set some initial plans (or not)
             for i in range(3):
@@ -884,11 +893,85 @@ class Resistance(Group):
         found = roll(find_plan, self.buffed('need_plan'))
         if found > 0:
             # TODO: select new plan based on self.modus_operandi and zone
-            new_plan = Plan(self.next_plan_name, self, self.modus_operandi,
-                "a new plan", 1+random.randint(1,4), [])
+            new_plan = self.make_random_plan()
             ui.msg('%s found a new plan: %s'%(self.name, new_plan.name))
             # add new plan to self.plans
             self.plans.append(new_plan)
+
+    def make_random_plan(self):
+        ptime = 1+random.randint(1,5)
+        astats = []
+        dstats = []
+        # target = self.zone.faction
+        target = 'faction'
+        costs = []
+        risks = []
+        effects = []
+        desc = 'a new plan'
+        modus = self.modus_operandi
+        if random.random() < .66:
+            modus = random.choice([Plan.VIOLENCE, Plan.ESPIONAGE, Plan.SABOTAGE, Plan.NOOP])
+        stat = random.choice(['quality_of_life', 'liberty', 'cash', 'rebellious'])
+        cohort = random.choice([Plan.WHO_PRIVILEGED, Plan.WHO_SERVITOR])
+
+        if modus == Plan.VIOLENCE:
+            astats.append('size')
+            dstats.append('size')
+            desc = 'using fists to beat them down'
+            # target = self.zone.faction
+            costs.append((Plan.WHO_ACTOR,('size',(-.1,-.05))))
+            risks.append((Plan.WHO_ACTOR,('size',(-.1,-.1,-.1,-.05,-.05))))
+            risks.append((Plan.WHO_ACTOR,('rich',(-.1,-.1,-.05))))
+            effects.append((Plan.WHO_FACTION,('size',(-.15,-.1,-.1,-.1,-.05,-.05))))
+            effects.append((Plan.WHO_FACTION,(random.choice(['smart', 'loyal', 'rich']),(-.1,-.1,-.7,-.05,-.05))))
+            effects.append((cohort, ('liberty', (-.1, -.1, -.05, -.05, -.02, -.02))))
+        if modus == Plan.ESPIONAGE:
+            astats.append('informed')
+            dstats.append('informed')
+            desc = 'using intel to win the war'
+            # target = self.zone.faction
+            costs.append((Plan.WHO_ACTOR,('informed',(-.1,-.05))))
+            risks.append((Plan.WHO_ACTOR,('informed',(-.2,-.1,-.1,-.05,-.05))))
+            risks.append((Plan.WHO_ACTOR,('smart',(-.1,-.1,-.05))))
+            effects.append((Plan.WHO_FACTION,('loyal',((-.15,-.1,-.1,-.1,-.05,-.05)))))
+            effects.append((Plan.WHO_FACTION,(random.choice(['size', 'rich', 'informed']),(-.1,-.1,-.7,-.05,-.05))))
+            effects.append((cohort, ('quality_of_life', (-.1, -.1, -.05, -.05, -.02, -.02))))
+        if modus == Plan.SABOTAGE:
+            astats.append('smart')
+            dstats.append('smart')
+            desc = 'using technology to break stuff'
+            # target = zone.faction
+            costs.append((Plan.WHO_ACTOR,('smart',(-.1,-.05))))
+            risks.append((Plan.WHO_ACTOR,('smart',(-.2,-.1,-.1,-.05,-.05))))
+            risks.append((Plan.WHO_ACTOR,('size',(-.1,-.1,-.05))))
+            effects.append((Plan.WHO_FACTION,('rich',((-.15,-.1,-.1,-.1,-.05,-.05)))))
+            effects.append((Plan.WHO_FACTION,(random.choice(['loyal', 'smart', 'rich']),(-.1,-.1,-.7,-.05,-.05))))
+            effects.append((cohort, ('cash', (-.1, -.1, -.05, -.05, -.02, -.02))))
+        if modus == Plan.NOOP:
+            astats.append('rich')
+            dstats.append('rich')
+            desc = 'spending up to bring \'em down'
+            # target = zone.faction
+            costs.append((Plan.WHO_ACTOR,('rich',(-.1,-.05))))
+            risks.append((Plan.WHO_ACTOR,('rich',(-.2,-.1,-.1,-.05,-.05))))
+            risks.append((Plan.WHO_ACTOR,('informed',(-.1,-.1,-.05))))
+            effects.append((Plan.WHO_FACTION,('informed',((-.15,-.1,-.1,-.1,-.05,-.05)))))
+            effects.append((Plan.WHO_FACTION,(random.choice(['size', 'loyal', 'smart']),(-.1,-.1,-.7,-.05,-.05))))
+            effects.append((cohort, (random.choice(['quality_of_life', 'cash']), (-.1, -.1, -.05, -.05, -.02, -.02))))
+        astats.append('loyal')
+        dstats.append('loyal')
+        costs.append((Plan.WHO_ACTOR,('visibility',(.1,.1,.1,.1))))
+        risks.append((Plan.WHO_ACTOR,('visibility',(.1,.1,.1,.1))))
+        risks.append((Plan.WHO_ACTOR,('loyalty',(-.2,-.1,-.1,-.05,-.05))))
+        risks.append((Plan.WHO_PRIVILEGED, ('rebellious', (-.1, -.1, -.05, -.05, -.02, -.02))))
+        risks.append((Plan.WHO_SERVITOR, ('rebellious', (-.1, -.1, -.05, -.05, -.02, -.02))))
+        effects.append((Plan.WHO_ACTOR,('loyalty',(.1,.1,.1,.1))))
+        effects.append((cohort, (stat, (-.1, -.05, -.02, -.02))))
+        new_plan = Plan(name=self.next_plan_name, actor=self,
+            style=self.modus_operandi, description=desc,
+            plan_time=ptime, attack_stats=astats, defend_stats=dstats,
+            target=target, costs=costs, risks=risks, effects=effects)
+        return new_plan
 
     def update(self, game, ui):
         '''

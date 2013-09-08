@@ -38,10 +38,15 @@ class Plan:
     target to chance against.
     '''
 
-    NOOP = 'No Operation'
+    NOOP = 'Financial'
     ESPIONAGE = 'Espionage'
     VIOLENCE = 'Violence'
     SABOTAGE = 'Sabotage'
+    WHO_ACTOR = 'actor'
+    WHO_ZONE = 'zone'
+    WHO_FACTION = 'faction'
+    WHO_PRIVILEGED = 'privileged'
+    WHO_SERVITOR = 'servitor'
 
     def __repr__(self):
         return '{{{PLAN:%s}}}'%(self.name)
