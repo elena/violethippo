@@ -340,7 +340,9 @@ class ChangePlan(Order):
 
     def execute(self, ui):
         self.zone = model.game.moon.zones[ui.zone.mode]
-        namelist = [g.name for g in self.zone.privileged.resistance_groups] + [g.name for g in self.zone.servitor.resistance_groups]
+        namelist = [g.name for g in self.zone.privileged.resistance_groups
+            if g.plans] + [g.name for g in self.zone.servitor.resistance_groups
+            if g.plans]
         ui.ask_choice('Change a plan from which group?',
             namelist, self.chosen_group)
 
