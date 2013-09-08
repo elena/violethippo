@@ -5,6 +5,8 @@ Entry in PyWeek #17  <http://www.pyweek.org/17/>
 Team: Violent Hippo
 Members: Richard, Liam, Elena, Cam
 
+Title / Background image: David McLeod
+
 
 DEPENDENCIES:
 
