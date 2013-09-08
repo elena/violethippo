@@ -608,8 +608,8 @@ class Cohort(JSONable, Buffable):
             new_group.rich = self.cash * cohort_effect
             new_group.loyal = max(Resistance.START_LOYAL,
                 random.random() * cohort_effect)
-            new_group.modus_operandi = random.choice(Plan.VIOLENCE,
-                Plan.ESPIONAGE, Plan.SABOTAGE, Plan.NOOP)
+            new_group.modus_operandi = random.choice([Plan.VIOLENCE,
+                Plan.ESPIONAGE, Plan.SABOTAGE, Plan.NOOP])
 
             # TODO should affect all stats somehow
             # set some initial plans (or not)
@@ -904,8 +904,10 @@ class Resistance(Group):
         desc = 'a new plan'
         modus = self.modus_operandi
         if random.random() < .66:
-            modus = random.choice([Plan.VIOLENCE, Plan.ESPIONAGE, Plan.SABOTAGE, Plan.NOOP])
-        stat = random.choice(['quality_of_life', 'liberty', 'cash', 'rebellious'])
+            modus = random.choice([Plan.VIOLENCE, Plan.ESPIONAGE,
+                Plan.SABOTAGE, Plan.NOOP])
+        stat = random.choice(['quality_of_life', 'liberty', 'cash',
+            'rebellious'])
         cohort = random.choice([Plan.WHO_PRIVILEGED, Plan.WHO_SERVITOR])
 
         if modus == Plan.VIOLENCE:
