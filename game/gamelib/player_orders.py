@@ -67,6 +67,7 @@ class Hideout(Order):
             model.game.player.pay_order_cost(self.cost(ui.zone))
             model.game.player.hideout = ui.zone.mode
             ui.msg('setting player hideout to %s'%(ui.zone.mode))
+            ui.hideout_moved()
             ui.update_info()
 
 all.append(Hideout())

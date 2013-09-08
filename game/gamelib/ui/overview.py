@@ -134,6 +134,11 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
                             color=(255,255,255,255), font_name='Prototype')
         self.add(order_label)
 
+        # add the hideout button - initially offscreen
+        self.add(Sprite('icon-home.png', position= (-100, self.zone.y)),
+            name='hideout')
+        self.hideout_moved()
+
         # order_help = Label(GENERAL_HELP_TEXT, position=(30, 320),
         #                    multiline=True, color=(150, 150, 150, 255),
         #                    font_size =10,
@@ -174,15 +179,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         else:
             # enable turn button and all the player actions
             self.get('end_turn').visible = True
-            offset = 75
-            zone_x = {
-                'industry': self.zone.zone1_x+offset,
-                'logistics': self.zone.zone2_x+offset,
-                'military': self.zone.zone3_x+offset,
-            }
-            home_logo = Sprite('icon-home.png', position=
-                (zone_x[model.game.player.hideout], self.zone.y))
-            self.add(home_logo)
+            self.hideout_moved()
 
         # remove old player order buttons
         for but in list(self.buttons):
@@ -206,6 +203,16 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
             y += int(b.label.element.content_height-60)
             self.buttons.append(b)
             self.add(b)
+
+    def hideout_moved(self):
+        if not model.game.player.hideout:
+            return
+        x = {
+            'industry': self.zone.zone1_x + 75,
+            'logistics': self.zone.zone2_x + 75,
+            'military': self.zone.zone3_x + 75,
+        }[model.game.player.hideout]
+        self.get('hideout').x = x
 
     class SIGNAL_GAMEOVER(Exception):
         pass
