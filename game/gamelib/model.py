@@ -964,7 +964,7 @@ class Resistance(Group):
         effects.append((Plan.WHO_ACTOR,('loyalty',(.1,.1,.1,.1))))
         effects.append((cohort, (stat, (-.1, -.05, -.02, -.02))))
         new_plan = Plan(name=self.next_plan_name, actor=self,
-            style=self.modus_operandi, description=desc,
+            style=modus, description=desc,
             plan_time=ptime, attack_stats=astats, defend_stats=dstats,
             target=target, costs=costs, risks=risks, effects=effects)
         return new_plan
