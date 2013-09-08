@@ -357,21 +357,22 @@ class ChangePlan(Order):
         if not self.group:
             return
         # list all plans
-        planlist = [p.name for p in self.group.plans]
-        ui.ask_choice('Modify which plan that %s is working on?' %
-            self.group.name, planlist, self.chosen_plan)
+        planlist = [p.description for p in self.group.plans]
+        ui.ask_choice('Choose a plan to modify', planlist, self.chosen_plan,
+            'Modify which plan that %s is working on?' % self.group.name)
 
     def chosen_plan(self, ui, choice):
         for p in self.group.plans:
-            if p.name == choice:
+            if p.description == choice:
                 self.plan = p
                 break
         if not self.plan:
             return
         opslist = ['speed up']
-        ui.ask_choice('Do what to the %s plan that %s is working on?' %
-            (self.plan.name, self.group.name), opslist + ['Cancel'],
-            self.chosen_op)
+        description = 'How do you want to modify the plan (%s) that %s is '\
+            'working on?' % (self.plan.description, self.group.name)
+        ui.ask_choice('Modify it how?', opslist + ['Cancel'], self.chosen_op,
+            description)
 
     def chosen_op(self,ui, choice):
         if choice == 'speed up':

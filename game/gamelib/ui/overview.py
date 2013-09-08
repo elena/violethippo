@@ -55,7 +55,7 @@ class Overview(Scene):
 class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and info"
     is_event_handler = True
     order_x = 200
-    order_y = 485
+    order_y = 445
 
     def __init__(self):
         super(Fixed, self).__init__()
@@ -130,7 +130,7 @@ class Fixed(Layer):   # "display" needs to be renamed "the one with buttons and 
         self.add(self.zone, z=-1)
 
         order_label = Label('Choose your actions for this turn: ',
-                            position=(self.order_x, self.order_y+40),
+                            position=(self.order_x, self.order_y + 40),
                             color=(255,255,255,255), font_name='Prototype')
         self.add(order_label)
 
@@ -356,8 +356,11 @@ class Zone(Layer):
                     name = but.info.name
                 self.add(but, z=1, name=name)
                 lx = x + indent + but.image.width + 10
-                l = Label(label, position=(lx, y+8), color=(255,255,255,255),
-                    font_name='Prototype')
+                ly = y + 12
+                if '\n' in label:
+                    ly += 12
+                l = Label(label, multiline=True, width=400, position=(lx, ly),
+                    color=(255,255,255,255), font_name='Prototype')
                 l.rect = Rect(l.x, l.y, l.element.content_width, l.element.content_height)
                 self.add(l)
                 but.label_ob = l
@@ -368,15 +371,19 @@ class Zone(Layer):
         adder.send((10, Button('icon-priv_off.png', (0, 0), 'privileged',
             self.on_show_info, img_prefix='icon-priv'), 'Privileged Cohort'))
         for group in zone.privileged.resistance_groups:
-            plans = ', '.join(p.description for p in group.plans)
-            label = '%s (%s)' % (group.name, plans)
+            plans = ',\n'.join(p.description for p in group.plans)
+            if not plans:
+                plans = 'no plans'
+            label = '%s\n(%s)' % (group.name, plans)
             adder.send((20, Button('icon-pres_off.png', (0, 0), group,
                 self.on_show_info, img_prefix='icon-pres'), label))
         adder.send((10, Button('icon-serv_off.png', (0, 0), 'servitors',
             self.on_show_info, img_prefix='icon-serv'), 'Servitor Cohort'))
         for group in zone.servitor.resistance_groups:
-            plans = ', '.join(p.description for p in group.plans)
-            label = '%s (%s)' % (group.name, plans)
+            plans = ',\n'.join(p.description for p in group.plans)
+            if not plans:
+                plans = 'no plans'
+            label = '%s\n(%s)' % (group.name, plans)
             adder.send((20, Button('icon-sres_off.png', (0, 0), group,
                 self.on_show_info, img_prefix='icon-sres'), label))
 
